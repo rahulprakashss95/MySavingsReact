@@ -9,7 +9,7 @@ export type FixedDepositModel = {
   interestPercentage: string;
   isCompleted: boolean;
   loginUserId: string;
-  maturityDate: string;
+  maturityDate: any;
   name: string;
   mobile: string;
 };

@@ -1,7 +1,7 @@
 export type ClientModel = {
   id: string;
   loginUserId: string;
-  mobile: MobileModel[];
+  mobile: MobileModel[] | null;
   name: string;
 };
 

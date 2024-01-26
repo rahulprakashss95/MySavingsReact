@@ -6,7 +6,7 @@ import { useEffect } from "react";
 
 type IFDCard = {
   fixedDeposit: FixedDepositModel;
-  onClickCard: () => void;
+  onClickCard: (data: FixedDepositModel) => void;
 };
 
 const FDCard = (props: IFDCard) => {
@@ -14,7 +14,7 @@ const FDCard = (props: IFDCard) => {
 
   return (
     <Card>
-      <Pressable onPress={onClickCard}>
+      <Pressable onPress={() => onClickCard(fixedDeposit)}>
         <Text style={styles.bankName}>
           {fixedDeposit.name} - {fixedDeposit.depositorName}
         </Text>
@@ -29,7 +29,7 @@ const FDCard = (props: IFDCard) => {
           <View style={styles.detailsColumn}>
             <Text style={styles.detailsTitle}>Interest(%)</Text>
             <Text style={styles.interestValue}>
-              {fixedDeposit.interestPercentage} %
+              {fixedDeposit.interestPercentage}%
             </Text>
           </View>
           <View style={styles.detailsColumn}>
@@ -40,16 +40,24 @@ const FDCard = (props: IFDCard) => {
           </View>
         </View>
 
-        <View style={styles.dateRow}>
-          <View style={styles.dateColumn}>
-            <Text style={styles.detailsTitle}>Deposited Date</Text>
-            <Text style={styles.dateValue}>{fixedDeposit.depositedDate}</Text>
+        {fixedDeposit.depositedDate || fixedDeposit.maturityDate != "0" ? (
+          <View style={styles.dateRow}>
+            <View style={styles.dateColumn}>
+              <Text style={styles.detailsTitle}>Deposited Date</Text>
+              <Text style={styles.dateValue}>{fixedDeposit.depositedDate}</Text>
+            </View>
+            <View style={styles.dateColumn}>
+              <Text style={styles.detailsTitle}>Maturity Date</Text>
+              {fixedDeposit.maturityDate != "0" && (
+                <Text style={styles.dateValue}>
+                  {fixedDeposit.maturityDate}
+                </Text>
+              )}
+            </View>
           </View>
-          <View style={styles.dateColumn}>
-            <Text style={styles.detailsTitle}>Maturity Date</Text>
-            <Text style={styles.dateValue}>{fixedDeposit.maturityDate}</Text>
-          </View>
-        </View>
+        ) : (
+          <></>
+        )}
       </Pressable>
     </Card>
   );
@@ -58,7 +66,7 @@ const FDCard = (props: IFDCard) => {
 const styles = StyleSheet.create({
   bankName: {
     fontSize: 18,
-    fontWeight: "bold",
+    fontWeight: "500",
     marginBottom: 12,
   },
   detailsRow: {
@@ -74,12 +82,12 @@ const styles = StyleSheet.create({
   },
   amountValue: {
     fontSize: 16,
-    fontWeight: "bold",
+    fontWeight: "500",
     color: "green",
   },
   interestValue: {
     fontSize: 16,
-    fontWeight: "bold",
+    fontWeight: "500",
     color: "green",
   },
   dateRow: {

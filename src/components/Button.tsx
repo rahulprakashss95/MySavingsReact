@@ -3,13 +3,14 @@ import { Colors } from "../utils/Color";
 
 type IButton = {
   title: string;
+  buttonStyle?: any;
   onPress: () => void;
 };
 
 const Button = (props: IButton) => {
   return (
     <TouchableHighlight onPress={props.onPress} underlayColor="white">
-      <View style={styles.button}>
+      <View style={[styles.button, props.buttonStyle]}>
         <Text style={styles.buttonText}>{props.title}</Text>
       </View>
     </TouchableHighlight>
@@ -22,7 +23,6 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   button: {
-    marginBottom: 30,
     width: 200,
     alignItems: "center",
     borderRadius: 8,

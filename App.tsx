@@ -18,7 +18,7 @@ export type RootStackParamList = {
   Deposit: undefined;
   Clients: undefined;
   FixedDepositList: undefined;
-  FixedDepositAddEdit: undefined;
+  FixedDepositAddEdit: any;
   OverView: undefined;
 };
 

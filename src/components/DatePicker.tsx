@@ -1,35 +1,87 @@
-import { View, Text, TouchableOpacity, StyleSheet } from "react-native";
-import { DateTimePickerAndroid } from "@react-native-community/datetimepicker";
+import {
+  View,
+  Text,
+  TouchableOpacity,
+  StyleSheet,
+  Platform,
+} from "react-native";
+import DateTimePickerModal from "react-native-modal-datetime-picker";
+import { useState } from "react";
+import moment from "moment";
 
 type IDatePicker = {
   label: string;
-  dateValue: Date;
+  dateValue: string;
   onDateChange: (date: any) => void;
 };
 
+const months = [
+  "Jan",
+  "Feb",
+  "Mar",
+  "Apr",
+  "May",
+  "Jun",
+  "Jul",
+  "Aug",
+  "Sep",
+  "Oct",
+  "Nov",
+  "Dec",
+];
+
 const DatePicker = (props: IDatePicker) => {
   const { label, dateValue, onDateChange } = props;
+  const [showDatePicker, setShowDatePicker] = useState(false);
 
-  const openDatePicker = () => {
-    DateTimePickerAndroid.open({
-      value: dateValue,
-      onChange(event, date) {
-        onDateChange(date);
-      },
-      mode: "date",
-      display: "spinner",
-    });
+  const parseDateString = (dateString: string) => {
+    if (dateString) {
+      const [day, monthStr, year] = dateString?.split("-");
+      const monthIndex = months.indexOf(monthStr);
+      // Ensure the format is correct before creating the Date object
+      if (day && monthIndex !== -1 && year) {
+        return new Date(Number(year), monthIndex, Number(day));
+      } else {
+        console.error("Invalid date string format");
+        return new Date(); // Return a default date if parsing fails
+      }
+    }
+  };
+
+  function convertDateFormat(dateString: string) {
+    const inputDate = new Date(dateString);
+    const formattedDate = moment(inputDate).format("DD-MMM-YYYY");
+
+    return formattedDate;
+  }
+
+  const handleConfirm = (date: any) => {
+    console.log(convertDateFormat(date));
+    setShowDatePicker(false);
+    onDateChange(convertDateFormat(date));
   };
 
   return (
     <View>
       <Text style={styles.label}>{label}</Text>
       <TouchableOpacity
-        onPress={() => openDatePicker()}
+        onPress={() => setShowDatePicker(true)}
         style={styles.dateInput}
       >
-        <Text style={styles.dateText}>{dateValue.toLocaleDateString()}</Text>
+        <Text style={styles.dateText}>{dateValue}</Text>
       </TouchableOpacity>
+      <DateTimePickerModal
+        date={parseDateString(dateValue)}
+        isVisible={showDatePicker}
+        mode="date"
+        display={Platform.OS == "ios" ? "inline" : "spinner"}
+        onConfirm={handleConfirm}
+        onCancel={() => {
+          setTimeout(() => {
+            setShowDatePicker(false);
+          }, 0);
+        }}
+      />
     </View>
   );
 };

@@ -1,25 +1,111 @@
-import React, { useState } from "react";
-import {
-  View,
-  Text,
-  TextInput,
-  TouchableOpacity,
-  StyleSheet,
-  Platform,
-  ScrollView,
-} from "react-native";
-import DateTimePicker from "@react-native-community/datetimepicker";
+import React, { useEffect, useState } from "react";
+import { View, Text, TextInput, StyleSheet, ScrollView } from "react-native";
 import { Picker } from "@react-native-picker/picker";
 import DatePicker from "../components/DatePicker";
+import { RouteProps } from "../utils/Utils";
+import { FixedDepositModel } from "../models/FixedDepositModel";
+import { Colors } from "../utils/Color";
+import Button from "../components/Button";
 
-const FixedDepositAddEditScreen = () => {
-  const [client, setClient] = useState("DBS");
-  const [depositorName, setDepositorName] = useState("Mythili");
-  const [amount, setAmount] = useState("550000");
-  const [interest, setInterest] = useState("7.21");
-  const [interestAmount, setInterestAmount] = useState("3304");
-  const [depositedDate, setDepositedDate] = useState(new Date());
-  const [maturityDate, setMaturityDate] = useState(new Date());
+const clientList = [
+  {
+    id: "3nHxEuNZinwy9w3DbzxY",
+    mobile: null,
+    name: "HDFC",
+    loginUserId: "V4yTbnAuEps1WpBRNeHb",
+  },
+  {
+    mobile: null,
+    name: "CUB",
+    loginUserId: "hvPqFbtNzE267IGQvLvf",
+    id: "DrOFa0co98GOQjTT8qRh",
+  },
+  {
+    mobile: null,
+    name: "Cinipriya",
+    id: "FDZL7myNAqUHCduJIVjP",
+    loginUserId: "hvPqFbtNzE267IGQvLvf",
+  },
+  {
+    mobile: [
+      { id: "527", pref: false, value: "+91 99949 47777", type: "mobile" },
+    ],
+    id: "QwVwQAAajPJ8vHbbSQbK",
+    loginUserId: "hvPqFbtNzE267IGQvLvf",
+    name: "Cheran Saravanan KBM",
+  },
+  {
+    loginUserId: "hvPqFbtNzE267IGQvLvf",
+    mobile: null,
+    name: "KVB Capital",
+    id: "UEiVaMkk2e5MqI7UTi0n",
+  },
+  {
+    id: "eOhYZkNsxPPTm7nWjiCd",
+    name: "Dhanaram",
+    mobile: null,
+    loginUserId: "hvPqFbtNzE267IGQvLvf",
+  },
+  {
+    id: "eXd7hUUGmuNfzQcuLyDY",
+    mobile: null,
+    name: "SIB",
+    loginUserId: "hvPqFbtNzE267IGQvLvf",
+  },
+  {
+    mobile: null,
+    loginUserId: "hvPqFbtNzE267IGQvLvf",
+    name: "DBS",
+    id: "tDWZk6pzW3inyw0rqdi5",
+  },
+  {
+    loginUserId: "hvPqFbtNzE267IGQvLvf",
+    id: "yxY1Rd7maTNOUfLRiIY9",
+    mobile: null,
+    name: "ICICI",
+  },
+];
+
+type Props = {
+  route: RouteProps;
+};
+
+const FixedDepositAddEditScreen = ({ route }: Props) => {
+  const { fixedDepositData } = route.params || {};
+  const pageType = fixedDepositData ? "Edit" : "Add";
+  const fixedDeposit: FixedDepositModel = fixedDepositData || null;
+  const depositorList = ["Rahul", "Mythili"];
+  const [clientName, setClientName] = useState("");
+  const [clientId, setClientId] = useState("");
+  const [depositorName, setDepositorName] = useState("");
+  const [amount, setAmount] = useState("");
+  const [interestPercentage, setInterestPercentage] = useState("");
+  const [interestAmount, setInterestAmount] = useState("");
+  const [depositedDate, setDepositedDate] = useState("");
+  const [maturityDate, setMaturityDate] = useState("");
+
+  useEffect(() => {
+    if (fixedDeposit) {
+      setClientId(fixedDeposit.clientId);
+      setClientName(
+        clientList.filter((client) => client.id == fixedDeposit.clientId)[0]
+          .name
+      );
+      setDepositorName(fixedDeposit.depositorName);
+      setAmount(fixedDeposit.amount);
+      setInterestPercentage(fixedDeposit.interestPercentage);
+      setInterestAmount(fixedDeposit.interest);
+      setDepositedDate(fixedDeposit.depositedDate);
+      setMaturityDate(fixedDeposit.maturityDate);
+    }
+  }, []);
+
+  const calculateInterestAmount = () => {
+    const calculatedInterest = Math.floor(
+      ((Number(amount) / 12) * Number(interestPercentage)) / 100
+    ).toString();
+    setInterestAmount(calculatedInterest);
+  };
 
   const onChangeDepositedDate = (selectedDate: any) => {
     const currentDate = selectedDate || depositedDate;
@@ -33,7 +119,16 @@ const FixedDepositAddEditScreen = () => {
 
   // Add your update logic here
   const handleUpdate = () => {
-    console.log("Update logic here");
+    console.log(
+      clientName,
+      clientId,
+      depositorName,
+      amount,
+      interestAmount,
+      interestPercentage,
+      depositedDate,
+      maturityDate
+    );
   };
 
   return (
@@ -43,23 +138,48 @@ const FixedDepositAddEditScreen = () => {
         <View style={styles.pickerContainer}>
           <Picker
             style={styles.picker}
-            mode="dropdown"
-            selectedValue={client}
-            onValueChange={(itemValue, itemIndex) => setClient(itemValue)}
+            mode="dialog"
+            selectedValue={clientId}
+            onValueChange={(itemValue, itemIndex) => {
+              setClientId(itemValue);
+              setClientName(
+                clientList.filter((client) => client.id == itemValue)[0].name
+              );
+            }}
           >
-            <Picker.Item label="DBS" value="DBS" />
-            <Picker.Item label="Client A" value="clientA" />
-            <Picker.Item label="Client B" value="clientB" />
+            {clientList.map((client, index) => {
+              return (
+                <Picker.Item
+                  key={client.id}
+                  label={client.name}
+                  value={client.id}
+                />
+              );
+            })}
           </Picker>
         </View>
 
         <Text style={styles.label}>Depositor Name</Text>
-        <TextInput
-          style={styles.input}
-          onChangeText={setDepositorName}
-          value={depositorName}
-          placeholder="Depositor Name"
-        />
+        <View style={styles.pickerContainer}>
+          <Picker
+            style={styles.picker}
+            mode="dropdown"
+            selectedValue={depositorName}
+            onValueChange={(itemValue, itemIndex) =>
+              setDepositorName(itemValue)
+            }
+          >
+            {depositorList.map((depositor, index) => {
+              return (
+                <Picker.Item
+                  key={index + 1}
+                  label={depositor}
+                  value={depositor}
+                />
+              );
+            })}
+          </Picker>
+        </View>
 
         <Text style={styles.label}>Amount</Text>
         <TextInput
@@ -73,20 +193,27 @@ const FixedDepositAddEditScreen = () => {
         <Text style={styles.label}>Interest(%)</Text>
         <TextInput
           style={styles.input}
-          onChangeText={setInterest}
-          value={interest}
+          onChangeText={setInterestPercentage}
+          value={interestPercentage}
           placeholder="Interest"
           keyboardType="decimal-pad"
         />
 
         <Text style={styles.label}>Interest Amount</Text>
-        <TextInput
-          style={styles.input}
-          onChangeText={setInterestAmount}
-          value={interestAmount}
-          placeholder="Interest Amount"
-          keyboardType="numeric"
-        />
+        <View style={styles.buttonInputContainer}>
+          <TextInput
+            style={[styles.input, { width: "75%" }]}
+            onChangeText={setInterestAmount}
+            value={interestAmount}
+            placeholder="Interest Amount"
+            keyboardType="numeric"
+          />
+          <Button
+            title="Calculate"
+            buttonStyle={{ width: "auto" }}
+            onPress={calculateInterestAmount}
+          />
+        </View>
 
         <DatePicker
           label={"Deposited Date"}
@@ -96,13 +223,16 @@ const FixedDepositAddEditScreen = () => {
 
         <DatePicker
           label={"Maturity Date"}
-          dateValue={depositedDate}
+          dateValue={maturityDate}
           onDateChange={onChangeMaturityDate}
         />
 
-        <TouchableOpacity style={styles.button} onPress={handleUpdate}>
-          <Text style={styles.buttonText}>Update</Text>
-        </TouchableOpacity>
+        <View style={{ justifyContent: "center", flexDirection: "row" }}>
+          <Button
+            title={pageType == "Add" ? "Add" : "Update"}
+            onPress={handleUpdate}
+          />
+        </View>
       </View>
     </ScrollView>
   );
@@ -126,7 +256,7 @@ const styles = StyleSheet.create({
     marginBottom: 8,
   },
   pickerContainer: {
-    borderWidth: 1,
+    borderWidth: 0,
     borderColor: "#ddd",
     borderRadius: 6,
     marginBottom: 20,
@@ -134,6 +264,9 @@ const styles = StyleSheet.create({
   },
   picker: {
     height: 50,
+    borderWidth: 0,
+    backgroundColor: Colors.F7F7F7,
+    paddingHorizontal: 8,
   },
   input: {
     borderWidth: 1,
@@ -142,6 +275,11 @@ const styles = StyleSheet.create({
     padding: 15,
     marginBottom: 20,
     fontSize: 16,
+  },
+  buttonInputContainer: {
+    flexDirection: "row",
+    gap: 6,
+    width: "100%",
   },
   dateInput: {
     borderWidth: 1,
@@ -152,17 +290,6 @@ const styles = StyleSheet.create({
   },
   dateText: {
     fontSize: 16,
-  },
-  button: {
-    backgroundColor: "#0066ff",
-    padding: 15,
-    borderRadius: 6,
-    alignItems: "center",
-  },
-  buttonText: {
-    color: "#fff",
-    fontSize: 16,
-    fontWeight: "bold",
   },
 });
 
