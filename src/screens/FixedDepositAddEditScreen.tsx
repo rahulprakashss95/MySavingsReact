@@ -2,10 +2,16 @@ import React, { useEffect, useState } from "react";
 import { View, Text, TextInput, StyleSheet, ScrollView } from "react-native";
 import { Picker } from "@react-native-picker/picker";
 import DatePicker from "../components/DatePicker";
-import { RouteProps } from "../utils/Utils";
+import { NavigationProp, RouteProps, showToast } from "../utils/Utils";
 import { FixedDepositModel } from "../models/FixedDepositModel";
 import { Colors } from "../utils/Color";
 import Button from "../components/Button";
+import {
+  addFixedDeposit,
+  deleteFixedDeposit,
+  updateFixedDeposit,
+} from "../../database/firebaseQuery";
+import Loader from "../components/Loader";
 
 const clientList = [
   {
@@ -68,11 +74,12 @@ const clientList = [
 
 type Props = {
   route: RouteProps;
+  navigation: NavigationProp;
 };
 
-const FixedDepositAddEditScreen = ({ route }: Props) => {
+const FixedDepositAddEditScreen = ({ route, navigation }: Props) => {
   const { fixedDepositData } = route.params || {};
-  const pageType = fixedDepositData ? "Edit" : "Add";
+  const pageMode = fixedDepositData ? "Edit" : "Add";
   const fixedDeposit: FixedDepositModel = fixedDepositData || null;
   const depositorList = ["Rahul", "Mythili"];
   const [clientName, setClientName] = useState("");
@@ -83,6 +90,7 @@ const FixedDepositAddEditScreen = ({ route }: Props) => {
   const [interestAmount, setInterestAmount] = useState("");
   const [depositedDate, setDepositedDate] = useState("");
   const [maturityDate, setMaturityDate] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
 
   useEffect(() => {
     if (fixedDeposit) {
@@ -117,8 +125,12 @@ const FixedDepositAddEditScreen = ({ route }: Props) => {
     setMaturityDate(currentDate);
   };
 
-  // Add your update logic here
+  const navigateBack = () => {
+    navigation.goBack();
+  };
+
   const handleUpdate = () => {
+    setIsLoading(true);
     console.log(
       clientName,
       clientId,
@@ -129,18 +141,62 @@ const FixedDepositAddEditScreen = ({ route }: Props) => {
       depositedDate,
       maturityDate
     );
+    if (pageMode == "Add") {
+      addFixedDeposit(
+        clientId,
+        depositorName,
+        amount,
+        interestAmount,
+        interestPercentage,
+        depositedDate,
+        maturityDate
+      )
+        .then(() => {
+          navigateBack();
+        })
+        .finally(() => setIsLoading(false));
+    } else {
+      updateFixedDeposit(
+        fixedDeposit.id,
+        clientId,
+        depositorName,
+        amount,
+        interestAmount,
+        interestPercentage,
+        depositedDate,
+        maturityDate
+      )
+        .then(() => {
+          navigateBack();
+        })
+        .finally(() => setIsLoading(false));
+    }
+  };
+
+  const handleDelete = () => {
+    setIsLoading(true);
+    console.log(fixedDeposit.id);
+    deleteFixedDeposit(fixedDeposit.id)
+      .then(() => {
+        navigateBack();
+      })
+      .catch((error) => {
+        showToast("error", "Unable to Delete", error, "bottom");
+      })
+      .finally(() => setIsLoading(false));
   };
 
   return (
     <ScrollView>
       <View style={styles.container}>
+        <Loader loading={isLoading} />
         <Text style={styles.label}>Client</Text>
         <View style={styles.pickerContainer}>
           <Picker
             style={styles.picker}
             mode="dialog"
             selectedValue={clientId}
-            onValueChange={(itemValue, itemIndex) => {
+            onValueChange={(itemValue) => {
               setClientId(itemValue);
               setClientName(
                 clientList.filter((client) => client.id == itemValue)[0].name
@@ -165,9 +221,7 @@ const FixedDepositAddEditScreen = ({ route }: Props) => {
             style={styles.picker}
             mode="dropdown"
             selectedValue={depositorName}
-            onValueChange={(itemValue, itemIndex) =>
-              setDepositorName(itemValue)
-            }
+            onValueChange={(itemValue) => setDepositorName(itemValue)}
           >
             {depositorList.map((depositor, index) => {
               return (
@@ -227,11 +281,25 @@ const FixedDepositAddEditScreen = ({ route }: Props) => {
           onDateChange={onChangeMaturityDate}
         />
 
-        <View style={{ justifyContent: "center", flexDirection: "row" }}>
+        <View
+          style={{
+            justifyContent: "center",
+            flexDirection: "row",
+            gap: 20,
+          }}
+        >
           <Button
-            title={pageType == "Add" ? "Add" : "Update"}
+            buttonStyle={{ width: pageMode !== "Add" ? 150 : 200 }}
+            title={pageMode == "Add" ? "Add" : "Update"}
             onPress={handleUpdate}
           />
+          {pageMode !== "Add" && (
+            <Button
+              buttonStyle={{ width: 150, backgroundColor: "red" }}
+              title={"Delete"}
+              onPress={handleDelete}
+            />
+          )}
         </View>
       </View>
     </ScrollView>

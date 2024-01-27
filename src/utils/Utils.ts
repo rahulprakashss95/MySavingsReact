@@ -2,9 +2,12 @@ import { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import Toast from "react-native-toast-message";
 import { RootStackParamList } from "../../App";
 import { RouteProp } from "@react-navigation/native";
+import { Platform } from "react-native";
 
 export type NavigationProp = NativeStackNavigationProp<RootStackParamList>;
 export type RouteProps = RouteProp<RootStackParamList>;
+
+export const currentOS = Platform.OS;
 
 export const showToast = (
   type: "success" | "error" | "info",

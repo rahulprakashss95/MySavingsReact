@@ -6,6 +6,11 @@ import {
   query,
   where,
   getDocs,
+  addDoc,
+  setDoc,
+  doc,
+  DocumentReference,
+  deleteDoc,
 } from "firebase/firestore";
 
 const db = getFirestore(firebaseDb);
@@ -56,6 +61,85 @@ export const getFixedDeposit = () => {
           fixedDepositList.push(doc.data());
         });
         resolve(fixedDepositList);
+      })
+      .catch((error) => {
+        reject(error);
+      });
+  });
+};
+
+export const addFixedDeposit = (
+  clientId: string,
+  depositorName: string,
+  amount: string,
+  interest: string,
+  interestPercentage: string,
+  depositedDate: string,
+  maturityDate: string
+) => {
+  return new Promise(async (resolve, reject) => {
+    const refId = doc(collection(db, "fixedDeposit")).id;
+    setDoc(doc(db, "fixedDeposit", refId), {
+      id: refId,
+      clientId: clientId,
+      depositorName: depositorName,
+      amount: amount,
+      interest: interest,
+      interestPercentage: interestPercentage,
+      depositedDate: depositedDate,
+      maturityDate: maturityDate,
+      canShow: true,
+      isCompleted: false,
+      loginUserId: "",
+    })
+      .then(() => {
+        resolve("");
+      })
+      .catch((error) => {
+        reject(error);
+      });
+  });
+};
+
+export const updateFixedDeposit = (
+  refId: string,
+  clientId: string,
+  depositorName: string,
+  amount: string,
+  interest: string,
+  interestPercentage: string,
+  depositedDate: string,
+  maturityDate: string
+) => {
+  return new Promise(async (resolve, reject) => {
+    setDoc(doc(db, "fixedDeposit", refId), {
+      id: refId,
+      clientId: clientId,
+      depositorName: depositorName,
+      amount: amount,
+      interest: interest,
+      interestPercentage: interestPercentage,
+      depositedDate: depositedDate,
+      maturityDate: maturityDate,
+      canShow: true,
+      isCompleted: false,
+      loginUserId: "",
+    })
+      .then((data) => {
+        console.log(data);
+        resolve(data);
+      })
+      .catch((error) => {
+        reject(error);
+      });
+  });
+};
+
+export const deleteFixedDeposit = (id: string) => {
+  return new Promise(async (resolve, reject) => {
+    deleteDoc(doc(db, "fixedDeposit", id))
+      .then((querySnapshot) => {
+        resolve(querySnapshot);
       })
       .catch((error) => {
         reject(error);
