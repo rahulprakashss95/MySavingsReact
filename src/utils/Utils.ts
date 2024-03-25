@@ -2,7 +2,7 @@ import { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import Toast from "react-native-toast-message";
 import { RootStackParamList } from "../../App";
 import { RouteProp } from "@react-navigation/native";
-import { Platform } from "react-native";
+import { Alert, Platform } from "react-native";
 
 export type NavigationProp = NativeStackNavigationProp<RootStackParamList>;
 export type RouteProps = RouteProp<RootStackParamList>;
@@ -20,6 +20,33 @@ export const showToast = (
     text1: text1,
     text2: text2,
     position: toastPosition,
+  });
+};
+
+export const showConfirmationAlert = (title: string, subTitle: string) => {
+  return new Promise(async (resolve, reject) => {
+    Platform.OS == "web"
+      ? resolve(confirm("Are you sure you want to delete?"))
+      : Alert.alert(
+          title,
+          subTitle,
+          [
+            {
+              text: "Cancel",
+              style: "cancel",
+              onPress: () => {
+                resolve(false);
+              },
+            },
+            {
+              text: "OK",
+              onPress: () => {
+                resolve(true);
+              },
+            },
+          ],
+          { cancelable: false }
+        );
   });
 };
 

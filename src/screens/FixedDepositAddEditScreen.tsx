@@ -2,7 +2,12 @@ import React, { useEffect, useState } from "react";
 import { View, Text, TextInput, StyleSheet, ScrollView } from "react-native";
 import { Picker } from "@react-native-picker/picker";
 import DatePicker from "../components/DatePicker";
-import { NavigationProp, RouteProps, showToast } from "../utils/Utils";
+import {
+  NavigationProp,
+  RouteProps,
+  showConfirmationAlert,
+  showToast,
+} from "../utils/Utils";
 import { FixedDepositModel } from "../models/FixedDepositModel";
 import { Colors } from "../utils/Color";
 import Button from "../components/Button";
@@ -174,16 +179,22 @@ const FixedDepositAddEditScreen = ({ route, navigation }: Props) => {
   };
 
   const handleDelete = () => {
-    setIsLoading(true);
-    console.log(fixedDeposit.id);
-    deleteFixedDeposit(fixedDeposit.id)
-      .then(() => {
-        navigateBack();
-      })
-      .catch((error) => {
-        showToast("error", "Unable to Delete", error, "bottom");
-      })
-      .finally(() => setIsLoading(false));
+    showConfirmationAlert("Delete", "Are you sure you want to delete").then(
+      (data) => {
+        if (data) {
+          setIsLoading(true);
+          console.log(fixedDeposit.id);
+          deleteFixedDeposit(fixedDeposit.id)
+            .then(() => {
+              navigateBack();
+            })
+            .catch((error) => {
+              showToast("error", "Unable to Delete", error, "bottom");
+            })
+            .finally(() => setIsLoading(false));
+        }
+      }
+    );
   };
 
   return (

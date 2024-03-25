@@ -9,6 +9,7 @@ import FixedDepositAddEditScreen from "./src/screens/FixedDepositAddEditScreen";
 import OverviewScreen from "./src/screens/OverviewScreen";
 import Toast from "react-native-toast-message";
 import ClientScreen from "./src/screens/ClientScreen";
+import CryptoPortfolioPage from "./src/screens/CryptoScreen";
 // import { Provider } from "react-redux";
 // import store from "./src/redux/store";
 
@@ -20,6 +21,7 @@ export type RootStackParamList = {
   FixedDepositList: undefined;
   FixedDepositAddEdit: any;
   OverView: undefined;
+  CryptoPortfolio: undefined;
 };
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
@@ -62,6 +64,11 @@ const App = () => {
           name="OverView"
           component={OverviewScreen}
           options={{ title: "Overview" }}
+        />
+        <Stack.Screen
+          name="CryptoPortfolio"
+          component={CryptoPortfolioPage}
+          options={{ title: "Crypto" }}
         />
       </Stack.Navigator>
     );

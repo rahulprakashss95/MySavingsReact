@@ -19,6 +19,10 @@ const HomeScreen = ({ navigation }: Props) => {
     navigation.navigate("Deposit");
   };
 
+  const navigateCrypto = () => {
+    navigation.navigate("CryptoPortfolio");
+  };
+
   return (
     <View style={styles.container}>
       <View style={styles.subContainer}>
@@ -31,6 +35,18 @@ const HomeScreen = ({ navigation }: Props) => {
               style={{ marginBottom: 8 }}
             />
             <Text style={styles.text}>Deposits</Text>
+          </Card>
+        </Pressable>
+
+        <Pressable onPress={navigateCrypto}>
+          <Card customStyle={styles.card}>
+            <FontAwesome
+              name="bitcoin"
+              size={32}
+              color={Colors.primary}
+              style={{ marginBottom: 8 }}
+            />
+            <Text style={styles.text}>Crypto</Text>
           </Card>
         </Pressable>
 
