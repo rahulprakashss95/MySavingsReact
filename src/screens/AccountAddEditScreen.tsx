@@ -9,7 +9,7 @@ import {
 } from "react-native";
 import { useRouter } from "expo-router";
 import DatePicker from "../components/DatePicker";
-import { showConfirmationAlert, showToast } from "../utils/Utils";
+import { amountFormat, showConfirmationAlert, showToast } from "../utils/Utils";
 import {
   AccountModel,
   ACCOUNT_TYPES,
@@ -22,7 +22,12 @@ import {
   normalizeAccountType,
 } from "../models/AccountModel";
 import { LedgerClientModel } from "../models/LedgerModel";
-import { rdMonthCount } from "../utils/deposits";
+import {
+  payoutFromRate,
+  payoutPeriodWord,
+  payoutsPerYear,
+  rdMonthCount,
+} from "../utils/deposits";
 import SearchableSelect from "../components/SearchableSelect";
 import LedgerClientForm from "../components/forms/LedgerClientForm";
 import { isValidAmount } from "../utils/amount";
@@ -121,7 +126,7 @@ const AccountAddEditScreen = ({ initial, presetType }: Props) => {
 
   // FD paid at maturity carries no periodic interest — it has a maturity amount.
   const isOnMaturity = isFD && interestFrequency === "On Maturity";
-  const periodWord = interestFrequency === "Quarterly" ? "quarter" : "month";
+  const periodWord = payoutPeriodWord(interestFrequency);
   const periodicInterestLabel = isFD
     ? `Interest per ${periodWord}`
     : "Interest amount";
@@ -147,9 +152,13 @@ const AccountAddEditScreen = ({ initial, presetType }: Props) => {
     }
   }, [contactId, contactName, contactState.items]);
 
-  // Periods per year for the payout frequency; "On Maturity" pays nothing along
-  // the way. RD (no frequency field) is treated as a monthly payout.
-  const periodsPerYear = interestFrequency === "Quarterly" ? 4 : 12;
+  // How many payouts a year this frequency makes — the same helper the totals
+  // annualise through, so the form and the overview can never disagree about
+  // what a quarterly ₹3,000 is worth over a year.
+  const payouts = payoutsPerYear(interestFrequency);
+  // Entering ₹3,000 without seeing "≈ ₹12,000 a year" next to it is how a
+  // quarterly figure ends up read as a monthly one.
+  const enteredPerYear = (Number(interestAmount) || 0) * payouts;
 
   const calculateInterestAmount = () => {
     if (!principal || !interestPercentage) {
@@ -161,9 +170,15 @@ const AccountAddEditScreen = ({ initial, presetType }: Props) => {
       );
       return;
     }
-    const yearly = (Number(principal) * Number(interestPercentage)) / 100;
-    const calculated = Math.floor(yearly / periodsPerYear).toString();
-    setInterestAmount(calculated);
+    setInterestAmount(
+      String(
+        payoutFromRate(
+          Number(principal),
+          Number(interestPercentage),
+          interestFrequency
+        )
+      )
+    );
   };
 
   const navigateBack = () => router.back();
@@ -488,6 +503,13 @@ const AccountAddEditScreen = ({ initial, presetType }: Props) => {
                       <Text style={styles.calculateText}>Calculate</Text>
                     </Pressable>
                   </View>
+                  {enteredPerYear > 0 && (
+                    <Text style={styles.hint}>
+                      That's {payouts} payouts a year — about ₹
+                      {amountFormat(Math.round(enteredPerYear))} in interest
+                      annually.
+                    </Text>
+                  )}
                 </>
               )}
             </View>

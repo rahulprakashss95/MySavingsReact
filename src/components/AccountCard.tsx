@@ -14,7 +14,9 @@ import { useTheme } from "../context/ThemeContext";
 import { ThemeColors, tint } from "../utils/Color";
 import {
   DATE_FORMAT,
+  depositInterest,
   parseMaturity,
+  payoutPeriodWord,
   rdMonthCount,
   rdMonthly,
   rdPaidCount,
@@ -89,8 +91,11 @@ const AccountCard = ({
   const isLoan = isLoanAccount(account.accountType);
   const owes = isLiability(account.accountType);
 
-  const payoutWord =
-    account.interestFrequency === "Quarterly" ? "quarter" : "month";
+  const payoutWord = payoutPeriodWord(account.interestFrequency);
+  // The per-payout figure alone doesn't say what the deposit earns: ₹3,000 a
+  // quarter and ₹3,000 a month are four times apart. The annual equivalent is
+  // what makes two deposits comparable at a glance.
+  const interest = useMemo(() => depositInterest(account), [account]);
 
   // RD figures.
   const schedule = useMemo(() => (isRD ? rdSchedule(account) : []), [
@@ -191,15 +196,24 @@ const AccountCard = ({
           Outstanding as of {account.balanceAsOf || "—"}
         </Text>
       )}
-      {isFD && Number(account.interest) > 0 && (
+      {isFD && interest.payouts > 0 && interest.perPayout > 0 && (
         <Text style={styles.interest}>
-          + ₹ {amountFormat(account.interest)} interest
-          {account.interestFrequency ? ` / ${payoutWord}` : ""}
+          + ₹ {amountFormat(Math.round(interest.perPayout))} / {payoutWord}
+          <Text style={styles.interestMeta}>
+            {"  ≈ ₹"}
+            {amountFormat(Math.round(interest.perYear))} a year
+          </Text>
         </Text>
       )}
       {isFD && Number(account.maturityAmount) > 0 && (
         <Text style={styles.interest}>
           → ₹ {amountFormat(account.maturityAmount)} at maturity
+          {interest.overTerm > 0 && (
+            <Text style={styles.interestMeta}>
+              {"  +₹"}
+              {amountFormat(Math.round(interest.overTerm))} interest
+            </Text>
+          )}
         </Text>
       )}
       {isRD && (
@@ -395,6 +409,13 @@ const createStyles = (colors: ThemeColors) =>
       color: colors.positive,
       marginTop: 2,
       fontVariant: ["tabular-nums"],
+    },
+    // The annualised equivalent, riding along in muted ink so the figure the
+    // bank actually pays stays the one the eye lands on.
+    interestMeta: {
+      fontSize: 12,
+      fontWeight: "400",
+      color: colors.textMuted,
     },
     rdCaption: {
       fontSize: 13,

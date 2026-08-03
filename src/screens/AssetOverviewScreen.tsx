@@ -1,4 +1,5 @@
-﻿import { Ionicons } from "@expo/vector-icons";
+import { Ionicons } from "@expo/vector-icons";
+import { useRouter } from "expo-router";
 import moment from "moment";
 import React, { useMemo, useState } from "react";
 import {
@@ -42,7 +43,133 @@ import { hasFeature } from "../models/common";
 import { AccountModel } from "../models/AccountModel";
 import { buildAccountTotals } from "../utils/deposits";
 
-const rupees = (value: number) => `₹ ${amountFormat(Math.round(value))}`;
+/**
+ * `amountFormat` returns "" for anything falsy, so a zero would render as a
+ * lone "₹" — and an overview is exactly where zeroes show up, in every section
+ * that hasn't been filled in yet.
+ */
+const rupees = (value: number) => {
+  const rounded = Math.round(value);
+  return `₹ ${rounded ? amountFormat(rounded) : "0"}`;
+};
+
+const percent = (share: number) => `${Math.round(share * 100)}%`;
+
+/** "1 property" / "3 properties" — every section caption counts something. */
+const plural = (count: number, one: string, many: string) =>
+  `${count} ${count === 1 ? one : many}`;
+
+type Styles = ReturnType<typeof createStyles>;
+type Chrome = { colors: ThemeColors; styles: Styles };
+
+/** The three things net worth is made of, keyed to one colour apiece. */
+type SegmentKey = "ornaments" | "property" | "accounts";
+
+type Segment = {
+  key: SegmentKey;
+  label: string;
+  value: number;
+  color: string;
+  href: string;
+};
+
+/**
+ * Every section carries the same header: what it is, what it totals, and a way
+ * into the list behind it. The total sits in the header rather than repeated as
+ * a first row, so the eye can run down one column of figures.
+ */
+const SectionHeader = ({
+  title,
+  value,
+  caption,
+  onPress,
+  colors,
+  styles,
+}: Chrome & {
+  title: string;
+  value?: string;
+  caption?: string;
+  onPress?: () => void;
+}) => {
+  const body = (
+    <>
+      <View style={styles.sectionHeadRow}>
+        <Text style={styles.sectionTitle}>{title}</Text>
+        <View style={styles.sectionHeadRight}>
+          {!!value && <Text style={styles.sectionValue}>{value}</Text>}
+          {!!onPress && (
+            <Ionicons
+              name="chevron-forward"
+              size={16}
+              color={colors.textMuted}
+            />
+          )}
+        </View>
+      </View>
+      {!!caption && <Text style={styles.sectionCaption}>{caption}</Text>}
+    </>
+  );
+
+  if (!onPress) {
+    return <View style={styles.sectionHead}>{body}</View>;
+  }
+
+  return (
+    <Pressable
+      onPress={onPress}
+      accessibilityRole="button"
+      accessibilityLabel={`${title}${value ? `, ${value}` : ""}`}
+      style={({ pressed }) => [styles.sectionHead, pressed && styles.pressed]}
+    >
+      {body}
+    </Pressable>
+  );
+};
+
+/**
+ * A labelled figure with its bar. Label and value are always spelled out, so
+ * the bar only ever restates a comparison the reader can already make.
+ */
+const MeterRow = ({
+  label,
+  value,
+  meta,
+  trailing,
+  share,
+  color,
+  styles,
+}: Pick<Chrome, "styles"> & {
+  label: string;
+  value: string;
+  meta?: string;
+  /** Right-hand end of the meta line — usually the share of the section. */
+  trailing?: string;
+  /** 0–1. Omit to drop the bar, for rows that have nothing to compare. */
+  share?: number;
+  color: string;
+}) => (
+  <View style={styles.meterRow}>
+    <View style={styles.rowBetween}>
+      <Text style={styles.meterLabel} numberOfLines={1}>
+        {label}
+      </Text>
+      <Text style={styles.meterValue}>{value}</Text>
+    </View>
+    {(!!meta || !!trailing) && (
+      <View style={styles.rowBetween}>
+        <Text style={styles.meterMeta} numberOfLines={1}>
+          {meta ?? ""}
+        </Text>
+        {!!trailing && <Text style={styles.meterMeta}>{trailing}</Text>}
+      </View>
+    )}
+    {share !== undefined && (
+      <View style={styles.barWrap}>
+        <ProgressBar progress={share} color={color} />
+      </View>
+    )}
+  </View>
+);
 
 const AssetOverviewScreen = () => {
   const [isRatesModalOpen, setIsRatesModalOpen] = useState(false);
@@ -50,8 +177,12 @@ const AssetOverviewScreen = () => {
 
   const { colors } = useTheme();
   const { user } = useAuth();
+  const router = useRouter();
   const dispatch = useAppDispatch();
   const styles = useMemo(() => createStyles(colors), [colors]);
+  // Same anchored push the Home dashboard uses, so arriving from either place
+  // leaves the same back stack behind.
+  const open = (href: string) => router.push(href as never, { withAnchor: true });
 
   // Ornaments, properties and accounts come from the shared cache; metal rates
   // from their own cached doc — none of them re-read on focus.
@@ -65,8 +196,7 @@ const AssetOverviewScreen = () => {
   const rates = ratesState.value ?? EMPTY_METAL_RATES;
 
   // Deposits/balances count toward net worth only for members who hold the
-  // Accounts tile — the overview reflects the tiles you can see. `balance` is
-  // net of anything borrowed, so the hero total is a genuine net figure.
+  // Accounts tile — the overview reflects the tiles you can see.
   const showAccounts = hasFeature(user, "accounts");
   const accountTotals = useMemo(
     () => buildAccountTotals(accountState.items),
@@ -101,14 +231,88 @@ const AssetOverviewScreen = () => {
   );
   const portfolio = useMemo(() => propertyPortfolio(properties), [properties]);
 
-  const netValue =
-    ornamentSummary.totalValue +
-    portfolio.total +
-    (showAccounts ? accountTotals.balance : 0);
-  // Borrowing is the only thing here that subtracts, so the "net" framing is
-  // only worth showing once there is something to net off.
-  const showOwed = showAccounts && accountTotals.liabilities > 0;
+  // The composition bar stacks what is *held*, so every segment is a positive
+  // magnitude; borrowing is netted off the headline underneath rather than drawn
+  // as a slice, which a stacked bar has no honest way to show.
+  const accountAssets = showAccounts ? accountTotals.assets : 0;
+  const liabilities = showAccounts ? accountTotals.liabilities : 0;
+  const grossValue =
+    ornamentSummary.totalValue + portfolio.total + accountAssets;
+  const netValue = grossValue - liabilities;
+  const showOwed = liabilities > 0;
   const hasRates = !!rates.goldPerGram || !!rates.silverPerGram;
+
+  // Colours match the Home dashboard's worth card exactly — the same money is
+  // the same colour wherever it is drawn.
+  const segments = useMemo<Segment[]>(() => {
+    const list: Segment[] = [
+      {
+        key: "ornaments",
+        label: "Ornaments",
+        value: ornamentSummary.totalValue,
+        color: colors.accentAmber,
+        href: "/assets/ornaments",
+      },
+      {
+        key: "property",
+        label: "Property",
+        value: portfolio.total,
+        color: colors.accentViolet,
+        href: "/assets/properties",
+      },
+    ];
+    if (showAccounts) {
+      list.push({
+        key: "accounts",
+        label: "Cash & Deposits",
+        value: accountAssets,
+        color: colors.accentBlue,
+        href: "/assets/accounts",
+      });
+    }
+    return list;
+  }, [
+    ornamentSummary.totalValue,
+    portfolio.total,
+    accountAssets,
+    showAccounts,
+    colors,
+  ]);
+
+  const priced = segments.filter((segment) => segment.value > 0);
+
+  // Everything that qualifies the headline, gathered in one place instead of
+  // stacked as loose amber sentences under the number.
+  const notes = useMemo(() => {
+    const list: string[] = [];
+    if (ornaments.length > 0 && !hasRates) {
+      list.push(
+        "No metal rates are set, so ornaments count as nothing here. Set them in the Ornaments section below."
+      );
+    }
+    if (ornamentSummary.hasUnvalued) {
+      list.push("Diamond and platinum aren't priced, so this total is a floor.");
+    }
+    if (ornamentSummary.hasAssumedKarat) {
+      list.push(
+        "Some gold has no purity set and is valued as 22K. Edit those pieces to correct the total."
+      );
+    }
+    if (portfolio.remaining > 0) {
+      list.push(
+        `Property is counted at full cost — ${rupees(
+          portfolio.remaining
+        )} of it is still unpaid.`
+      );
+    }
+    return list;
+  }, [
+    ornaments.length,
+    hasRates,
+    ornamentSummary.hasUnvalued,
+    ornamentSummary.hasAssumedKarat,
+    portfolio.remaining,
+  ]);
 
   const handleSaveRates = (next: MetalRates) => {
     setIsSavingRates(true);
@@ -127,38 +331,40 @@ const AssetOverviewScreen = () => {
 
   const renderMetalRow = (row: MetalTotal) => {
     const share =
-      ornamentSummary.totalValue > 0 ? row.value / ornamentSummary.totalValue : 0;
+      ornamentSummary.totalValue > 0
+        ? row.value / ornamentSummary.totalValue
+        : 0;
     // Summed floats: 8.1 + 16.2 lands on 24.299999999999997 without this.
     const grams = formatNumber(row.grams);
     const pawn = gramsToPawn(grams);
+    const pieces = row.pieces === 1 ? "1 piece" : `${row.pieces} pieces`;
 
     return (
-      <View key={row.metal} style={styles.metalRow}>
-        <View style={styles.metalTop}>
-          <Text style={styles.metalName}>{row.metal}</Text>
-          <Text style={styles.metalValue}>
-            {row.valued ? rupees(row.value) : "Not valued"}
-          </Text>
-        </View>
-        <View style={styles.metalTop}>
-          <Text style={styles.metalMeta}>
-            {grams} g{pawn ? ` · ${pawn} pawn` : ""} ·{" "}
-            {row.pieces === 1 ? "1 piece" : `${row.pieces} pieces`}
-          </Text>
-        </View>
-        <View style={styles.barWrap}>
-          <ProgressBar progress={share} color={colors.chartAmount} />
-        </View>
+      <View key={row.metal}>
+        <MeterRow
+          styles={styles}
+          label={row.metal}
+          value={row.valued ? rupees(row.value) : "Not valued"}
+          meta={`${grams} g${pawn ? ` · ${pawn} pawn` : ""} · ${pieces}`}
+          trailing={row.valued ? percent(share) : undefined}
+          share={row.valued ? share : undefined}
+          color={colors.accentAmber}
+        />
 
         {/* Gold splits by purity: 22K is worth 8% less per gram than 24K. */}
-        {row.karats.length > 1 &&
-          row.karats.map((karat) => (
-            <View key={karat.karat} style={styles.karatRow}>
-              <Text style={styles.karatName}>{karat.karat}</Text>
-              <Text style={styles.karatGrams}>{formatNumber(karat.grams)} g</Text>
-              <Text style={styles.karatValue}>{rupees(karat.value)}</Text>
-            </View>
-          ))}
+        {row.karats.length > 1 && (
+          <View style={styles.subRows}>
+            {row.karats.map((karat) => (
+              <View key={karat.karat} style={styles.subRow}>
+                <Text style={styles.subRowName}>{karat.karat}</Text>
+                <Text style={styles.subRowMeta}>
+                  {formatNumber(karat.grams)} g
+                </Text>
+                <Text style={styles.subRowValue}>{rupees(karat.value)}</Text>
+              </View>
+            ))}
+          </View>
+        )}
       </View>
     );
   };
@@ -170,6 +376,33 @@ const AssetOverviewScreen = () => {
       </View>
     );
   }
+
+  const isEmpty =
+    ornaments.length === 0 &&
+    properties.length === 0 &&
+    accountTotals.accountCount === 0;
+
+  const largestHolder = holders.length ? holders[0].value : 0;
+  const largestSection = accountTotals.balanceBySection.reduce(
+    (max, row) => Math.max(max, row.value),
+    0
+  );
+  // Gated like every other account figure: a member without the Accounts tile
+  // must not learn what the family's deposits earn from a stat tile.
+  const interest = showAccounts ? accountTotals.interestPerYear : 0;
+
+  // Once anything is borrowed, the count of accounts is the less useful fact:
+  // what the section header owes the reader is how its net figure was reached.
+  let accountsCaption: string | undefined;
+  if (accountTotals.accountCount > 0) {
+    accountsCaption = showOwed
+      ? `${rupees(accountTotals.assets)} held, less ${rupees(liabilities)} owed`
+      : plural(accountTotals.accountCount, "account", "accounts");
+  }
+
+  const ratesUpdated = rates.updatedAt
+    ? moment(rates.updatedAt).fromNow()
+    : "never";
 
   return (
     <View style={styles.container}>
@@ -194,210 +427,352 @@ const AssetOverviewScreen = () => {
           />
         }
       >
-      <View style={styles.heroCard}>
-        <Text style={styles.heroLabel}>
-          {showOwed ? "Net asset value" : "Total asset value"}
-        </Text>
-        <Text style={styles.heroValue}>{rupees(netValue)}</Text>
-        <Text style={styles.heroCaption}>
-          Ornaments {rupees(ornamentSummary.totalValue)} · Properties{" "}
-          {rupees(portfolio.total)} at cost
-          {showAccounts
-            ? ` · Cash, Deposits & Dues ${rupees(accountTotals.balance)}`
-            : ""}
-        </Text>
-        {showOwed && (
-          <Text style={styles.heroWarning}>
-            {rupees(accountTotals.liabilities)} borrowed is already subtracted.
+        {/* ---- Headline ------------------------------------------------- */}
+        <View style={styles.heroCard}>
+          <Text style={styles.heroLabel}>
+            {showOwed ? "Net asset value" : "Total asset value"}
           </Text>
-        )}
-        {ornamentSummary.hasUnvalued && (
-          <Text style={styles.heroWarning}>
-            Diamond and platinum aren't priced, so the total is a floor.
-          </Text>
-        )}
-        {ornamentSummary.hasAssumedKarat && (
-          <Text style={styles.heroWarning}>
-            Some gold has no purity set and is valued as 22K. Edit those pieces
-            to correct the total.
-          </Text>
-        )}
-      </View>
+          <Text style={styles.heroValue}>{rupees(netValue)}</Text>
 
-      {/* A summary, not an editor: tapping opens the rates modal. */}
-      <Pressable
-        onPress={() => setIsRatesModalOpen(true)}
-        accessibilityRole="button"
-        accessibilityLabel="Edit metal rates"
-        style={({ pressed }) => [styles.ratesStrip, pressed && styles.pressed]}
-      >
-        <Ionicons
-          name="pricetag-outline"
-          size={18}
-          color={colors.textMuted}
-          style={styles.stripIcon}
-        />
-        <View style={styles.stripText}>
-          {hasRates ? (
-            <>
-              <Text style={styles.stripValue}>
-                Gold ₹{rates.goldPerGram}/g · Silver ₹{rates.silverPerGram}/g
-              </Text>
-              <Text style={styles.stripMeta}>
-                {rates.updatedAt
-                  ? `Updated ${moment(rates.updatedAt).fromNow()}`
-                  : "Never updated"}
-              </Text>
-            </>
-          ) : (
-            <>
-              <Text style={styles.stripValue}>Set Metal Rates</Text>
-              <Text style={styles.stripMeta}>
-                Ornaments can't be valued without them.
-              </Text>
-            </>
+          {showOwed && (
+            <Text style={styles.heroDeduction}>
+              {rupees(grossValue)} held, less {rupees(liabilities)} borrowed
+            </Text>
+          )}
+
+          {priced.length > 0 && (
+            <View
+              style={styles.compositionBar}
+              accessibilityLabel="Composition of total asset value"
+            >
+              {priced.map((segment) => (
+                <View
+                  key={segment.key}
+                  style={{
+                    flex: segment.value / grossValue,
+                    backgroundColor: segment.color,
+                  }}
+                />
+              ))}
+            </View>
+          )}
+
+          <View style={styles.chipWrap}>
+            {segments.map((segment) => (
+              <Pressable
+                key={segment.key}
+                onPress={() => open(segment.href)}
+                accessibilityRole="button"
+                accessibilityLabel={`${segment.label}, ${rupees(
+                  segment.value
+                )}`}
+                style={({ pressed }) => [
+                  styles.chip,
+                  pressed && styles.pressed,
+                ]}
+              >
+                <View
+                  style={[styles.chipDot, { backgroundColor: segment.color }]}
+                />
+                <Text style={styles.chipLabel}>{segment.label}</Text>
+                <Text style={styles.chipValue}>{rupees(segment.value)}</Text>
+              </Pressable>
+            ))}
+          </View>
+
+          {notes.length > 0 && (
+            <View style={styles.notes}>
+              {notes.map((note) => (
+                <View key={note} style={styles.noteRow}>
+                  <Ionicons
+                    name="information-circle-outline"
+                    size={15}
+                    color={colors.accentAmber}
+                    style={styles.noteIcon}
+                  />
+                  <Text style={styles.noteText}>{note}</Text>
+                </View>
+              ))}
+            </View>
           )}
         </View>
-        <Ionicons name="chevron-forward" size={18} color={colors.textMuted} />
-      </Pressable>
 
-      <View style={styles.card}>
-        <Text style={styles.sectionTitle}>Ornaments</Text>
-        {ornamentSummary.rows.length === 0 ? (
-          <Text style={styles.emptyText}>No ornaments recorded yet.</Text>
-        ) : (
-          <>
-            <Text style={styles.subTotal}>
-              {formatNumber(ornamentSummary.totalGrams)} g in total
-            </Text>
-            {ornamentSummary.rows.map(renderMetalRow)}
-          </>
-        )}
-      </View>
-
-      {holders.length > 0 && (
-        <View style={styles.card}>
-          <Text style={styles.sectionTitle}>By holder</Text>
-          {holders.map((holder) => (
-            <View key={holder.name} style={styles.holderRow}>
-              <Text style={styles.holderName} numberOfLines={1}>
-                {holder.name}
-              </Text>
-              <View style={styles.holderRight}>
-                <Text style={styles.holderValue}>{rupees(holder.value)}</Text>
-                <Text style={styles.holderGrams}>
-                  {formatNumber(holder.grams)} g
+        {/* ---- The figures worth knowing without opening a section ------- */}
+        {(interest > 0 || portfolio.remaining > 0 || showOwed) && (
+          <View style={styles.statGrid}>
+            {interest > 0 && (
+              <View style={styles.statTile}>
+                <Text style={styles.statLabel}>Deposit interest</Text>
+                <Text style={[styles.statValue, styles.positive]}>
+                  {rupees(interest)}
+                </Text>
+                <Text style={styles.statCaption}>
+                  a year · {rupees(interest / 12)} a month
                 </Text>
               </View>
-            </View>
-          ))}
-        </View>
-      )}
-
-      <View style={styles.card}>
-        <Text style={styles.sectionTitle}>Properties</Text>
-        {portfolio.count === 0 ? (
-          <Text style={styles.emptyText}>No properties recorded yet.</Text>
-        ) : (
-          <>
-            <View style={styles.statRow}>
-              <View style={styles.stat}>
-                <Text style={styles.statLabel}>Total cost</Text>
-                <Text style={styles.statValue}>{rupees(portfolio.total)}</Text>
-              </View>
-              <View style={styles.stat}>
-                <Text style={styles.statLabel}>Still owed</Text>
+            )}
+            {portfolio.remaining > 0 && (
+              <View style={styles.statTile}>
+                <Text style={styles.statLabel}>Property still owed</Text>
                 <Text style={[styles.statValue, styles.owed]}>
                   {rupees(portfolio.remaining)}
                 </Text>
+                <Text style={styles.statCaption}>
+                  {percent(portfolio.progress)} of cost paid
+                </Text>
               </View>
-            </View>
-
-            <View style={styles.barWrap}>
-              <ProgressBar progress={portfolio.progress} />
-            </View>
-
-            <Text style={styles.propertyCaption}>
-              {rupees(portfolio.paid)} paid across{" "}
-              {portfolio.count === 1 ? "1 property" : `${portfolio.count} properties`}
-              {portfolio.outstandingCount > 0
-                ? ` · ${portfolio.outstandingCount} still owing`
-                : " · all settled"}
-            </Text>
-          </>
+            )}
+            {showOwed && (
+              <View style={styles.statTile}>
+                <Text style={styles.statLabel}>You owe</Text>
+                <Text style={[styles.statValue, styles.liability]}>
+                  {rupees(liabilities)}
+                </Text>
+                <Text style={styles.statCaption}>
+                  already subtracted above
+                </Text>
+              </View>
+            )}
+          </View>
         )}
-      </View>
 
-      {showAccounts && (
+        {isEmpty && (
+          <View style={styles.card}>
+            <Text style={styles.emptyText}>
+              Nothing recorded yet. Add an ornament, a property or an account and
+              this page fills in.
+            </Text>
+          </View>
+        )}
+
+        {/* ---- Ornaments ------------------------------------------------- */}
         <View style={styles.card}>
-          <Text style={styles.sectionTitle}>Cash, Deposits & Dues</Text>
-          {accountTotals.accountCount === 0 ? (
-            <Text style={styles.emptyText}>No accounts recorded yet.</Text>
+          <SectionHeader
+            colors={colors}
+            styles={styles}
+            title="Ornaments"
+            value={rupees(ornamentSummary.totalValue)}
+            caption={
+              ornamentSummary.rows.length > 0
+                ? `${formatNumber(ornamentSummary.totalGrams)} g in total`
+                : undefined
+            }
+            onPress={() => open("/assets/ornaments")}
+          />
+
+          {/* Rates belong to this section — they are the only thing that turns
+              grams into rupees — so the way to edit them lives here. */}
+          <Pressable
+            onPress={() => setIsRatesModalOpen(true)}
+            accessibilityRole="button"
+            accessibilityLabel="Edit metal rates"
+            style={({ pressed }) => [
+              styles.ratesStrip,
+              pressed && styles.pressed,
+            ]}
+          >
+            <Ionicons
+              name="pricetag-outline"
+              size={16}
+              color={hasRates ? colors.textMuted : colors.primary}
+            />
+            <View style={styles.ratesText}>
+              <Text style={hasRates ? styles.ratesValue : styles.ratesPrompt}>
+                {hasRates
+                  ? `Gold ₹${rates.goldPerGram}/g · Silver ₹${rates.silverPerGram}/g`
+                  : "Set metal rates"}
+              </Text>
+              <Text style={styles.ratesMeta}>
+                {hasRates
+                  ? `Updated ${ratesUpdated}`
+                  : "Ornaments can't be valued without them."}
+              </Text>
+            </View>
+            <Ionicons
+              name="chevron-forward"
+              size={16}
+              color={colors.textMuted}
+            />
+          </Pressable>
+
+          {ornamentSummary.rows.length === 0 ? (
+            <Text style={styles.emptyText}>No ornaments recorded yet.</Text>
+          ) : (
+            ornamentSummary.rows.map(renderMetalRow)
+          )}
+        </View>
+
+        {/* ---- By holder -------------------------------------------------- */}
+        {holders.length > 0 && (
+          <View style={styles.card}>
+            <SectionHeader
+              colors={colors}
+              styles={styles}
+              title="Ornaments by holder"
+              caption={plural(holders.length, "holder", "holders")}
+            />
+            {holders.map((holder) => (
+              <MeterRow
+                key={holder.name}
+                styles={styles}
+                label={holder.name}
+                value={rupees(holder.value)}
+                meta={`${formatNumber(holder.grams)} g`}
+                share={largestHolder > 0 ? holder.value / largestHolder : 0}
+                color={colors.accentAmber}
+              />
+            ))}
+          </View>
+        )}
+
+        {/* ---- Property --------------------------------------------------- */}
+        <View style={styles.card}>
+          <SectionHeader
+            colors={colors}
+            styles={styles}
+            title="Property"
+            value={rupees(portfolio.total)}
+            caption={
+              portfolio.count > 0
+                ? `${plural(portfolio.count, "property", "properties")} at cost`
+                : undefined
+            }
+            onPress={() => open("/assets/properties")}
+          />
+
+          {portfolio.count === 0 ? (
+            <Text style={styles.emptyText}>No properties recorded yet.</Text>
           ) : (
             <>
-              <View style={styles.statRow}>
-                <View style={styles.stat}>
-                  {/* Once anything is borrowed, "total balance" would be two
-                      different numbers depending on who's asking. Split it. */}
-                  <Text style={styles.statLabel}>
-                    {showOwed ? "Held & owed to you" : "Total balance"}
-                  </Text>
-                  <Text style={styles.statValue}>
-                    {rupees(showOwed ? accountTotals.assets : accountTotals.balance)}
+              <View style={styles.splitRow}>
+                <View style={styles.split}>
+                  <Text style={styles.statLabel}>Paid</Text>
+                  <Text style={[styles.splitValue, styles.positive]}>
+                    {rupees(portfolio.paid)}
                   </Text>
                 </View>
-                <View style={styles.stat}>
-                  <Text style={styles.statLabel}>
-                    {showOwed ? "You owe" : "Deposit interest"}
-                  </Text>
-                  <Text
-                    style={[styles.statValue, showOwed && styles.liability]}
-                  >
-                    {rupees(
-                      showOwed ? accountTotals.liabilities : accountTotals.interest
-                    )}
+                <View style={styles.split}>
+                  <Text style={styles.statLabel}>Still owed</Text>
+                  <Text style={[styles.splitValue, styles.owed]}>
+                    {rupees(portfolio.remaining)}
                   </Text>
                 </View>
               </View>
 
-              {showOwed && (
-                <View style={[styles.statRow, styles.statRowSpacing]}>
-                  <View style={styles.stat}>
-                    <Text style={styles.statLabel}>Net</Text>
-                    <Text style={styles.statValue}>
-                      {rupees(accountTotals.balance)}
-                    </Text>
-                  </View>
-                  <View style={styles.stat}>
-                    <Text style={styles.statLabel}>Deposit interest</Text>
-                    <Text style={styles.statValue}>
-                      {rupees(accountTotals.interest)}
-                    </Text>
-                  </View>
-                </View>
-              )}
+              <View style={styles.barWrap}>
+                <ProgressBar
+                  progress={portfolio.progress}
+                  color={colors.accentViolet}
+                />
+              </View>
 
-              {/* Section values are all positive magnitudes — "Loans" is what
-                  you owe, so only its colour says which way it points. */}
-              {accountTotals.balanceBySection.map((row) => (
-                <View key={row.label} style={styles.holderRow}>
-                  <Text style={styles.holderName} numberOfLines={1}>
-                    {row.label}
-                  </Text>
-                  <Text
-                    style={[
-                      styles.holderValue,
-                      row.label === "Loans" && styles.liability,
-                    ]}
-                  >
-                    {rupees(row.value)}
-                  </Text>
-                </View>
-              ))}
+              <Text style={styles.footnote}>
+                {percent(portfolio.progress)} paid
+                {portfolio.outstandingCount > 0
+                  ? ` · ${portfolio.outstandingCount} still owing`
+                  : " · all settled"}
+              </Text>
             </>
           )}
         </View>
-      )}
+
+        {/* ---- Cash, deposits and dues ------------------------------------ */}
+        {showAccounts && (
+          <View style={styles.card}>
+            <SectionHeader
+              colors={colors}
+              styles={styles}
+              title="Cash, Deposits & Dues"
+              value={rupees(accountTotals.balance)}
+              caption={accountsCaption}
+              onPress={() => open("/assets/accounts")}
+            />
+
+            {accountTotals.accountCount === 0 ? (
+              <Text style={styles.emptyText}>No accounts recorded yet.</Text>
+            ) : (
+              <>
+                {/* Section values are all positive magnitudes — "Loans" is what
+                    you owe, so only its colour says which way it points. */}
+                {accountTotals.balanceBySection.map((row) => {
+                  const owes = row.label === "Loans";
+                  return (
+                    <MeterRow
+                      key={row.label}
+                      styles={styles}
+                      label={owes ? "Loans (you owe)" : row.label}
+                      value={rupees(row.value)}
+                      share={
+                        largestSection > 0 ? row.value / largestSection : 0
+                      }
+                      color={owes ? colors.negative : colors.accentBlue}
+                    />
+                  );
+                })}
+
+                {accountTotals.depositValue > 0 && (
+                  <View style={styles.inset}>
+                    <Text style={styles.insetTitle}>Deposits</Text>
+                    <View style={styles.insetRow}>
+                      <Text style={styles.insetLabel}>Held in deposits</Text>
+                      <Text style={styles.insetValue}>
+                        {rupees(accountTotals.depositValue)}
+                      </Text>
+                    </View>
+
+                    {/* Per-payout amounts are never summed: a quarterly ₹3,000
+                        and a monthly ₹3,000 are four times apart, so every
+                        deposit is annualised before it lands here. Both readings
+                        of the same annual figure are given, because "a month" is
+                        how most people hold the number in their head. */}
+                    {interest > 0 && (
+                      <>
+                        <View style={styles.insetRow}>
+                          <Text style={styles.insetLabel}>Interest a year</Text>
+                          <Text style={[styles.insetValue, styles.positive]}>
+                            {rupees(interest)}
+                          </Text>
+                        </View>
+                        <View style={styles.insetRow}>
+                          <Text style={styles.insetLabel}>
+                            Which is, a month
+                          </Text>
+                          <Text style={styles.insetValue}>
+                            {rupees(accountTotals.interestPerMonth)}
+                          </Text>
+                        </View>
+                        {accountTotals.effectiveYield > 0 && (
+                          <View style={styles.insetRow}>
+                            <Text style={styles.insetLabel}>
+                              Effective yield
+                            </Text>
+                            <Text style={styles.insetValue}>
+                              {(accountTotals.effectiveYield * 100).toFixed(1)}%
+                            </Text>
+                          </View>
+                        )}
+                      </>
+                    )}
+
+                    {accountTotals.interestEstimated && (
+                      <Text style={styles.footnote}>
+                        Some deposits have no payout amount recorded, so their
+                        interest is worked out from the rate.
+                      </Text>
+                    )}
+                    {accountTotals.depositsWithoutInterest > 0 && (
+                      <Text style={styles.footnote}>
+                        {accountTotals.depositsWithoutInterest} of these carry no
+                        interest details — recurring deposits keep no rate — so
+                        they add nothing to the figures above.
+                      </Text>
+                    )}
+                  </View>
+                )}
+              </>
+            )}
+          </View>
+        )}
       </ScrollView>
     </View>
   );
@@ -413,6 +788,8 @@ const createStyles = (colors: ThemeColors) =>
       padding: 20,
       paddingBottom: 40,
     },
+
+    // Headline
     heroCard: {
       backgroundColor: colors.card,
       borderRadius: 16,
@@ -422,7 +799,7 @@ const createStyles = (colors: ThemeColors) =>
       marginBottom: 14,
     },
     heroLabel: {
-      fontSize: 13,
+      fontSize: 12,
       fontWeight: "600",
       textTransform: "uppercase",
       letterSpacing: 0.6,
@@ -435,165 +812,81 @@ const createStyles = (colors: ThemeColors) =>
       marginTop: 8,
       fontVariant: ["tabular-nums"],
     },
-    heroCaption: {
+    heroDeduction: {
       fontSize: 13,
       color: colors.textMuted,
       marginTop: 6,
-      lineHeight: 19,
+      fontVariant: ["tabular-nums"],
     },
-    heroWarning: {
+    compositionBar: {
+      flexDirection: "row",
+      height: 8,
+      borderRadius: 4,
+      overflow: "hidden",
+      marginTop: 18,
+      backgroundColor: colors.chartTrack,
+    },
+    chipWrap: {
+      flexDirection: "row",
+      flexWrap: "wrap",
+      marginTop: 14,
+      gap: 8,
+    },
+    chip: {
+      flexDirection: "row",
+      alignItems: "center",
+      gap: 6,
+      paddingVertical: 6,
+      paddingHorizontal: 10,
+      borderRadius: 10,
+      backgroundColor: colors.inputBackground,
+    },
+    chipDot: { width: 8, height: 8, borderRadius: 4 },
+    chipLabel: { fontSize: 13, color: colors.textMuted },
+    chipValue: {
+      fontSize: 13,
+      fontWeight: "600",
+      color: colors.text,
+      fontVariant: ["tabular-nums"],
+    },
+    notes: {
+      marginTop: 16,
+      borderTopWidth: StyleSheet.hairlineWidth,
+      borderTopColor: colors.border,
+      paddingTop: 12,
+      gap: 8,
+    },
+    noteRow: {
+      flexDirection: "row",
+      alignItems: "flex-start",
+    },
+    noteIcon: {
+      marginRight: 8,
+      marginTop: 1,
+    },
+    noteText: {
+      flex: 1,
       fontSize: 12,
-      color: colors.accentAmber,
-      marginTop: 8,
+      color: colors.textMuted,
       lineHeight: 17,
     },
-    card: {
-      backgroundColor: colors.card,
-      borderRadius: 16,
-      borderWidth: StyleSheet.hairlineWidth,
-      borderColor: colors.border,
-      padding: 16,
+
+    // KPI tiles. Two to a row; a third stretches across the next one rather
+    // than sitting half-width beside a gap.
+    statGrid: {
+      flexDirection: "row",
+      flexWrap: "wrap",
+      gap: 10,
       marginBottom: 14,
     },
-    ratesStrip: {
-      flexDirection: "row",
-      alignItems: "center",
+    statTile: {
+      flexGrow: 1,
+      flexBasis: "46%",
       backgroundColor: colors.card,
-      borderRadius: 16,
+      borderRadius: 14,
       borderWidth: StyleSheet.hairlineWidth,
       borderColor: colors.border,
-      paddingHorizontal: 16,
-      paddingVertical: 14,
-      marginBottom: 14,
-    },
-    stripIcon: {
-      marginRight: 12,
-    },
-    stripText: {
-      flex: 1,
-      marginRight: 12,
-    },
-    stripValue: {
-      fontSize: 14,
-      fontWeight: "600",
-      color: colors.text,
-    },
-    stripMeta: {
-      fontSize: 12,
-      color: colors.textMuted,
-      marginTop: 2,
-    },
-    sectionTitle: {
-      fontSize: 13,
-      fontWeight: "600",
-      textTransform: "uppercase",
-      letterSpacing: 0.6,
-      color: colors.textMuted,
-      marginBottom: 16,
-    },
-    pressed: {
-      opacity: 0.6,
-    },
-    emptyText: {
-      fontSize: 14,
-      color: colors.textMuted,
-    },
-    subTotal: {
-      fontSize: 13,
-      color: colors.textMuted,
-      marginTop: -8,
-      marginBottom: 16,
-    },
-    metalRow: {
-      marginBottom: 16,
-    },
-    metalTop: {
-      flexDirection: "row",
-      alignItems: "baseline",
-      justifyContent: "space-between",
-    },
-    metalName: {
-      fontSize: 15,
-      fontWeight: "600",
-      color: colors.text,
-    },
-    metalValue: {
-      fontSize: 15,
-      fontWeight: "600",
-      color: colors.text,
-      fontVariant: ["tabular-nums"],
-    },
-    metalMeta: {
-      fontSize: 12,
-      color: colors.textMuted,
-      marginTop: 2,
-    },
-    barWrap: {
-      marginTop: 8,
-    },
-    karatRow: {
-      flexDirection: "row",
-      alignItems: "center",
-      marginTop: 8,
-      paddingLeft: 12,
-    },
-    karatName: {
-      width: 46,
-      fontSize: 12,
-      fontWeight: "600",
-      color: colors.textMuted,
-    },
-    karatGrams: {
-      flex: 1,
-      fontSize: 12,
-      color: colors.textMuted,
-      fontVariant: ["tabular-nums"],
-    },
-    karatValue: {
-      fontSize: 12,
-      color: colors.textMuted,
-      fontVariant: ["tabular-nums"],
-    },
-    holderRow: {
-      flexDirection: "row",
-      alignItems: "center",
-      justifyContent: "space-between",
-      paddingVertical: 8,
-    },
-    holderName: {
-      flex: 1,
-      fontSize: 15,
-      color: colors.text,
-      marginRight: 12,
-      textTransform: "capitalize",
-    },
-    holderRight: {
-      alignItems: "flex-end",
-    },
-    holderValue: {
-      fontSize: 15,
-      fontWeight: "600",
-      color: colors.text,
-      fontVariant: ["tabular-nums"],
-    },
-    holderGrams: {
-      fontSize: 12,
-      color: colors.textMuted,
-      marginTop: 2,
-    },
-    statRow: {
-      flexDirection: "row",
-      justifyContent: "space-between",
-    },
-    statRowSpacing: {
-      marginTop: 14,
-    },
-    // Money owed, wherever it appears — never the same colour as money held.
-    liability: {
-      color: colors.negative,
-    },
-    stat: {
-      flex: 1,
+      padding: 14,
     },
     statLabel: {
       fontSize: 12,
@@ -606,15 +899,216 @@ const createStyles = (colors: ThemeColors) =>
       marginTop: 4,
       fontVariant: ["tabular-nums"],
     },
-    owed: {
-      color: colors.accentAmber,
+    statCaption: {
+      fontSize: 11,
+      color: colors.textMuted,
+      marginTop: 4,
     },
-    propertyCaption: {
+
+    // Sections
+    card: {
+      backgroundColor: colors.card,
+      borderRadius: 16,
+      borderWidth: StyleSheet.hairlineWidth,
+      borderColor: colors.border,
+      padding: 16,
+      marginBottom: 14,
+    },
+    sectionHead: {
+      borderBottomWidth: StyleSheet.hairlineWidth,
+      borderBottomColor: colors.border,
+      paddingBottom: 12,
+      marginBottom: 16,
+    },
+    sectionHeadRow: {
+      flexDirection: "row",
+      alignItems: "center",
+      justifyContent: "space-between",
+    },
+    sectionHeadRight: {
+      flexDirection: "row",
+      alignItems: "center",
+      gap: 4,
+    },
+    sectionTitle: {
+      flex: 1,
+      fontSize: 12,
+      fontWeight: "600",
+      textTransform: "uppercase",
+      letterSpacing: 0.6,
+      color: colors.textMuted,
+      marginRight: 12,
+    },
+    sectionValue: {
+      fontSize: 17,
+      fontWeight: "700",
+      color: colors.text,
+      fontVariant: ["tabular-nums"],
+    },
+    sectionCaption: {
       fontSize: 12,
       color: colors.textMuted,
-      marginTop: 10,
-      lineHeight: 17,
+      marginTop: 4,
     },
+
+    // Metal rates, inside the ornaments section it governs.
+    ratesStrip: {
+      flexDirection: "row",
+      alignItems: "center",
+      gap: 10,
+      backgroundColor: colors.inputBackground,
+      borderRadius: 12,
+      paddingHorizontal: 12,
+      paddingVertical: 10,
+      marginBottom: 18,
+    },
+    ratesText: { flex: 1 },
+    ratesValue: {
+      fontSize: 13,
+      fontWeight: "600",
+      color: colors.text,
+      fontVariant: ["tabular-nums"],
+    },
+    ratesPrompt: {
+      fontSize: 13,
+      fontWeight: "600",
+      color: colors.primary,
+    },
+    ratesMeta: {
+      fontSize: 11,
+      color: colors.textMuted,
+      marginTop: 2,
+    },
+
+    // Meter rows
+    meterRow: {
+      marginBottom: 16,
+    },
+    rowBetween: {
+      flexDirection: "row",
+      alignItems: "baseline",
+      justifyContent: "space-between",
+    },
+    meterLabel: {
+      flex: 1,
+      fontSize: 15,
+      fontWeight: "600",
+      color: colors.text,
+      marginRight: 12,
+      textTransform: "capitalize",
+    },
+    meterValue: {
+      fontSize: 15,
+      fontWeight: "600",
+      color: colors.text,
+      fontVariant: ["tabular-nums"],
+    },
+    meterMeta: {
+      fontSize: 12,
+      color: colors.textMuted,
+      marginTop: 2,
+      fontVariant: ["tabular-nums"],
+    },
+    barWrap: {
+      marginTop: 8,
+    },
+
+    // Karat breakdown, indented under its metal.
+    subRows: {
+      marginTop: -8,
+      marginBottom: 16,
+      paddingLeft: 12,
+      borderLeftWidth: StyleSheet.hairlineWidth,
+      borderLeftColor: colors.border,
+      gap: 6,
+    },
+    subRow: {
+      flexDirection: "row",
+      alignItems: "center",
+    },
+    subRowName: {
+      width: 44,
+      fontSize: 12,
+      fontWeight: "600",
+      color: colors.textMuted,
+    },
+    subRowMeta: {
+      flex: 1,
+      fontSize: 12,
+      color: colors.textMuted,
+      fontVariant: ["tabular-nums"],
+    },
+    subRowValue: {
+      fontSize: 12,
+      color: colors.textMuted,
+      fontVariant: ["tabular-nums"],
+    },
+
+    // Paid / owed pairs
+    splitRow: {
+      flexDirection: "row",
+    },
+    split: {
+      flex: 1,
+    },
+    splitValue: {
+      fontSize: 20,
+      fontWeight: "700",
+      marginTop: 4,
+      fontVariant: ["tabular-nums"],
+    },
+
+    // Deposit interest, inset inside the accounts section.
+    inset: {
+      backgroundColor: colors.inputBackground,
+      borderRadius: 12,
+      padding: 14,
+      marginTop: 2,
+    },
+    insetTitle: {
+      fontSize: 11,
+      fontWeight: "600",
+      textTransform: "uppercase",
+      letterSpacing: 0.6,
+      color: colors.textMuted,
+      marginBottom: 10,
+    },
+    insetRow: {
+      flexDirection: "row",
+      alignItems: "baseline",
+      justifyContent: "space-between",
+      marginBottom: 6,
+    },
+    insetLabel: {
+      fontSize: 13,
+      color: colors.textMuted,
+    },
+    insetValue: {
+      fontSize: 14,
+      fontWeight: "600",
+      color: colors.text,
+      fontVariant: ["tabular-nums"],
+    },
+
+    footnote: {
+      fontSize: 11,
+      color: colors.textMuted,
+      marginTop: 8,
+      lineHeight: 16,
+    },
+    emptyText: {
+      fontSize: 14,
+      color: colors.textMuted,
+      lineHeight: 20,
+    },
+    pressed: {
+      opacity: 0.6,
+    },
+
+    // Money owed, wherever it appears — never the same colour as money held.
+    liability: { color: colors.negative },
+    owed: { color: colors.accentAmber },
+    positive: { color: colors.positive },
   });
 
 export default AssetOverviewScreen;
