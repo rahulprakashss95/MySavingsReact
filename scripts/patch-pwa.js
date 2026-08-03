@@ -1,20 +1,25 @@
 /* eslint-env node */
 /**
  * Post-processes the Metro web export (`expo export --platform web`, output in
- * `dist/`) into an installable PWA that works from the GitHub Pages subpath.
+ * `dist/`) into an installable PWA.
  *
  * Metro's web export — unlike the old webpack one — emits no manifest and no PWA
  * markup, and serves its JS from an `_expo/` folder. So this script:
  *   1. Generates 192/512 Chrome icons from assets/icon.png.
- *   2. Writes a manifest.json from scratch, scoped to the deploy subpath.
- *   3. Injects the manifest link, theme-color, and apple-touch-icon into
- *      index.html (Metro adds only a favicon).
- *   4. Drops a `.nojekyll` file — GitHub Pages runs Jekyll, which otherwise
- *      strips the underscore-prefixed `_expo/` directory and 404s the bundle.
+ *   2. Writes a manifest.json from scratch, scoped to the deploy base.
+ *   3. Injects the manifest link, theme-color, apple-touch-icon, and a robots
+ *      noindex into index.html (Metro adds only a favicon).
  *
- * Runs as part of `build-web`, so every deploy is patched. The subpath comes
- * from `homepage` in package.json; keep it in sync with `experiments.baseUrl`
- * in app.json (the value Metro bakes into the asset URLs).
+ * Runs as part of `build-web`, so every deploy is patched. The base comes from
+ * `homepage` in package.json. The app deploys to its own host
+ * (app.assetdiary.in) so that is "/"; if it ever moves back under a subpath,
+ * set `homepage` and app.json's `experiments.baseUrl` to the same value — the
+ * latter is what Metro bakes into the asset URLs.
+ *
+ * The noindex is deliberate: app.assetdiary.in is an app shell with no content
+ * worth indexing, and letting it rank would compete with the marketing site at
+ * the apex. vercel.json sets the matching X-Robots-Tag header for non-HTML
+ * responses.
  */
 const path = require("path");
 const fs = require("fs");
@@ -28,10 +33,8 @@ const ICON_OUT_DIR = path.join(DIST, "pwa", "chrome-icon");
 const { homepage } = require(path.join(PROJECT_ROOT, "package.json"));
 const { expo: appConfig } = require(path.join(PROJECT_ROOT, "app.json"));
 
-// Leading+trailing-slashed base so both manifest and icon URLs resolve under
-// the subpath. This tracks the GitHub Pages deploy path (the repo name), not
-// the app name — they differ until the repo is renamed or a custom domain is
-// attached, at which point this becomes "/".
+// Trailing-slashed base so both manifest and icon URLs resolve correctly. "/"
+// on a dedicated host; a subpath only if `homepage` says so.
 const BASE = (homepage || "/").replace(/\/?$/, "/");
 const APP_NAME = appConfig?.name || "AssetDiary";
 const THEME_COLOR = "#26619c";
@@ -121,6 +124,7 @@ function patchIndexHtml() {
     `<link rel="manifest" href="${BASE}manifest.json" />`,
     `<meta name="theme-color" content="${THEME_COLOR}" />`,
     `<link rel="apple-touch-icon" href="${BASE}pwa/chrome-icon/chrome-icon-192.png" />`,
+    `<meta name="robots" content="noindex, nofollow" />`,
     bleedFix,
   ].join("\n    ");
 
@@ -161,18 +165,14 @@ async function main() {
   patchIndexHtml();
 
   // SPA deep-link fallback. Expo Router does client-side routing under a single
-  // index.html, but GitHub Pages has no server to rewrite unknown paths to it —
-  // so a hard refresh on a route like <base>/deposits/banks/new would 404.
-  // Pages serves 404.html for any unmatched path; making it a copy of the
-  // patched index boots the same app shell and the router resolves the URL.
+  // index.html, so a hard refresh on a route like /deposits/banks/new needs the
+  // host to serve the app shell rather than 404. On Vercel that is the rewrite
+  // in vercel.json; this copy is the belt-and-braces version for any static
+  // host that falls back to 404.html instead (GitHub Pages, Netlify).
   fs.copyFileSync(path.join(DIST, "index.html"), path.join(DIST, "404.html"));
 
-  // GitHub Pages / Jekyll strips folders that start with "_"; without this the
-  // _expo/ JS bundle 404s and the site is blank.
-  fs.writeFileSync(path.join(DIST, ".nojekyll"), "");
-
   console.log(
-    `patch-pwa: wrote ${icons.length} icons + manifest.json, injected PWA markup, 404.html SPA fallback, and .nojekyll under ${BASE}`
+    `patch-pwa: wrote ${icons.length} icons + manifest.json, injected PWA markup and a 404.html SPA fallback under ${BASE}`
   );
 }
 

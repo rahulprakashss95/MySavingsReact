@@ -7,26 +7,27 @@
 <meta name="description" content="How AssetDiary collects, stores and protects your family's data.">
 <meta name="theme-color" content="#26619c">
 <link rel="icon" href="/favicon.png">
+<link rel="canonical" href="https://assetdiary.in/privacy">
+<link rel="stylesheet" href="/style.css">
+<script>
+  // Applies the saved (or system) theme before first paint, so the page never
+  // flashes the wrong one. Inline and blocking on purpose — an external file
+  // would resolve too late. See theme.js for the toggle itself.
+  try {
+    var saved = localStorage.getItem("theme");
+    document.documentElement.setAttribute(
+      "data-theme",
+      saved ||
+        (matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light")
+    );
+  } catch (e) {}
+</script>
+
 <style>
-  :root {
-    --bg:#fff; --text:#16202b; --muted:#5c6873; --border:#e3e7ec; --accent:#26619c;
-    --note-bg:#fff8e8; --note-br:#e0b667;
-  }
-  @media (prefers-color-scheme: dark) {
-    :root { --bg:#0f1418; --text:#e9edf1; --muted:#98a3ad; --border:#262e36; --accent:#5b9bd5;
-            --note-bg:#241f13; --note-br:#7a5c1f; }
-  }
-  :root[data-theme="dark"] { --bg:#0f1418; --text:#e9edf1; --muted:#98a3ad; --border:#262e36; --accent:#5b9bd5; --note-bg:#241f13; --note-br:#7a5c1f; }
-  :root[data-theme="light"] { --bg:#fff; --text:#16202b; --muted:#5c6873; --border:#e3e7ec; --accent:#26619c; --note-bg:#fff8e8; --note-br:#e0b667; }
-  * { box-sizing:border-box; }
-  body {
-    margin:0; background:var(--bg); color:var(--text);
-    font:16px/1.7 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif;
-    -webkit-font-smoothing:antialiased;
-  }
-  .wrap { width:min(760px, 100% - 3rem); margin-inline:auto; }
-  header { border-bottom:1px solid var(--border); padding:0.85rem 0; }
-  .brand { display:flex; align-items:center; gap:0.6rem; font-weight:650; text-decoration:none; color:var(--text); }
+  /* Narrower column and looser leading than the landing page: this is a
+     document, meant to be read start to finish. */
+  :root { --wrap: 760px; --body-line: 1.7; }
+
   main { padding:2.5rem 0 4rem; }
   h1 { font-size:clamp(1.8rem,4vw,2.4rem); letter-spacing:-0.025em; margin:0 0 0.4rem; }
   .updated { color:var(--muted); font-size:0.9rem; margin:0 0 2.2rem; }
@@ -34,32 +35,24 @@
   p, li { color:var(--text); }
   ul { padding-left:1.25rem; }
   li { margin:0.35rem 0; }
-  a { color:var(--accent); }
-  .note {
-    background:var(--note-bg); border:1px solid var(--note-br);
-    border-radius:10px; padding:1rem 1.2rem; margin:1.5rem 0; font-size:0.94rem;
-  }
-  .note strong { display:block; margin-bottom:0.3rem; }
-  footer { border-top:1px solid var(--border); padding:2rem 0; color:var(--muted); font-size:0.9rem; }
-  footer a { color:var(--muted); }
-  table { width:100%; border-collapse:collapse; margin:1rem 0; font-size:0.94rem; }
-  th, td { text-align:left; padding:0.6rem 0.7rem; border-bottom:1px solid var(--border); vertical-align:top; }
-  th { font-weight:640; }
-  .scroll { overflow-x:auto; }
 </style>
 </head>
 <body>
 
 <header>
-  <div class="wrap">
+  <div class="wrap bar">
     <a class="brand" href="/">
-      <svg width="26" height="26" viewBox="0 0 1024 1024" aria-hidden="true" style="border-radius:7px">
+      <svg class="mark" width="26" height="26" viewBox="0 0 1024 1024" aria-hidden="true">
         <rect width="1024" height="1024" fill="#26619c"/>
-        <g fill="#fff"><polygon points="462,262 562,262 402,762 302,762"/><polygon points="462,262 562,262 722,762 622,762"/></g>
-        <polygon points="356.4,592 667.6,592 688.4,657 335.6,657" fill="#f0b357"/>
+        <g fill="#fff"><polygon class="mark-leg mark-leg-l" points="462,262 562,262 402,762 302,762"/><polygon class="mark-leg mark-leg-r" points="462,262 562,262 722,762 622,762"/></g>
+        <polygon class="mark-bar" points="356.4,592 667.6,592 688.4,657 335.6,657" fill="#f0b357"/>
       </svg>
       AssetDiary
     </a>
+    <button class="theme-toggle" type="button" data-theme-toggle aria-label="Switch to dark theme">
+      <svg class="icon-moon" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12.8A9 9 0 1111.2 3a7 7 0 009.8 9.8z"/></svg>
+      <svg class="icon-sun" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="4.2"/><path d="M12 2v2.4M12 19.6V22M4.9 4.9l1.7 1.7M17.4 17.4l1.7 1.7M2 12h2.4M19.6 12H22M4.9 19.1l1.7-1.7M17.4 6.6l1.7-1.7"/></svg>
+    </button>
   </div>
 </header>
 
@@ -162,7 +155,7 @@
   <h2>How long we keep it</h2>
   <p>
     Your records are kept until you delete them, or until your account is
-    deleted. See <a href="/delete-account.html">Delete your account</a> for how
+    deleted. See <a href="/delete-account">Delete your account</a> for how
     to request removal and what happens afterwards.
   </p>
 
@@ -201,5 +194,6 @@
   </div>
 </footer>
 
+<script src="/theme.js" defer></script>
 </body>
 </html>

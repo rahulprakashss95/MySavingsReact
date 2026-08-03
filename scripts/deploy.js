@@ -1,9 +1,14 @@
 /* eslint-env node */
 /**
- * Interactive deploy. Shows the current version, asks for the next one, writes
- * it to package.json and app.json, then builds the web bundle and publishes it
- * to GitHub Pages. `build-web` regenerates src/appVersion.ts from package.json,
- * so what's deployed and what the app's drawer shows always match.
+ * Interactive version bump for a release. Shows the current version, asks for
+ * the next one, writes it to package.json and app.json, and regenerates
+ * src/appVersion.ts so the drawer shows what is actually deployed.
+ *
+ * It deliberately does not build or publish. The app is deployed by Vercel from
+ * git: pushing to main builds `npm run build-web` and promotes the result to
+ * app.assetdiary.in (see vercel.json). So this script ends by printing the
+ * commit/push to run — the deploy is the push, and keeping that step manual
+ * means nothing ships without an explicit git command.
  */
 const path = require("path");
 const fs = require("fs");
@@ -64,8 +69,6 @@ async function main() {
     process.exit(1);
   }
 
-  // Write the new version to both manifests before building; build-web
-  // regenerates src/appVersion.ts from package.json.
   pkg.version = next;
   writeJson(PACKAGE_JSON, pkg);
 
@@ -79,37 +82,26 @@ async function main() {
     console.warn("Could not update app.json version:", error.message);
   }
 
-  console.log(`\nDeploying version ${next}...\n`);
-  execSync("npm run build-web", { cwd: PROJECT_ROOT, stdio: "inherit" });
-
-  // Resolve the push URL ourselves and pass it via --repo. gh-pages otherwise
-  // auto-detects remote.origin.url by shelling out to git, which fails in some
-  // environments with "Failed to get remote.origin.url"; reading it here keeps
-  // the value in sync with the real remote while removing that dependency.
-  let repoUrl;
-  try {
-    repoUrl = execSync("git config --get remote.origin.url", {
-      cwd: PROJECT_ROOT,
-    })
-      .toString()
-      .trim();
-  } catch {
-    repoUrl = "";
-  }
-  if (!repoUrl) {
-    console.error(
-      "\nCould not resolve remote.origin.url. Set an 'origin' remote (git remote add origin <url>) and retry."
-    );
-    process.exit(1);
-  }
-
-  // -t/--dotfiles so the .nojekyll patch-pwa writes gets published; without it
-  // GitHub Pages' Jekyll strips the _expo/ bundle folder.
-  execSync(`npx gh-pages -d dist -t --repo ${repoUrl}`, {
+  // Regenerate now rather than leaving it to the Vercel build, so the bumped
+  // version is committed alongside the manifests instead of drifting.
+  execSync("node scripts/gen-version.js", {
     cwd: PROJECT_ROOT,
     stdio: "inherit",
   });
-  console.log(`\nDeployed version ${next}.`);
+
+  console.log(`
+Version bumped to ${next}. Nothing has been deployed yet.
+
+  git add package.json app.json src/appVersion.ts
+  git commit -m "Release ${next}"
+  git push
+
+Then ship it:
+
+  - If the Vercel project is connected to the GitHub repo, the push above is
+    the deploy — Vercel builds and promotes automatically.
+  - If not, deploy the build yourself:  npx vercel deploy --prod
+`);
 }
 
 main().catch((error) => {

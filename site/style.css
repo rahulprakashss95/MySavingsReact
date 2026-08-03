@@ -1,0 +1,171 @@
+/* Shared foundation for every page on assetdiary.in: design tokens, the light
+   and dark themes, the base element styles, and the header/footer chrome that
+   appears on all three pages.
+
+   Page-specific rules stay in a <style> block in the page itself — the hero and
+   feature cards belong to the landing page, the .steps list belongs to
+   delete-account. Only things used by more than one page live here.
+
+   Two knobs pages set to tune the shared rules, since the marketing page and
+   the document pages differ on both:
+     --wrap       content column width (landing is wide, documents are narrow)
+     --body-line  body line-height (documents read better looser) */
+
+:root {
+  --lapis: #26619c;
+  --lapis-deep: #1d4d7c;
+  --lapis-lift: #2d6fae;
+  --amber: #b26a00;
+  --amber-bright: #f0b357;
+
+  --bg: #ffffff;
+  --surface: #f7f8fa;
+  --text: #16202b;
+  --muted: #5c6873;
+  --border: #e3e7ec;
+  --accent: var(--lapis);
+  --note-bg: #fff8e8;
+  --note-br: #e0b667;
+
+  --wrap: 1080px;
+  --body-line: 1.6;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #0f1418;
+    --surface: #161c22;
+    --text: #e9edf1;
+    --muted: #98a3ad;
+    --border: #262e36;
+    --accent: #5b9bd5;
+    --note-bg: #241f13;
+    --note-br: #7a5c1f;
+  }
+}
+
+/* Explicit overrides win over the media query, so a theme toggle can force
+   either scheme regardless of the OS setting. */
+:root[data-theme="dark"] {
+  --bg: #0f1418; --surface: #161c22; --text: #e9edf1;
+  --muted: #98a3ad; --border: #262e36; --accent: #5b9bd5;
+  --note-bg: #241f13; --note-br: #7a5c1f;
+}
+:root[data-theme="light"] {
+  --bg: #ffffff; --surface: #f7f8fa; --text: #16202b;
+  --muted: #5c6873; --border: #e3e7ec; --accent: #26619c;
+  --note-bg: #fff8e8; --note-br: #e0b667;
+}
+
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--text);
+  font: 16px/var(--body-line) -apple-system, BlinkMacSystemFont, "Segoe UI",
+        Roboto, "Helvetica Neue", Arial, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  /* Softens the flip when the theme toggle runs. */
+  transition: background-color 0.25s ease, color 0.25s ease;
+}
+
+.wrap { width: min(var(--wrap), 100% - 3rem); margin-inline: auto; }
+
+a { color: var(--accent); }
+
+/* ---------- header ---------- */
+header { border-bottom: 1px solid var(--border); padding: 0.85rem 0; }
+.bar { display: flex; align-items: center; gap: 1rem; }
+.brand {
+  display: flex; align-items: center; gap: 0.6rem;
+  font-weight: 650; letter-spacing: -0.01em;
+  text-decoration: none; color: var(--text);
+}
+
+/* ---------- brand mark ---------- */
+/* The legs rise and the amber rule wipes across, once, on load. Each keyframe
+   defines only a `from` state and uses fill-mode `backwards`: the natural
+   rendered state is the finished one, so if animations never run — reduced
+   motion, an old browser, a failed paint — the mark is simply visible rather
+   than stuck invisible. */
+.mark { display: block; border-radius: 8px; transition: transform 0.25s cubic-bezier(0.2, 0.7, 0.2, 1); }
+.brand:hover .mark { transform: scale(1.05); }
+
+.mark-leg, .mark-bar { transform-box: fill-box; }
+.mark-leg {
+  transform-origin: 50% 100%;
+  animation: mark-leg-rise 0.55s cubic-bezier(0.2, 0.7, 0.2, 1) backwards;
+}
+.mark-leg-r { animation-delay: 0.09s; }
+.mark-bar {
+  transform-origin: 50% 50%;
+  animation: mark-bar-wipe 0.45s cubic-bezier(0.2, 0.7, 0.2, 1) 0.3s backwards;
+}
+
+@keyframes mark-leg-rise {
+  from { opacity: 0; transform: translateY(18%) scaleY(0.8); }
+}
+@keyframes mark-bar-wipe {
+  from { opacity: 0; transform: scaleX(0); }
+}
+
+/* ---------- theme toggle ---------- */
+.theme-toggle {
+  margin-left: auto;
+  display: grid; place-items: center;
+  width: 38px; height: 38px; flex: none;
+  padding: 0; border-radius: 10px;
+  border: 1px solid var(--border); background: var(--surface);
+  color: var(--muted); cursor: pointer;
+  transition: color 0.2s ease, border-color 0.2s ease;
+}
+.theme-toggle:hover { color: var(--text); border-color: var(--accent); }
+.theme-toggle:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+/* Show only the icon for the theme the click would switch *to*: a moon while
+   light, a sun while dark. Every rule below is scoped through .theme-toggle so
+   they share a specificity floor — a bare `.theme-toggle svg` rule here would
+   outrank the `.icon-*` ones and leave both icons visible at once.
+
+   data-theme is set before first paint by the inline script in each page's
+   <head>. The media query is the fallback for when JavaScript never runs, and
+   is scoped with :not([data-theme="light"]) so an explicit light choice still
+   wins on a dark OS. */
+.theme-toggle .icon-moon { display: block; }
+.theme-toggle .icon-sun { display: none; }
+
+:root[data-theme="dark"] .theme-toggle .icon-moon { display: none; }
+:root[data-theme="dark"] .theme-toggle .icon-sun { display: block; }
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) .theme-toggle .icon-moon { display: none; }
+  :root:not([data-theme="light"]) .theme-toggle .icon-sun { display: block; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .mark-leg, .mark-bar { animation: none; }
+  .mark, body, .theme-toggle { transition: none; }
+}
+
+/* ---------- footer ---------- */
+footer {
+  border-top: 1px solid var(--border);
+  padding: 2.25rem 0;
+  color: var(--muted); font-size: 0.9rem;
+}
+footer a { color: var(--muted); text-decoration: none; }
+footer a:hover { color: var(--text); text-decoration: underline; }
+
+/* ---------- document pages (privacy, delete-account) ---------- */
+.note {
+  background: var(--note-bg); border: 1px solid var(--note-br);
+  border-radius: 10px; padding: 1rem 1.2rem; margin: 1.5rem 0; font-size: 0.94rem;
+}
+.note strong { display: block; margin-bottom: 0.3rem; }
+
+table { width: 100%; border-collapse: collapse; margin: 1rem 0; font-size: 0.94rem; }
+th, td { text-align: left; padding: 0.6rem 0.7rem; border-bottom: 1px solid var(--border); vertical-align: top; }
+th { font-weight: 640; }
+/* Wraps a table so a narrow screen scrolls it rather than the whole page. */
+.scroll { overflow-x: auto; }
