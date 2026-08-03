@@ -238,7 +238,7 @@ const ProfileScreen = () => {
         >
           <Ionicons name="key-outline" size={22} color={colors.textMuted} />
           <View style={styles.rowText}>
-            <Text style={styles.rowLabel}>Change password</Text>
+            <Text style={styles.rowLabel}>Change Password</Text>
           </View>
           <Ionicons name="chevron-forward" size={18} color={colors.textMuted} />
         </Pressable>
@@ -282,7 +282,7 @@ const ProfileScreen = () => {
         >
           <Ionicons name="log-out-outline" size={22} color={colors.negative} />
           <View style={styles.rowText}>
-            <Text style={[styles.rowLabel, styles.signOutLabel]}>Log out</Text>
+            <Text style={[styles.rowLabel, styles.signOutLabel]}>Log Out</Text>
           </View>
         </Pressable>
       </Card>
@@ -346,13 +346,13 @@ const PhotoSheet = ({
     // Web has no camera to launch into; the file chooser covers it there.
     ...(Platform.OS === "web"
       ? []
-      : [{ icon: "camera-outline" as const, label: "Take photo", onPress: onTakePhoto }]),
-    { icon: "images-outline", label: "Choose from gallery", onPress: onChooseFromGallery },
+      : [{ icon: "camera-outline" as const, label: "Take Photo", onPress: onTakePhoto }]),
+    { icon: "images-outline", label: "Choose from Gallery", onPress: onChooseFromGallery },
     ...(hasPhoto
       ? [
           {
             icon: "trash-outline" as const,
-            label: "Remove photo",
+            label: "Remove Photo",
             onPress: onRemove,
             destructive: true,
           },
@@ -506,7 +506,7 @@ const ChangePasswordModal = ({
             />
 
             <Button
-              title="Change password"
+              title="Change Password"
               onPress={handleSave}
               buttonStyle={styles.modalButton}
             />

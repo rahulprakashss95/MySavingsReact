@@ -5,6 +5,8 @@ import { DarkColors, LightColors, ThemeColors } from "../utils/Color";
 
 export type ThemeMode = "system" | "light" | "dark";
 
+// Keeps the pre-AssetDiary prefix: it addresses a preference already stored on
+// the device. Renaming it would reset everyone back to system theme.
 const THEME_STORAGE_KEY = "@homevault/theme-mode";
 
 const isThemeMode = (value: unknown): value is ThemeMode =>

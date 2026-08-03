@@ -43,7 +43,7 @@ const ExpenseTypeListScreen = () => {
       hideSectionHeaders
       keyOf={(item) => item.id}
       noun="type"
-      addLabel="Add type"
+      addLabel="Add Type"
       onAdd={() => navigateAddEdit(null)}
       emptyIcon="pricetags-outline"
       emptyTitle="No types yet"

@@ -1,0 +1,35 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024" width="1024" height="1024" role="img" aria-label="AssetDiary">
+  <title>AssetDiary</title>
+  <!--
+    The mark: a geometric "A" whose crossbar is amber. The crossbar doubles as
+    the ruled line of a diary page, so the letterform carries both halves of the
+    name — Asset (the ascending form) and Diary (the rule) — in one shape.
+
+    Geometry is parametric around a mark height H = 500 centred at (512, 512):
+      bw (half-width at the baseline) = 0.42H     t  (stroke) = 0.20H
+      crossbar sits at 0.66H from the apex,       tc (rule)   = 0.13H
+    Keep these ratios if you rescale: they are what holds the counter (the
+    triangular hole) open at small sizes.
+
+    The rule's ends are slanted to the legs' angle. Square ends would jut out at
+    the bar's top and notch in at its bottom, because the legs widen as they
+    descend — so the ends must follow the same slope to sit flush.
+  -->
+  <defs>
+    <linearGradient id="field" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#2d6fae"/>
+      <stop offset="1" stop-color="#1d4d7c"/>
+    </linearGradient>
+  </defs>
+
+  <rect width="1024" height="1024" fill="url(#field)"/>
+
+  <!-- Left and right legs, horizontally offset by t/2 so the terminals cut vertically. -->
+  <g fill="#ffffff">
+    <polygon points="462,262 562,262 402,762 302,762"/>
+    <polygon points="462,262 562,262 722,762 622,762"/>
+  </g>
+
+  <!-- The rule. Reads as a ledger line, not a serif. -->
+  <polygon points="356.4,592 667.6,592 688.4,657 335.6,657" fill="#f0b357"/>
+</svg>

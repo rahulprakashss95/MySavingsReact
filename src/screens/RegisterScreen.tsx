@@ -243,7 +243,7 @@ const RegisterScreen = () => {
 
           <Button
             onPress={handleRegister}
-            title="Create family"
+            title="Create Family"
             loading={isLoading}
             buttonStyle={styles.submit}
           />

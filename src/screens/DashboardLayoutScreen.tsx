@@ -190,7 +190,7 @@ const DashboardLayoutScreen = () => {
         <Text
           style={[styles.resetText, isDefault && styles.resetTextDisabled]}
         >
-          Reset to default order
+          Reset to Default Order
         </Text>
       </Pressable>
 
@@ -344,7 +344,7 @@ const DashboardLayoutScreen = () => {
         <Text
           style={[styles.resetText, quick === null && styles.resetTextDisabled]}
         >
-          Reset to default shortcuts
+          Reset to Default Shortcuts
         </Text>
       </Pressable>
     </ScrollView>

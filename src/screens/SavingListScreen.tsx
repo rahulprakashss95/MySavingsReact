@@ -28,7 +28,7 @@ const SavingListScreen = () => {
       keyOf={(item) => item.id}
       countLabel={(section) => `₹ ${amountFormat(sumAmount(section.data))}`}
       noun="saving"
-      addLabel="Add saving"
+      addLabel="Add Saving"
       onAdd={() => navigateAddEdit(null)}
       emptyIcon="wallet-outline"
       emptyTitle="No savings yet"

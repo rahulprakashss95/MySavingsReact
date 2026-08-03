@@ -111,7 +111,7 @@ const EarningAddEditScreen = ({ initial }: Props) => {
 
   const handleDelete = () => {
     showConfirmationAlert(
-      "Delete earning",
+      "Delete Earning",
       "Are you sure you want to delete this entry?"
     ).then((confirmed) => {
       if (!confirmed) {
@@ -194,7 +194,7 @@ const EarningAddEditScreen = ({ initial }: Props) => {
 
       {!readOnly && (
         <Button
-          title={pageMode === "Add" ? "Add earning" : "Save changes"}
+          title={pageMode === "Add" ? "Add Earning" : "Save Changes"}
           onPress={handleSave}
           buttonStyle={styles.primaryButton}
         />
@@ -209,7 +209,7 @@ const EarningAddEditScreen = ({ initial }: Props) => {
             pressed && styles.pressed,
           ]}
         >
-          <Text style={styles.deleteText}>Delete earning</Text>
+          <Text style={styles.deleteText}>Delete Earning</Text>
         </Pressable>
       )}
     </ScrollView>

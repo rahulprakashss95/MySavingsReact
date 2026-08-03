@@ -11,7 +11,7 @@ type IHeaderActions = {
 
 export const confirmSignOut = async (signOut: () => Promise<void>) => {
   const confirmed = await showConfirmationAlert(
-    "Log out",
+    "Log Out",
     "Are you sure you want to log out?"
   );
   if (confirmed) {
@@ -39,7 +39,7 @@ const HeaderActions = ({ navigation }: IHeaderActions) => {
         onPress={() => confirmSignOut(signOut)}
         hitSlop={8}
         accessibilityRole="button"
-        accessibilityLabel="Log out"
+        accessibilityLabel="Log Out"
         style={({ pressed }) => [styles.icon, pressed && styles.pressed]}
       >
         <Ionicons name="log-out-outline" size={24} color={colors.text} />

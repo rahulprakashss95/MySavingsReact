@@ -40,7 +40,7 @@ type Props = {
    * keyboard over the very options you came to read.
    */
   searchable?: boolean;
-  /** Label for the add row and the popup title, e.g. "Add bank". Omit to hide add. */
+  /** Label for the add row and the popup title, e.g. "Add Bank". Omit to hide add. */
   addLabel?: string;
   /** Renders the entity's full form inside the add popup. Omit to hide add. */
   renderAddForm?: (handlers: AddFormHandlers) => React.ReactNode;
@@ -206,7 +206,7 @@ const SearchableSelect = ({
                 accessibilityRole="button"
               >
                 <Ionicons name="add" size={18} color={colors.primary} />
-                <Text style={styles.addText}>{addLabel ?? "Add new"}</Text>
+                <Text style={styles.addText}>{addLabel ?? "Add New"}</Text>
               </Pressable>
             )}
           </View>

@@ -14,7 +14,7 @@ type ILedgerClientPicker = {
 
 /**
  * A searchable client dropdown for the ledger. The signed-in user's clients are
- * served from the cache; "Add client" opens the full client form in a popup and
+ * served from the cache; "Add Client" opens the full client form in a popup and
  * selects the new record on save — no leaving the earning/saving form.
  */
 const LedgerClientPicker = ({
@@ -32,7 +32,7 @@ const LedgerClientPicker = ({
       selectedName={selectedName}
       options={items}
       onSelect={onSelect}
-      addLabel="Add client"
+      addLabel="Add Client"
       renderAddForm={({ onCreated }) => (
         <LedgerClientForm
           onSaved={(saved) => onCreated({ id: saved.id, name: saved.name })}

@@ -97,7 +97,7 @@ const SavingAddEditScreen = ({ initial }: Props) => {
 
   const handleDelete = () => {
     showConfirmationAlert(
-      "Delete saving",
+      "Delete Saving",
       "Are you sure you want to delete this entry?"
     ).then((confirmed) => {
       if (!confirmed) {
@@ -172,7 +172,7 @@ const SavingAddEditScreen = ({ initial }: Props) => {
 
       {!readOnly && (
         <Button
-          title={pageMode === "Add" ? "Add saving" : "Save changes"}
+          title={pageMode === "Add" ? "Add Saving" : "Save Changes"}
           onPress={handleSave}
           buttonStyle={styles.primaryButton}
         />
@@ -187,7 +187,7 @@ const SavingAddEditScreen = ({ initial }: Props) => {
             pressed && styles.pressed,
           ]}
         >
-          <Text style={styles.deleteText}>Delete saving</Text>
+          <Text style={styles.deleteText}>Delete Saving</Text>
         </Pressable>
       )}
     </ScrollView>

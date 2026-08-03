@@ -29,7 +29,7 @@ type Props = {
 
 /**
  * The earning-type form (just a name) shared by the full-screen add/edit and the
- * "Add type" popup on the earning form. Mirrors `ExpenseTypeForm`. Owns its own
+ * "Add Type" popup on the earning form. Mirrors `ExpenseTypeForm`. Owns its own
  * state and writes; the parent supplies the scroll container.
  */
 const EarningTypeForm = ({ initial, onSaved, onDeleted }: Props) => {
@@ -72,7 +72,7 @@ const EarningTypeForm = ({ initial, onSaved, onDeleted }: Props) => {
 
   const handleDelete = () => {
     showConfirmationAlert(
-      "Delete type",
+      "Delete Type",
       "Earnings already recorded against this type are kept. Continue?"
     ).then((confirmed) => {
       if (!confirmed) {
@@ -116,7 +116,7 @@ const EarningTypeForm = ({ initial, onSaved, onDeleted }: Props) => {
 
       {!readOnly && (
         <Button
-          title={isEdit ? "Save changes" : "Add type"}
+          title={isEdit ? "Save Changes" : "Add Type"}
           onPress={handleSave}
           buttonStyle={styles.primaryButton}
         />
@@ -128,7 +128,7 @@ const EarningTypeForm = ({ initial, onSaved, onDeleted }: Props) => {
           accessibilityRole="button"
           style={({ pressed }) => [styles.deleteButton, pressed && styles.pressed]}
         >
-          <Text style={styles.deleteText}>Delete type</Text>
+          <Text style={styles.deleteText}>Delete Type</Text>
         </Pressable>
       )}
     </>

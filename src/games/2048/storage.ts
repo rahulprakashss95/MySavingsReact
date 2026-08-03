@@ -28,6 +28,8 @@ export type SavedGame = {
   submitted: boolean;
 };
 
+// Keeps the pre-AssetDiary prefix: it addresses boards already saved on the
+// device. Renaming it would wipe every member's game in progress.
 const key = (userId: string) => `@homevault/game-2048/${userId}`;
 
 /** The saved board for a member, or null if there is none / it's unreadable. */

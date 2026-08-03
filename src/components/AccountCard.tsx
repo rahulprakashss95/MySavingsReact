@@ -230,11 +230,11 @@ const AccountCard = ({
           <Pressable
             onPress={() => setExpanded((prev) => !prev)}
             accessibilityRole="button"
-            accessibilityLabel={expanded ? "Hide schedule" : "View schedule"}
+            accessibilityLabel={expanded ? "Hide Schedule" : "View Schedule"}
             style={styles.scheduleToggle}
           >
             <Text style={styles.scheduleToggleText}>
-              {expanded ? "Hide schedule" : "View schedule"}
+              {expanded ? "Hide Schedule" : "View Schedule"}
             </Text>
             <Ionicons
               name={expanded ? "chevron-up" : "chevron-down"}
@@ -286,7 +286,7 @@ const AccountCard = ({
                         },
                       ]}
                     >
-                      {instalment.paid ? "Paid" : "Mark paid"}
+                      {instalment.paid ? "Paid" : "Mark Paid"}
                     </Text>
                   </Pressable>
                 ) : (

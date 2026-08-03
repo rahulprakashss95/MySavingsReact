@@ -35,7 +35,7 @@ const BankDocumentListScreen = () => {
       sections={sections}
       keyOf={(item) => item.id}
       noun="account"
-      addLabel="Add bank account"
+      addLabel="Add Bank Account"
       onAdd={() => navigateAddEdit(null)}
       emptyIcon="business-outline"
       emptyTitle="No bank accounts yet"

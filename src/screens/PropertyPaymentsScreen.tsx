@@ -117,7 +117,7 @@ const PropertyPaymentsScreen = ({ property }: Props) => {
 
   const handleDelete = (entry: PaymentEntry) => {
     showConfirmationAlert(
-      isLoan ? "Delete payment" : "Delete installment",
+      isLoan ? "Delete Payment" : "Delete Installment",
       "Are you sure? This cannot be undone."
     ).then((confirmed) => {
       if (!confirmed) {
@@ -262,7 +262,7 @@ const PropertyPaymentsScreen = ({ property }: Props) => {
         />
 
         <Button
-          title={isLoan ? "Record payment" : "Add installment"}
+          title={isLoan ? "Record Payment" : "Add Installment"}
           onPress={handleAdd}
           buttonStyle={styles.primaryButton}
         />

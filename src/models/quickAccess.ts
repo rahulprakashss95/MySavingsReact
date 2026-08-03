@@ -12,7 +12,7 @@ import {
 /**
  * The catalogue of shortcuts the Home dashboard's Quick access row can show.
  *
- * The unit here is an *action*, not a module: "Add earning" is worth a chip in a
+ * The unit here is an *action*, not a module: "Add Earning" is worth a chip in a
  * way that "Ledger" — already a bottom tab — is not. Every add form in the app
  * is reachable at `<list route>/new` with no parameters (the forms default any
  * preset they accept, e.g. the account type falls back to `ACCOUNT_TYPES[0]`),
@@ -94,7 +94,7 @@ export const QUICK_ACCESS_ITEMS: QuickAccessItem[] = [
   },
   {
     id: "add-bank-document",
-    label: "Add bank",
+    label: "Add Bank",
     icon: "business-outline",
     accent: "accentViolet",
     href: "/records/bank-accounts/new",
@@ -116,7 +116,7 @@ export const QUICK_ACCESS_ITEMS: QuickAccessItem[] = [
   },
   {
     id: "add-account",
-    label: "Add holding",
+    label: "Add Holding",
     icon: "add-circle-outline",
     accent: "accentBlue",
     href: "/assets/accounts/new",
@@ -125,7 +125,7 @@ export const QUICK_ACCESS_ITEMS: QuickAccessItem[] = [
   },
   {
     id: "add-ornament",
-    label: "Add ornament",
+    label: "Add Ornament",
     icon: "diamond-outline",
     accent: "accentAmber",
     href: "/assets/ornaments/new",
@@ -134,7 +134,7 @@ export const QUICK_ACCESS_ITEMS: QuickAccessItem[] = [
   },
   {
     id: "add-property",
-    label: "Add property",
+    label: "Add Property",
     icon: "home-outline",
     accent: "accentViolet",
     href: "/assets/properties/new",
@@ -143,7 +143,7 @@ export const QUICK_ACCESS_ITEMS: QuickAccessItem[] = [
   },
   {
     id: "add-vehicle",
-    label: "Add vehicle",
+    label: "Add Vehicle",
     icon: "car-outline",
     accent: "accentBlue",
     href: "/assets/vehicles/new",
@@ -154,7 +154,7 @@ export const QUICK_ACCESS_ITEMS: QuickAccessItem[] = [
   // ---- Ledger -------------------------------------------------------------
   {
     id: "add-earning",
-    label: "Add earning",
+    label: "Add Earning",
     icon: "trending-up-outline",
     accent: "positive",
     href: "/ledger/earnings/new",
@@ -163,7 +163,7 @@ export const QUICK_ACCESS_ITEMS: QuickAccessItem[] = [
   },
   {
     id: "add-expense",
-    label: "Add expense",
+    label: "Add Expense",
     icon: "trending-down-outline",
     accent: "negative",
     href: "/ledger/expenses/new",
@@ -172,7 +172,7 @@ export const QUICK_ACCESS_ITEMS: QuickAccessItem[] = [
   },
   {
     id: "add-saving",
-    label: "Add saving",
+    label: "Add Saving",
     icon: "wallet-outline",
     accent: "positive",
     href: "/ledger/savings/new",
@@ -199,7 +199,7 @@ export const QUICK_ACCESS_ITEMS: QuickAccessItem[] = [
   },
   {
     id: "add-client",
-    label: "Add contact",
+    label: "Add Contact",
     icon: "person-add-outline",
     accent: "accentBlue",
     href: "/ledger/clients/new",

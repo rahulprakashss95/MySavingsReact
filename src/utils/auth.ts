@@ -11,6 +11,9 @@ import type { LoginUserModel } from "../models/LoginUserModel";
  * The last family signed into, remembered on the device so returning users
  * don't retype their Family ID. Survives logout; shared by the login and
  * recovery screens.
+ *
+ * Keeps the pre-AssetDiary prefix: it addresses data already on the device, so
+ * renaming it would make returning users retype their Family ID once.
  */
 export const LAST_FAMILY_KEY = "@homevault/lastFamily";
 

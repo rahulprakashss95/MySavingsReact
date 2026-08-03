@@ -97,7 +97,7 @@ const BankDocumentAddEditScreen = ({ initial }: Props) => {
 
   const handleDelete = () => {
     showConfirmationAlert(
-      "Delete account",
+      "Delete Account",
       "Are you sure you want to delete this bank account?"
     ).then((confirmed) => {
       if (!confirmed) {
@@ -195,7 +195,7 @@ const BankDocumentAddEditScreen = ({ initial }: Props) => {
 
       {!readOnly && (
         <Button
-          title={pageMode === "Add" ? "Add account" : "Save changes"}
+          title={pageMode === "Add" ? "Add Account" : "Save Changes"}
           onPress={handleSave}
           buttonStyle={styles.primaryButton}
         />
@@ -210,7 +210,7 @@ const BankDocumentAddEditScreen = ({ initial }: Props) => {
             pressed && styles.pressed,
           ]}
         >
-          <Text style={styles.deleteText}>Delete account</Text>
+          <Text style={styles.deleteText}>Delete Account</Text>
         </Pressable>
       )}
     </ScrollView>

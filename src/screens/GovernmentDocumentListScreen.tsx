@@ -34,7 +34,7 @@ const GovernmentDocumentListScreen = () => {
       sections={sections}
       keyOf={(item) => item.id}
       noun="document"
-      addLabel="Add document"
+      addLabel="Add Document"
       onAdd={() => navigateAddEdit(null)}
       emptyIcon="shield-checkmark-outline"
       emptyTitle="No records yet"

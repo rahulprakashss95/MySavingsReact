@@ -2,7 +2,7 @@ import { Stack } from "expo-router";
 import { StatusBar } from "expo-status-bar";
 import * as SplashScreen from "expo-splash-screen";
 import { useEffect } from "react";
-import { Platform, View } from "react-native";
+import { Platform, StyleSheet, View, useWindowDimensions } from "react-native";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import {
   SafeAreaProvider,
@@ -29,6 +29,20 @@ installWebStyles();
 // layout to always render one) without flashing the wrong theme or a login
 // redirect. `index` returns null while restoring, so nothing paints under it.
 SplashScreen.preventAutoHideAsync().catch(() => {});
+
+/**
+ * The screens are phone/tablet-first: cards, lists and the tab bar all stretch
+ * badly across a wide desktop monitor. On web the shell is therefore capped at
+ * an iPad Pro's portrait width and centred, with the page behind it showing as
+ * a plain gutter. Below this width nothing changes — the frame fills the
+ * viewport, so phones and the installed PWA are untouched.
+ */
+const WEB_FRAME_WIDTH = 1024;
+
+// Recessed page colour behind the frame. Kept out of ThemeColors because it is
+// the only surface that sits *outside* the app, on web only.
+const GUTTER_LIGHT = "#eef1f4";
+const GUTTER_DARK = "#0a0a0a";
 
 /**
  * Expo Router root layout. Client state lives in Zustand stores and server data
@@ -62,6 +76,12 @@ function RootNavigator() {
     isRestoring: passcodeRestoring,
   } = usePasscode();
 
+  // Only frame the app once the viewport is actually wider than the cap; at or
+  // below it the frame fills the window and there is no gutter to draw.
+  const { width } = useWindowDimensions();
+  const framed = Platform.OS === "web" && width > WEB_FRAME_WIDTH;
+  const gutter = isDark ? GUTTER_DARK : GUTTER_LIGHT;
+
   // Rehydrate all persisted stores exactly once on cold start.
   useEffect(() => {
     bootstrapApp();
@@ -70,13 +90,17 @@ function RootNavigator() {
   // On web, paint html/body to match the active theme. The static CSS in
   // index.html only follows the OS scheme; this also covers a manual override
   // (e.g. forcing light while the OS is dark), so no white/black bleeds past the
-  // app root in the installed PWA. Formerly lived in the ThemeProvider.
+  // app root in the installed PWA. Formerly lived in the ThemeProvider. When the
+  // shell is framed the page is the gutter, so paint it that colour instead —
+  // otherwise the strip either side reads as part of the app.
   useEffect(() => {
     if (Platform.OS !== "web" || typeof document === "undefined") return;
-    const background = (isDark ? DarkColors : LightColors).background;
+    const background = framed
+      ? gutter
+      : (isDark ? DarkColors : LightColors).background;
     document.documentElement.style.backgroundColor = background;
     document.body.style.backgroundColor = background;
-  }, [isDark]);
+  }, [isDark, framed, gutter]);
 
   // Once the session, theme and passcode state are known, drop the splash. The
   // navigator below stays mounted throughout — `index` holds on a blank frame
@@ -95,23 +119,44 @@ function RootNavigator() {
   }, [ready]);
 
   return (
-    <View style={{ flex: 1, backgroundColor: colors.background }}>
-      <StatusBar style={isDark ? "light" : "dark"} />
-      <Stack
-        screenOptions={{
-          headerShown: false,
-          contentStyle: { backgroundColor: colors.background },
-        }}
+    <View
+      style={{
+        flex: 1,
+        backgroundColor: framed ? gutter : colors.background,
+        alignItems: framed ? "center" : undefined,
+      }}
+    >
+      {/* Everything the app draws lives inside this frame — including the
+          drawer, toasts and the passcode lock — so overlays stay within the
+          app's own bounds rather than flying in from the browser edge. */}
+      <View
+        style={[
+          { flex: 1, width: "100%", backgroundColor: colors.background },
+          framed && {
+            maxWidth: WEB_FRAME_WIDTH,
+            borderLeftWidth: StyleSheet.hairlineWidth,
+            borderRightWidth: StyleSheet.hairlineWidth,
+            borderColor: colors.border,
+          },
+        ]}
       >
-        <Stack.Screen name="index" />
-        <Stack.Screen name="(auth)" />
-        <Stack.Screen name="(app)" />
-      </Stack>
-      {/* Overlays the whole app (absolute-fill); mounts only while open. */}
-      <SideDrawer />
-      <Toast />
-      {/* Launch lock: covers everything above until the passcode is entered. */}
-      {showLock && <PasscodeLockScreen />}
+        <StatusBar style={isDark ? "light" : "dark"} />
+        <Stack
+          screenOptions={{
+            headerShown: false,
+            contentStyle: { backgroundColor: colors.background },
+          }}
+        >
+          <Stack.Screen name="index" />
+          <Stack.Screen name="(auth)" />
+          <Stack.Screen name="(app)" />
+        </Stack>
+        {/* Overlays the whole app (absolute-fill); mounts only while open. */}
+        <SideDrawer />
+        <Toast />
+        {/* Launch lock: covers everything above until the passcode is entered. */}
+        {showLock && <PasscodeLockScreen />}
+      </View>
     </View>
   );
 }

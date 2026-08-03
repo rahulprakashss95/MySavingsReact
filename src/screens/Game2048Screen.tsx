@@ -95,7 +95,7 @@ const Game2048Screen = () => {
             <Text style={styles.overlayTitle}>You made {game.target}! 🎉</Text>
             <View style={styles.overlayButtons}>
               <Pressable onPress={game.continuePlaying} style={styles.primaryButton}>
-                <Text style={styles.primaryButtonText}>Keep going</Text>
+                <Text style={styles.primaryButtonText}>Keep Going</Text>
               </Pressable>
               <Pressable onPress={game.restart} style={styles.overlayGhost}>
                 <Text style={styles.ghostButtonText}>New Game</Text>

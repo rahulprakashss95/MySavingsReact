@@ -1,0 +1,132 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Delete your account — AssetDiary</title>
+<meta name="description" content="How to delete your AssetDiary account and the data associated with it.">
+<meta name="theme-color" content="#26619c">
+<link rel="icon" href="/favicon.png">
+<style>
+  :root {
+    --bg:#fff; --text:#16202b; --muted:#5c6873; --border:#e3e7ec; --accent:#26619c;
+    --note-bg:#fff8e8; --note-br:#e0b667;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root { --bg:#0f1418; --text:#e9edf1; --muted:#98a3ad; --border:#262e36; --accent:#5b9bd5;
+            --note-bg:#241f13; --note-br:#7a5c1f; }
+  }
+  :root[data-theme="dark"] { --bg:#0f1418; --text:#e9edf1; --muted:#98a3ad; --border:#262e36; --accent:#5b9bd5; --note-bg:#241f13; --note-br:#7a5c1f; }
+  :root[data-theme="light"] { --bg:#fff; --text:#16202b; --muted:#5c6873; --border:#e3e7ec; --accent:#26619c; --note-bg:#fff8e8; --note-br:#e0b667; }
+  * { box-sizing:border-box; }
+  body {
+    margin:0; background:var(--bg); color:var(--text);
+    font:16px/1.7 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif;
+    -webkit-font-smoothing:antialiased;
+  }
+  .wrap { width:min(760px, 100% - 3rem); margin-inline:auto; }
+  header { border-bottom:1px solid var(--border); padding:0.85rem 0; }
+  .brand { display:flex; align-items:center; gap:0.6rem; font-weight:650; text-decoration:none; color:var(--text); }
+  main { padding:2.5rem 0 4rem; }
+  h1 { font-size:clamp(1.8rem,4vw,2.4rem); letter-spacing:-0.025em; margin:0 0 0.5rem; }
+  .lede { color:var(--muted); margin:0 0 2rem; }
+  h2 { font-size:1.16rem; margin:2.2rem 0 0.6rem; letter-spacing:-0.01em; }
+  ul, ol { padding-left:1.25rem; }
+  li { margin:0.4rem 0; }
+  a { color:var(--accent); }
+  .note {
+    background:var(--note-bg); border:1px solid var(--note-br);
+    border-radius:10px; padding:1rem 1.2rem; margin:1.5rem 0; font-size:0.94rem;
+  }
+  .note strong { display:block; margin-bottom:0.3rem; }
+  .steps { background:var(--bg); border:1px solid var(--border); border-radius:12px; padding:1.3rem 1.3rem 1.3rem 2.4rem; }
+  .mail {
+    display:inline-flex; align-items:center; min-height:48px;
+    padding:0.8rem 1.4rem; border-radius:10px; background:var(--accent);
+    color:#fff; text-decoration:none; font-weight:600; margin-top:0.5rem;
+  }
+  footer { border-top:1px solid var(--border); padding:2rem 0; color:var(--muted); font-size:0.9rem; }
+  footer a { color:var(--muted); }
+  table { width:100%; border-collapse:collapse; margin:1rem 0; font-size:0.94rem; }
+  th, td { text-align:left; padding:0.6rem 0.7rem; border-bottom:1px solid var(--border); vertical-align:top; }
+  th { font-weight:640; }
+  .scroll { overflow-x:auto; }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="wrap">
+    <a class="brand" href="/">
+      <svg width="26" height="26" viewBox="0 0 1024 1024" aria-hidden="true" style="border-radius:7px">
+        <rect width="1024" height="1024" fill="#26619c"/>
+        <g fill="#fff"><polygon points="462,262 562,262 402,762 302,762"/><polygon points="462,262 562,262 722,762 622,762"/></g>
+        <polygon points="356.4,592 667.6,592 688.4,657 335.6,657" fill="#f0b357"/>
+      </svg>
+      AssetDiary
+    </a>
+  </div>
+</header>
+
+<main class="wrap">
+  <h1>Delete your account</h1>
+  <p class="lede">
+    You can ask us to delete your AssetDiary account and its data at any time,
+    without installing or opening the app.
+  </p>
+
+  <div class="note">
+    <strong>Before you publish this</strong>
+    Google Play requires this page to be reachable without installing the app,
+    and requires that a request made here is actually honoured. Complete the
+    bracketed fields, and make sure someone monitors the mailbox below.
+  </div>
+
+  <h2>How to request deletion</h2>
+  <ol class="steps">
+    <li>Email <a href="mailto:support@assetdiary.in">support@assetdiary.in</a> from any address.</li>
+    <li>Include your <strong>Family ID</strong> and your <strong>username</strong> so we can identify the account.</li>
+    <li>We will verify the request with your family administrator before deleting anything, so that one member cannot erase another member's records.</li>
+  </ol>
+  <a class="mail" href="mailto:support@assetdiary.in?subject=Delete%20my%20AssetDiary%20account">Email a deletion request</a>
+
+  <h2>What gets deleted</h2>
+  <div class="scroll">
+    <table>
+      <tr><th>Data</th><th>What happens</th></tr>
+      <tr><td>Your login and profile</td><td>Deleted</td></tr>
+      <tr><td>Records you created (deposits, gold, property, vehicles, ledger entries)</td><td>Deleted <!-- TODO -->[OR: transferred to the family administrator — decide and state it plainly]</td></tr>
+      <tr><td>Documents and photos you uploaded</td><td>Deleted from storage</td></tr>
+      <tr><td>Data held only on your device</td><td>Removed when you uninstall the app</td></tr>
+    </table>
+  </div>
+
+  <h2>Deleting a whole family</h2>
+  <p>
+    If you are the family administrator and want the entire family group removed
+    &mdash; every member, every record and every document &mdash; say so in your
+    email. This cannot be undone, and it affects every member of that family.
+  </p>
+
+  <h2>How long it takes</h2>
+  <p>
+    We action deletion requests within <!-- TODO -->[N] days of verifying them.
+    Backups may retain a copy for up to <!-- TODO -->[N] days afterwards, after
+    which they are overwritten.
+  </p>
+
+  <h2>Questions</h2>
+  <p>
+    Write to <a href="mailto:support@assetdiary.in">support@assetdiary.in</a>.
+    See also our <a href="/privacy.html">Privacy Policy</a>.
+  </p>
+</main>
+
+<footer>
+  <div class="wrap">
+    <a href="/">&larr; Back to AssetDiary</a>
+  </div>
+</footer>
+
+</body>
+</html>

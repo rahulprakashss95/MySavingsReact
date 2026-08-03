@@ -1,5 +1,5 @@
 /**
- * The app's entire data layer: every read and write in HomeVault goes through
+ * The app's entire data layer: every read and write in AssetDiary goes through
  * one of the functions exported here, and nothing above `database/` ever talks
  * to the storage SDK directly.
  *
@@ -697,7 +697,7 @@ const toLoginUser = (row: LoginUserRow): LoginUserModel =>
   } as LoginUserModel);
 
 /**
- * Supabase Auth identifies users by email. HomeVault identifies them by
+ * Supabase Auth identifies users by email. AssetDiary identifies them by
  * username within a family and has no email anywhere — so every member gets a
  * synthetic address derived from (familyId, username), which nobody ever sees
  * or types. Because it is derived rather than stored, the login screen can
@@ -707,6 +707,10 @@ const toLoginUser = (row: LoginUserRow): LoginUserModel =>
  * MUST match `syntheticEmail` in `supabase/functions/auth/index.ts` exactly —
  * if the two ever disagree, logins fail. The local part is hashed because
  * usernames are free text and may contain characters an address can't hold.
+ *
+ * The `.homevault.internal` domain keeps the app's old name deliberately: it is
+ * the stored identity of every existing account in Supabase Auth, not a label.
+ * Renaming it to match the AssetDiary rebrand would lock out every user.
  */
 const syntheticEmail = async (familyId: string, username: string) => {
   const digest = await Crypto.digestStringAsync(

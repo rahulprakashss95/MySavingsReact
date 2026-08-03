@@ -114,7 +114,7 @@ const VehicleAddEditScreen = ({ initial }: Props) => {
 
   const handleDelete = () => {
     showConfirmationAlert(
-      "Delete vehicle",
+      "Delete Vehicle",
       "Are you sure you want to delete this vehicle?"
     ).then((confirmed) => {
       if (!confirmed) {
@@ -240,7 +240,7 @@ const VehicleAddEditScreen = ({ initial }: Props) => {
 
       {!readOnly && (
         <Button
-          title={pageMode === "Add" ? "Add vehicle" : "Save changes"}
+          title={pageMode === "Add" ? "Add Vehicle" : "Save Changes"}
           onPress={handleSave}
           buttonStyle={styles.primaryButton}
         />
@@ -255,7 +255,7 @@ const VehicleAddEditScreen = ({ initial }: Props) => {
             pressed && styles.pressed,
           ]}
         >
-          <Text style={styles.deleteText}>Delete vehicle</Text>
+          <Text style={styles.deleteText}>Delete Vehicle</Text>
         </Pressable>
       )}
     </ScrollView>

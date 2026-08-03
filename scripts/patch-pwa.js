@@ -29,9 +29,11 @@ const { homepage } = require(path.join(PROJECT_ROOT, "package.json"));
 const { expo: appConfig } = require(path.join(PROJECT_ROOT, "app.json"));
 
 // Leading+trailing-slashed base so both manifest and icon URLs resolve under
-// the subpath, e.g. "/HomeVault/".
+// the subpath. This tracks the GitHub Pages deploy path (the repo name), not
+// the app name — they differ until the repo is renamed or a custom domain is
+// attached, at which point this becomes "/".
 const BASE = (homepage || "/").replace(/\/?$/, "/");
-const APP_NAME = appConfig?.name || "HomeVault";
+const APP_NAME = appConfig?.name || "AssetDiary";
 const THEME_COLOR = "#26619c";
 
 // Page background behind the React root, per color scheme. Keep in sync with
@@ -160,7 +162,7 @@ async function main() {
 
   // SPA deep-link fallback. Expo Router does client-side routing under a single
   // index.html, but GitHub Pages has no server to rewrite unknown paths to it —
-  // so a hard refresh on a route like /HomeVault/deposits/banks/new would 404.
+  // so a hard refresh on a route like <base>/deposits/banks/new would 404.
   // Pages serves 404.html for any unmatched path; making it a copy of the
   // patched index boots the same app shell and the router resolves the URL.
   fs.copyFileSync(path.join(DIST, "index.html"), path.join(DIST, "404.html"));

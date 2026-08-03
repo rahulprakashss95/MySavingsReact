@@ -1,4 +1,4 @@
--- HomeVault schema for Supabase (Postgres).
+-- AssetDiary schema for Supabase (Postgres).
 -- Run once in the Supabase dashboard → SQL Editor → New query. Safe to re-run.
 --
 -- ================================================================== --

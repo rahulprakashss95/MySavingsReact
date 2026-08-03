@@ -63,7 +63,7 @@ const LedgerClientListScreen = ({
       hideSectionHeaders
       keyOf={(item) => item.id}
       noun="contact"
-      addLabel="Add contact"
+      addLabel="Add Contact"
       onAdd={() => navigateAddEdit(null)}
       emptyIcon="people-outline"
       emptyTitle="No contacts yet"

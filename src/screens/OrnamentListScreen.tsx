@@ -67,7 +67,7 @@ const OrnamentListScreen = () => {
       sections={sections}
       keyOf={(item) => item.id}
       noun="ornament"
-      addLabel="Add ornament"
+      addLabel="Add Ornament"
       onAdd={() => navigateAddEdit(null)}
       emptyIcon="ribbon-outline"
       emptyTitle="No ornaments yet"

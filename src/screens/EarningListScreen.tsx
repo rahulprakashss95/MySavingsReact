@@ -30,7 +30,7 @@ const EarningListScreen = () => {
       // heading carries its total instead.
       countLabel={(section) => `₹ ${amountFormat(sumAmount(section.data))}`}
       noun="earning"
-      addLabel="Add earning"
+      addLabel="Add Earning"
       onAdd={() => navigateAddEdit(null)}
       emptyIcon="trending-up-outline"
       emptyTitle="No earnings yet"

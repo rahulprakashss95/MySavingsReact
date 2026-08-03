@@ -12,7 +12,7 @@ type Props = {
 
 /**
  * A searchable earning-type dropdown, backed entirely by the family's own
- * `earning_types` (mirrors `ExpenseTypePicker`). "Add type" opens the type form
+ * `earning_types` (mirrors `ExpenseTypePicker`). "Add Type" opens the type form
  * in a popup and selects the new name — no leaving the earning form.
  *
  * Earnings store the type *name*, not an id (see `EarningModel`), so options use
@@ -29,7 +29,7 @@ const EarningTypePicker = ({ selectedName, onSelect }: Props) => {
       selectedName={selectedName}
       options={items.map((t) => ({ id: t.name, name: t.name }))}
       onSelect={(id) => onSelect(id)}
-      addLabel="Add type"
+      addLabel="Add Type"
       renderAddForm={({ onCreated }) => (
         <EarningTypeForm
           onSaved={(saved) => onCreated({ id: saved.name, name: saved.name })}

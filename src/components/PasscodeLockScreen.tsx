@@ -52,7 +52,7 @@ const PasscodeLockScreen = () => {
         </View>
         <PasscodePad
           title="Enter passcode"
-          subtitle="HomeVault is locked"
+          subtitle="AssetDiary is locked"
           error={error}
           disabled={checking}
           onComplete={handleComplete}
@@ -65,7 +65,7 @@ const PasscodeLockScreen = () => {
         hitSlop={8}
         style={styles.logout}
       >
-        <Text style={styles.logoutText}>Log out</Text>
+        <Text style={styles.logoutText}>Log Out</Text>
       </Pressable>
     </View>
   );

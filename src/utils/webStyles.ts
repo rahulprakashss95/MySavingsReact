@@ -28,11 +28,11 @@ export const installWebStyles = () => {
     }
   }
 
-  if (document.getElementById("homevault-web-styles")) {
+  if (document.getElementById("assetdiary-web-styles")) {
     return;
   }
   const style = document.createElement("style");
-  style.id = "homevault-web-styles";
+  style.id = "assetdiary-web-styles";
   style.textContent = `
     input:focus,
     textarea:focus,
@@ -61,7 +61,7 @@ export const installWebStyles = () => {
      * safe-area inset (falling back to the base top padding). An id selector
      * with !important beats react-native-web's atomic class for paddingTop.
      */
-    #homevault-drawer-panel {
+    #assetdiary-drawer-panel {
       padding-top: max(24px, env(safe-area-inset-top, 0px)) !important;
       padding-bottom: env(safe-area-inset-bottom, 0px);
     }

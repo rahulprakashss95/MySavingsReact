@@ -31,7 +31,7 @@ type Props = {
 
 /**
  * The contact form fields + save/delete, shared by the full-screen add/edit and
- * every "Add contact" popup — the earning and saving forms, and the account
+ * every "Add Contact" popup — the earning and saving forms, and the account
  * form's counterparty picker. Owns its own state and writes; the parent
  * supplies the scroll container.
  */
@@ -91,7 +91,7 @@ const LedgerClientForm = ({ initial, onSaved, onDeleted }: Props) => {
 
   const handleDelete = () => {
     showConfirmationAlert(
-      "Delete contact",
+      "Delete Contact",
       "Records already saved against this contact — earnings, savings and accounts — are kept. Continue?"
     ).then((confirmed) => {
       if (!confirmed) {
@@ -184,7 +184,7 @@ const LedgerClientForm = ({ initial, onSaved, onDeleted }: Props) => {
 
       {!readOnly && (
         <Button
-          title={isEdit ? "Save changes" : "Add contact"}
+          title={isEdit ? "Save Changes" : "Add Contact"}
           onPress={handleSave}
           buttonStyle={styles.primaryButton}
         />
@@ -196,7 +196,7 @@ const LedgerClientForm = ({ initial, onSaved, onDeleted }: Props) => {
           accessibilityRole="button"
           style={({ pressed }) => [styles.deleteButton, pressed && styles.pressed]}
         >
-          <Text style={styles.deleteText}>Delete contact</Text>
+          <Text style={styles.deleteText}>Delete Contact</Text>
         </Pressable>
       )}
     </>

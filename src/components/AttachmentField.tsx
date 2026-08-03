@@ -317,7 +317,7 @@ const AttachmentField = ({ drafts, onChange, readOnly, label, module }: Props) =
           accessibilityRole="button"
         >
           <Ionicons name="attach" size={18} color={colors.primary} />
-          <Text style={styles.addText}>Add attachment</Text>
+          <Text style={styles.addText}>Add Attachment</Text>
         </Pressable>
       )}
 
@@ -367,8 +367,8 @@ const PickerSheet = ({
     // Web has no camera to launch into; the file chooser covers it there.
     ...(Platform.OS === "web"
       ? []
-      : [{ icon: "camera-outline" as const, label: "Take photo", onPress: onTakePhoto }]),
-    { icon: "images-outline", label: "Choose from gallery", onPress: onPickImage },
+      : [{ icon: "camera-outline" as const, label: "Take Photo", onPress: onTakePhoto }]),
+    { icon: "images-outline", label: "Choose from Gallery", onPress: onPickImage },
     { icon: "document-outline", label: "Pick a PDF", onPress: onPickPdf },
   ];
 

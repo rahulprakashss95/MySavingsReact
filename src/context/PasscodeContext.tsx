@@ -3,6 +3,8 @@ import * as Crypto from "expo-crypto";
 import { create } from "zustand";
 import { useAuthStore } from "./AuthContext";
 
+// Keeps the pre-AssetDiary prefix on purpose: it addresses data already on
+// users' devices. Renaming it would orphan every existing passcode.
 const PASSCODE_STORAGE_KEY = "@homevault/passcode";
 
 /** What we keep on disk: never the passcode itself, only a salted digest. */

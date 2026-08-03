@@ -251,7 +251,7 @@ const AssetOverviewScreen = () => {
             </>
           ) : (
             <>
-              <Text style={styles.stripValue}>Set metal rates</Text>
+              <Text style={styles.stripValue}>Set Metal Rates</Text>
               <Text style={styles.stripMeta}>
                 Ornaments can't be valued without them.
               </Text>

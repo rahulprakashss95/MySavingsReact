@@ -24,6 +24,8 @@ export const DEFAULT_DASHBOARD_ORDER: DashboardSection[] = [
   "quick",
 ];
 
+// Keep the pre-AssetDiary prefix: these address data already on users' devices,
+// so renaming them would reset everyone's saved dashboard arrangement.
 const STORAGE_KEY = "@homevault/dashboard-order";
 const QUICK_STORAGE_KEY = "@homevault/dashboard-quick";
 

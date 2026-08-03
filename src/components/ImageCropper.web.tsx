@@ -225,7 +225,7 @@ const ImageCropper = ({ visible, uri, onCancel, onCropped }: ImageCropperProps) 
               onPress={confirm}
               accessibilityRole="button"
             >
-              <Text style={styles.confirmText}>Use photo</Text>
+              <Text style={styles.confirmText}>Use Photo</Text>
             </Pressable>
           </View>
         </View>

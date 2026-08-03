@@ -1,8 +1,8 @@
 {
   "expo": {
-    "name": "HomeVault",
-    "slug": "HomeVault",
-    "scheme": "homevault",
+    "name": "AssetDiary",
+    "slug": "assetdiary",
+    "scheme": "assetdiary",
     "version": "1.2.32",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
@@ -16,20 +16,18 @@
         "NSFaceIDUsageDescription": "Your usage description for Face ID",
         "ITSAppUsesNonExemptEncryption": false
       },
-      "bundleIdentifier": "com.app.homevault"
+      "bundleIdentifier": "in.assetdiary.app"
     },
     "android": {
       "permissions": [
         "android.permission.USE_FINGERPRINT",
-        "android.permission.USE_BIOMETRIC",
-        "android.permission.USE_FINGERPRINT",
-        "android.permission.RECORD_AUDIO"
+        "android.permission.USE_BIOMETRIC"
       ],
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
-        "backgroundColor": "#ffffff"
+        "backgroundColor": "#26619c"
       },
-      "package": "com.app.homevault"
+      "package": "in.assetdiary.app"
     },
     "web": {
       "bundler": "metro",
@@ -65,8 +63,8 @@
         "expo-splash-screen",
         {
           "image": "./assets/splash.png",
-          "resizeMode": "cover",
-          "backgroundColor": "#ffffff"
+          "resizeMode": "contain",
+          "backgroundColor": "#26619c"
         }
       ],
       "expo-status-bar",

@@ -1,5 +1,5 @@
 /**
- * HomeVault auth — the only server-side code in the app.
+ * AssetDiary auth — the only server-side code in the app.
  *
  * Supabase Auth handles passwords, tokens and sessions. This function exists
  * for the things a client bundle cannot do, all of which need the service_role
@@ -59,13 +59,17 @@ const fail = (message: string, status = 400) => json({ error: message }, status)
 /* ------------------------------------------------------------------ *
  * Synthetic emails
  *
- * Supabase Auth identifies users by email; HomeVault identifies them by
+ * Supabase Auth identifies users by email; AssetDiary identifies them by
  * username within a family and has no email anywhere. The bridge is an address
  * derived from (family_id, username) that nobody ever sees or types.
  *
  * MUST match `syntheticEmail` in `database/query.ts` exactly — if these two
  * ever disagree, logins fail. The local part is a hash because usernames are
  * free text and may contain characters that are invalid in an address.
+ *
+ * The `.homevault.internal` domain keeps the app's old name deliberately: it is
+ * the stored identity of every existing account, not a label. Renaming it to
+ * match the AssetDiary rebrand would lock out every user.
  * ------------------------------------------------------------------ */
 
 const syntheticEmail = async (familyId: string, username: string) => {

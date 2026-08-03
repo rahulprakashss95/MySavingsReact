@@ -266,7 +266,7 @@ const AccountAddEditScreen = ({ initial, presetType }: Props) => {
 
   const handleDelete = () => {
     showConfirmationAlert(
-      "Delete holding",
+      "Delete Holding",
       "Are you sure you want to delete this holding?"
     ).then((confirmed) => {
       if (!confirmed) return;
@@ -337,7 +337,7 @@ const AccountAddEditScreen = ({ initial, presetType }: Props) => {
                 setContactId(id);
                 setContactName(selectedName);
               }}
-              addLabel="Add contact"
+              addLabel="Add Contact"
               renderAddForm={({ onCreated }) => (
                 <LedgerClientForm
                   onSaved={(saved) =>
@@ -605,7 +605,7 @@ const AccountAddEditScreen = ({ initial, presetType }: Props) => {
 
       {!readOnly && (
         <Button
-          title={pageMode === "Add" ? "Add holding" : "Save changes"}
+          title={pageMode === "Add" ? "Add Holding" : "Save Changes"}
           onPress={handleUpdate}
           buttonStyle={styles.primaryButton}
         />
@@ -617,7 +617,7 @@ const AccountAddEditScreen = ({ initial, presetType }: Props) => {
           accessibilityRole="button"
           style={({ pressed }) => [styles.deleteButton, pressed && styles.pressed]}
         >
-          <Text style={styles.deleteText}>Delete holding</Text>
+          <Text style={styles.deleteText}>Delete Holding</Text>
         </Pressable>
       )}
     </ScrollView>

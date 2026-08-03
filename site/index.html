@@ -1,0 +1,284 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>AssetDiary — Everything your family owns, in one place</title>
+<meta name="description" content="Track deposits, gold, property, vehicles, documents and daily spending for your whole family — in one private, shared app.">
+<meta name="theme-color" content="#26619c">
+<link rel="icon" href="/favicon.png">
+
+<meta property="og:title" content="AssetDiary — Everything your family owns, in one place">
+<meta property="og:description" content="Deposits, gold, property, vehicles, documents and daily spending. One private app your whole family shares.">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://assetdiary.in/">
+
+<style>
+  :root {
+    --lapis: #26619c;
+    --lapis-deep: #1d4d7c;
+    --lapis-lift: #2d6fae;
+    --amber: #b26a00;
+    --amber-bright: #f0b357;
+
+    --bg: #ffffff;
+    --surface: #f7f8fa;
+    --text: #16202b;
+    --muted: #5c6873;
+    --border: #e3e7ec;
+    --accent: var(--lapis);
+  }
+
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #0f1418;
+      --surface: #161c22;
+      --text: #e9edf1;
+      --muted: #98a3ad;
+      --border: #262e36;
+      --accent: #5b9bd5;
+    }
+  }
+  :root[data-theme="dark"] {
+    --bg: #0f1418; --surface: #161c22; --text: #e9edf1;
+    --muted: #98a3ad; --border: #262e36; --accent: #5b9bd5;
+  }
+  :root[data-theme="light"] {
+    --bg: #ffffff; --surface: #f7f8fa; --text: #16202b;
+    --muted: #5c6873; --border: #e3e7ec; --accent: #26619c;
+  }
+
+  * { box-sizing: border-box; }
+
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--text);
+    font: 16px/1.6 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+          "Helvetica Neue", Arial, sans-serif;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  .wrap { width: min(1080px, 100% - 3rem); margin-inline: auto; }
+
+  /* ---------- header ---------- */
+  header {
+    position: sticky; top: 0; z-index: 10;
+    background: color-mix(in srgb, var(--bg) 88%, transparent);
+    backdrop-filter: blur(12px);
+    border-bottom: 1px solid var(--border);
+  }
+  .bar { display: flex; align-items: center; gap: 1rem; padding: 0.85rem 0; }
+  .brand { display: flex; align-items: center; gap: 0.6rem; font-weight: 650; letter-spacing: -0.01em; }
+  .brand svg { display: block; border-radius: 8px; }
+  .bar nav { margin-left: auto; display: flex; gap: 1.5rem; }
+  .bar nav a { color: var(--muted); text-decoration: none; font-size: 0.94rem; }
+  .bar nav a:hover { color: var(--text); }
+  @media (max-width: 620px) { .bar nav { display: none; } }
+
+  /* ---------- hero ---------- */
+  .hero { padding: clamp(3.5rem, 9vw, 6.5rem) 0 clamp(2.5rem, 6vw, 4rem); }
+  h1 {
+    margin: 0 0 1.1rem;
+    font-size: clamp(2.1rem, 5.6vw, 3.5rem);
+    line-height: 1.08;
+    letter-spacing: -0.03em;
+    font-weight: 700;
+    max-width: 16ch;
+  }
+  h1 .rule {
+    /* Echoes the amber rule in the mark. */
+    background: linear-gradient(transparent 62%, var(--amber-bright) 62%, var(--amber-bright) 86%, transparent 86%);
+  }
+  .lede { font-size: clamp(1.05rem, 2.1vw, 1.22rem); color: var(--muted); max-width: 56ch; margin: 0 0 2rem; }
+
+  .cta { display: flex; flex-wrap: wrap; gap: 0.75rem; align-items: center; }
+  .btn {
+    display: inline-flex; align-items: center; gap: 0.5rem;
+    padding: 0.8rem 1.4rem; border-radius: 10px;
+    font-weight: 600; font-size: 0.97rem; text-decoration: none;
+    border: 1px solid transparent; min-height: 48px;
+  }
+  .btn-primary { background: var(--accent); color: #fff; }
+  .btn-primary:hover { background: var(--lapis-deep); }
+  .btn-ghost { border-color: var(--border); color: var(--text); background: var(--surface); }
+  .btn-ghost:hover { border-color: var(--accent); }
+  .btn[aria-disabled="true"] { opacity: 0.55; pointer-events: none; }
+  .soon { font-size: 0.8rem; color: var(--muted); font-weight: 500; }
+
+  /* ---------- sections ---------- */
+  section { padding: clamp(2.5rem, 6vw, 4.5rem) 0; }
+  .band { background: var(--surface); border-block: 1px solid var(--border); }
+  h2 {
+    font-size: clamp(1.5rem, 3.2vw, 2rem);
+    letter-spacing: -0.02em; margin: 0 0 0.6rem; font-weight: 680;
+  }
+  .sub { color: var(--muted); margin: 0 0 2.2rem; max-width: 60ch; }
+
+  .grid { display: grid; gap: 1rem; grid-template-columns: repeat(auto-fit, minmax(238px, 1fr)); }
+  .card {
+    background: var(--bg); border: 1px solid var(--border);
+    border-radius: 14px; padding: 1.4rem;
+  }
+  .card h3 { margin: 0.9rem 0 0.4rem; font-size: 1.02rem; font-weight: 640; }
+  .card p { margin: 0; color: var(--muted); font-size: 0.93rem; }
+  .chip {
+    width: 38px; height: 38px; border-radius: 10px;
+    display: grid; place-items: center;
+    background: color-mix(in srgb, var(--accent) 13%, transparent);
+    color: var(--accent);
+  }
+  .chip svg { display: block; }
+
+  /* ---------- footer ---------- */
+  footer { border-top: 1px solid var(--border); padding: 2.5rem 0; color: var(--muted); font-size: 0.9rem; }
+  .foot { display: flex; flex-wrap: wrap; gap: 1.5rem 2rem; align-items: center; }
+  footer a { color: var(--muted); text-decoration: none; }
+  footer a:hover { color: var(--text); text-decoration: underline; }
+  .foot nav { display: flex; flex-wrap: wrap; gap: 1.25rem; margin-left: auto; }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="wrap bar">
+    <span class="brand">
+      <!-- The mark, inline so it needs no network request. Geometry mirrors assets/brand/logo.svg. -->
+      <svg width="30" height="30" viewBox="0 0 1024 1024" aria-hidden="true">
+        <rect width="1024" height="1024" fill="#26619c"/>
+        <g fill="#fff">
+          <polygon points="462,262 562,262 402,762 302,762"/>
+          <polygon points="462,262 562,262 722,762 622,762"/>
+        </g>
+        <polygon points="356.4,592 667.6,592 688.4,657 335.6,657" fill="#f0b357"/>
+      </svg>
+      AssetDiary
+    </span>
+    <nav>
+      <a href="#track">What it tracks</a>
+      <a href="#family">For families</a>
+      <a href="#privacy">Privacy</a>
+    </nav>
+  </div>
+</header>
+
+<main>
+  <div class="wrap hero">
+    <h1>Everything your family owns, <span class="rule">in one place</span>.</h1>
+    <p class="lede">
+      Fixed deposits, gold, property, vehicles, documents and the daily ledger —
+      tracked together, shared with the people who should see them, and private
+      from everyone else.
+    </p>
+    <div class="cta">
+      <a class="btn btn-primary" href="#" aria-disabled="true">Get it on Google Play</a>
+      <a class="btn btn-ghost" href="#" aria-disabled="true">Download on the App Store</a>
+      <span class="soon">Both coming soon — use it in your browser meanwhile.</span>
+    </div>
+  </div>
+
+  <section id="track" class="band">
+    <div class="wrap">
+      <h2>One record for every kind of asset</h2>
+      <p class="sub">
+        Most apps track only what a bank can see. AssetDiary tracks what a family
+        actually holds.
+      </p>
+      <div class="grid">
+        <div class="card">
+          <div class="chip"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M3 10h18M5 10V7l7-4 7 4v3M6 10v8m4-8v8m4-8v8m4-8v8M3 21h18"/></svg></div>
+          <h3>Deposits &amp; accounts</h3>
+          <p>Bank balances, fixed and recurring deposits, and cash in hand — with maturity and interest tracked.</p>
+        </div>
+        <div class="card">
+          <div class="chip"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2l3 6 6 1-4.5 4.2 1.1 6.3L12 16.6 6.4 19.5l1.1-6.3L3 9l6-1z"/></svg></div>
+          <h3>Gold &amp; ornaments</h3>
+          <p>Every piece logged by weight and purity, so the family's gold is never a guess.</p>
+        </div>
+        <div class="card">
+          <div class="chip"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 11l9-8 9 8M5 10v10h14V10"/></svg></div>
+          <h3>Property</h3>
+          <p>Land and homes, with the payment schedule against each one.</p>
+        </div>
+        <div class="card">
+          <div class="chip"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 17h14M6 17l-1-5 2-5h10l2 5-1 5M7 12h10"/><circle cx="8" cy="17" r="2"/><circle cx="16" cy="17" r="2"/></svg></div>
+          <h3>Vehicles</h3>
+          <p>Cars and two-wheelers alongside the paperwork that belongs to them.</p>
+        </div>
+        <div class="card">
+          <div class="chip"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 3H7a2 2 0 00-2 2v14a2 2 0 002 2h10a2 2 0 002-2V8z"/><path d="M14 3v5h5M9 13h6M9 17h4"/></svg></div>
+          <h3>Records</h3>
+          <p>Government IDs and bank documents, with scans attached and kept private.</p>
+        </div>
+        <div class="card">
+          <div class="chip"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h16v16H4z"/><path d="M8 9h8M8 13h8M8 17h5"/></svg></div>
+          <h3>Ledger</h3>
+          <p>Earnings and expenses by category, so the month adds up without a spreadsheet.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section id="family">
+    <div class="wrap">
+      <h2>Built for a family, not a single user</h2>
+      <p class="sub">
+        Everyone gets their own login under one family. You decide who sees which
+        modules — a spouse can hold full access while a child sees only what you
+        choose to share.
+      </p>
+      <div class="grid">
+        <div class="card">
+          <h3>Separate logins, one family</h3>
+          <p>Members sign in by username under a shared Family ID. No email address required from anyone.</p>
+        </div>
+        <div class="card">
+          <h3>Access you control</h3>
+          <p>Grant or withhold each module per member, and change it whenever you like.</p>
+        </div>
+        <div class="card">
+          <h3>Something to come back for</h3>
+          <p>A family leaderboard turns the app into somewhere people actually open, not another chore.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section id="privacy" class="band">
+    <div class="wrap">
+      <h2>Private by construction</h2>
+      <p class="sub">
+        This app holds deposit balances and identity documents. It is built
+        accordingly.
+      </p>
+      <div class="grid">
+        <div class="card">
+          <h3>Locked on the device</h3>
+          <p>A passcode or your fingerprint guards the app itself, separate from your login.</p>
+        </div>
+        <div class="card">
+          <h3>Documents stay private</h3>
+          <p>Uploaded scans live in private storage — never in a public bucket, never on a shareable link.</p>
+        </div>
+        <div class="card">
+          <h3>Your family's data is yours</h3>
+          <p>No advertising, no selling data, no third-party trackers. You can request deletion at any time.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+</main>
+
+<footer>
+  <div class="wrap foot">
+    <span>&copy; 2026 AssetDiary</span>
+    <nav>
+      <a href="/privacy.html">Privacy Policy</a>
+      <a href="/delete-account.html">Delete your account</a>
+      <a href="mailto:support@assetdiary.in">Support</a>
+    </nav>
+  </div>
+</footer>
+
+</body>
+</html>

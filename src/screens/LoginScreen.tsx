@@ -2,6 +2,7 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import { Ionicons } from "@expo/vector-icons";
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import {
+  Image,
   KeyboardAvoidingView,
   Pressable,
   ScrollView,
@@ -21,7 +22,7 @@ import {
   signInWithCredentials,
 } from "../utils/auth";
 import { useRouter } from "expo-router";
-import { ThemeColors, tint } from "../utils/Color";
+import { ThemeColors } from "../utils/Color";
 import { showToast } from "../utils/Utils";
 
 type FocusField = "family" | "username" | "password" | null;
@@ -168,10 +169,12 @@ const LoginScreen = () => {
         showsVerticalScrollIndicator={false}
       >
         <View style={styles.brand}>
-          <View style={styles.logo}>
-            <Ionicons name="wallet-outline" size={34} color={colors.primary} />
-          </View>
-          <Text style={styles.title}>HomeVault</Text>
+          <Image
+            source={require("../../assets/favicon.png")}
+            style={styles.logo}
+            accessibilityIgnoresInvertColors
+          />
+          <Text style={styles.title}>AssetDiary</Text>
           {family ? (
             <Text style={styles.welcome} numberOfLines={2}>
               Welcome to {family.name}
@@ -389,13 +392,11 @@ const createStyles = (colors: ThemeColors) =>
       alignItems: "center",
       marginBottom: 32,
     },
+    // The mark carries its own lapis field, so no tinted backing behind it.
     logo: {
       width: 72,
       height: 72,
       borderRadius: 22,
-      alignItems: "center",
-      justifyContent: "center",
-      backgroundColor: tint(colors.primary),
       marginBottom: 18,
     },
     title: {

@@ -113,15 +113,10 @@ const HomeScreen = () => {
     !!dashboard.worth || !!dashboard.attention || !!dashboard.month;
 
   // A family that hasn't added anything yet gets a warm nudge instead of a wall
-  // of ₹0 cards. Once any record exists, the real dashboard takes over.
-  const isFresh =
-    dashboard.ready &&
-    modules.length > 0 &&
-    (dashboard.worth?.total ?? 0) === 0 &&
-    (dashboard.attention?.maturities.length ?? 0) === 0 &&
-    (dashboard.attention?.paymentsDue.length ?? 0) === 0 &&
-    (dashboard.month?.expenses?.total ?? 0) === 0 &&
-    (dashboard.month?.earnings?.total ?? 0) === 0;
+  // of ₹0 cards. Once any record exists, the real dashboard takes over — the
+  // test is whether records exist (`isEmpty`), not what they add up to, so a
+  // quiet start to the month can't read as an empty vault and blank the page.
+  const isFresh = dashboard.ready && modules.length > 0 && dashboard.isEmpty;
 
   // The cards only have something to say once loading has finished and the
   // family has records.
@@ -246,7 +241,7 @@ const HomeScreen = () => {
           size={15}
           color={colors.textMuted}
         />
-        <Text style={styles.customiseText}>Customise dashboard</Text>
+        <Text style={styles.customiseText}>Customise Dashboard</Text>
       </Pressable>
     </ScrollView>
   );
@@ -927,7 +922,7 @@ const createStyles = (colors: ThemeColors) =>
       borderStyle: "dashed",
       borderColor: colors.border,
     },
-    // Two lines: shortcut labels are verbs now ("Add earning"), which no longer
+    // Two lines: shortcut labels are verbs now ("Add Earning"), which no longer
     // fit a chip on one. A fixed height keeps one- and two-line chips aligned
     // when the row wraps.
     quickLabel: {

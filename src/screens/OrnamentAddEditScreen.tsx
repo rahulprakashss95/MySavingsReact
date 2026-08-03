@@ -110,7 +110,7 @@ const OrnamentAddEditScreen = ({ initial }: Props) => {
 
   const handleDelete = () => {
     showConfirmationAlert(
-      "Delete ornament",
+      "Delete Ornament",
       "Are you sure you want to delete this ornament?"
     ).then((confirmed) => {
       if (!confirmed) {
@@ -216,7 +216,7 @@ const OrnamentAddEditScreen = ({ initial }: Props) => {
 
       {!readOnly && (
         <Button
-          title={pageMode === "Add" ? "Add ornament" : "Save changes"}
+          title={pageMode === "Add" ? "Add Ornament" : "Save Changes"}
           onPress={handleSave}
           buttonStyle={styles.primaryButton}
         />
@@ -231,7 +231,7 @@ const OrnamentAddEditScreen = ({ initial }: Props) => {
             pressed && styles.pressed,
           ]}
         >
-          <Text style={styles.deleteText}>Delete ornament</Text>
+          <Text style={styles.deleteText}>Delete Ornament</Text>
         </Pressable>
       )}
     </ScrollView>

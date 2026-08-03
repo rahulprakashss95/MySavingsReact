@@ -28,7 +28,7 @@ const ExpenseListScreen = () => {
       // its total instead.
       countLabel={(section) => `₹ ${amountFormat(sumAmount(section.data))}`}
       noun="expense"
-      addLabel="Add expense"
+      addLabel="Add Expense"
       onAdd={() => navigateAddEdit(null)}
       emptyIcon="receipt-outline"
       emptyTitle="No expenses yet"

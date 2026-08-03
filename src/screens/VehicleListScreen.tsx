@@ -57,7 +57,7 @@ const VehicleListScreen = () => {
       sections={sections}
       keyOf={(item) => item.id}
       noun="vehicle"
-      addLabel="Add vehicle"
+      addLabel="Add Vehicle"
       onAdd={() => navigateAddEdit(null)}
       emptyIcon="car-outline"
       emptyTitle="No vehicles yet"

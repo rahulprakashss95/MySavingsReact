@@ -2,7 +2,7 @@
  * A registered family — the tenant boundary of the whole app. `id` is the
  * internal, immutable row id that every record references as
  * `familyId`; `code` is the human-facing unique handle the admin can edit, and
- * `name` is the display name shown as "Welcome to HomeVault, <name>".
+ * `name` is the display name shown as "Welcome to <name>" on the login screen.
  *
  * Keeping `id` and `code` separate means renaming the family or changing its
  * handle never has to re-stamp every record.

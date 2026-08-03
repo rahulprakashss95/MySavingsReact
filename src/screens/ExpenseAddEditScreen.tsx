@@ -105,7 +105,7 @@ const ExpenseAddEditScreen = ({ initial }: Props) => {
 
   const handleDelete = () => {
     showConfirmationAlert(
-      "Delete expense",
+      "Delete Expense",
       "Are you sure you want to delete this entry?"
     ).then((confirmed) => {
       if (!confirmed) {
@@ -185,7 +185,7 @@ const ExpenseAddEditScreen = ({ initial }: Props) => {
 
       {!readOnly && (
         <Button
-          title={pageMode === "Add" ? "Add expense" : "Save changes"}
+          title={pageMode === "Add" ? "Add Expense" : "Save Changes"}
           onPress={handleSave}
           buttonStyle={styles.primaryButton}
         />
@@ -197,7 +197,7 @@ const ExpenseAddEditScreen = ({ initial }: Props) => {
           accessibilityRole="button"
           style={({ pressed }) => [styles.deleteButton, pressed && styles.pressed]}
         >
-          <Text style={styles.deleteText}>Delete expense</Text>
+          <Text style={styles.deleteText}>Delete Expense</Text>
         </Pressable>
       )}
     </ScrollView>

@@ -22,7 +22,7 @@ const THEME_OPTIONS: {
 }[] = [
   {
     mode: "system",
-    label: "System default",
+    label: "System Default",
     description: "Match your device appearance",
     icon: "phone-portrait-outline",
   },
@@ -68,7 +68,7 @@ const SettingsScreen = () => {
             color={passcodeEnabled ? colors.primary : colors.textMuted}
           />
           <View style={styles.rowText}>
-            <Text style={styles.rowLabel}>App passcode</Text>
+            <Text style={styles.rowLabel}>App Passcode</Text>
             <Text style={styles.rowDescription}>
               Require a 4-digit passcode when the app opens
             </Text>
@@ -95,7 +95,7 @@ const SettingsScreen = () => {
             color={colors.textMuted}
           />
           <View style={styles.rowText}>
-            <Text style={styles.rowLabel}>Rearrange dashboard</Text>
+            <Text style={styles.rowLabel}>Rearrange Dashboard</Text>
             <Text style={styles.rowDescription}>
               Choose the order the Home sections appear in
             </Text>

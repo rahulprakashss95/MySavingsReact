@@ -27,7 +27,7 @@ export default function SettingsStack() {
         name="index"
         options={{ title: "Settings", headerLeft: () => <MenuButton /> }}
       />
-      <Stack.Screen name="passcode" options={{ title: "App passcode" }} />
+      <Stack.Screen name="passcode" options={{ title: "App Passcode" }} />
       <Stack.Screen name="dashboard" options={{ title: "Dashboard" }} />
     </Stack>
   );

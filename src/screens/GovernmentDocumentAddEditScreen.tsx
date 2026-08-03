@@ -107,7 +107,7 @@ const GovernmentDocumentAddEditScreen = ({ initial }: Props) => {
 
   const handleDelete = () => {
     showConfirmationAlert(
-      "Delete document",
+      "Delete Document",
       "Are you sure you want to delete this document?"
     ).then((confirmed) => {
       if (!confirmed) {
@@ -197,7 +197,7 @@ const GovernmentDocumentAddEditScreen = ({ initial }: Props) => {
 
       {!readOnly && (
         <Button
-          title={pageMode === "Add" ? "Add document" : "Save changes"}
+          title={pageMode === "Add" ? "Add Document" : "Save Changes"}
           onPress={handleSave}
           buttonStyle={styles.primaryButton}
         />
@@ -212,7 +212,7 @@ const GovernmentDocumentAddEditScreen = ({ initial }: Props) => {
             pressed && styles.pressed,
           ]}
         >
-          <Text style={styles.deleteText}>Delete document</Text>
+          <Text style={styles.deleteText}>Delete Document</Text>
         </Pressable>
       )}
     </ScrollView>

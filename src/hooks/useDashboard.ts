@@ -88,6 +88,14 @@ export type MonthFlow = {
 
 export type DashboardData = {
   ready: boolean;
+  /**
+   * True when every module the member holds is empty of records. "Has this
+   * family recorded anything yet" is a question about record counts, never
+   * about a total: a member whose only earnings are last month's has plenty to
+   * show, and keying the empty state off this month's figures handed them the
+   * new-install nudge on the 1st of every month.
+   */
+  isEmpty: boolean;
   /** null when the member has no worth-bearing module (accounts/assets). */
   worth: {
     total: number;
@@ -360,7 +368,17 @@ export const useDashboard = (): DashboardData => {
       earnings.items
     );
 
-    return { ready, worth, attention, month };
+    // Only the member's own modules are asked: a family with deposits means
+    // nothing to someone who can't open them, and their dashboard is genuinely
+    // empty.
+    const isEmpty =
+      (!need.deposits || accounts.items.length === 0) &&
+      (!need.assets ||
+        (ornaments.items.length === 0 && properties.items.length === 0)) &&
+      (!need.earnings || earnings.items.length === 0) &&
+      (!need.expenses || expenses.items.length === 0);
+
+    return { ready, isEmpty, worth, attention, month };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [
     need.deposits,

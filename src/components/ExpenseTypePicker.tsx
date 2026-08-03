@@ -14,7 +14,7 @@ type IExpenseTypePicker = {
 
 /**
  * A searchable expense-type dropdown. Types are served from the cache;
- * "Add type" opens the full type form in a popup and selects the new record on
+ * "Add Type" opens the full type form in a popup and selects the new record on
  * save — no leaving the expense form.
  */
 const ExpenseTypePicker = ({
@@ -32,7 +32,7 @@ const ExpenseTypePicker = ({
       selectedName={selectedName}
       options={items}
       onSelect={onSelect}
-      addLabel="Add type"
+      addLabel="Add Type"
       renderAddForm={({ onCreated }) => (
         <ExpenseTypeForm
           onSaved={(saved) => onCreated({ id: saved.id, name: saved.name })}

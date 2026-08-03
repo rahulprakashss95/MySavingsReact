@@ -43,7 +43,7 @@ type Props = {
 };
 
 const PAYMENT_MODES: { value: PaymentMode; label: string }[] = [
-  { value: "full", label: "Paid in full" },
+  { value: "full", label: "Paid in Full" },
   { value: "installments", label: "Installments" },
   { value: "loan", label: "Loan" },
 ];
@@ -135,7 +135,7 @@ const PropertyAddEditScreen = ({ initial }: Props) => {
 
   const handleDelete = () => {
     showConfirmationAlert(
-      "Delete property",
+      "Delete Property",
       "This deletes the property and its payment history. Are you sure?"
     ).then((confirmed) => {
       if (!confirmed) {
@@ -353,7 +353,7 @@ const PropertyAddEditScreen = ({ initial }: Props) => {
 
       {!readOnly && (
         <Button
-          title={pageMode === "Add" ? "Add property" : "Save changes"}
+          title={pageMode === "Add" ? "Add Property" : "Save Changes"}
           onPress={handleSave}
           buttonStyle={styles.primaryButton}
         />
@@ -368,7 +368,7 @@ const PropertyAddEditScreen = ({ initial }: Props) => {
             pressed && styles.pressed,
           ]}
         >
-          <Text style={styles.deleteText}>Delete property</Text>
+          <Text style={styles.deleteText}>Delete Property</Text>
         </Pressable>
       )}
     </ScrollView>

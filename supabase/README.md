@@ -29,7 +29,7 @@ it. Each is guarded and safe to re-run.
 
 Dashboard → Authentication → Providers → **Email**:
 
-- **Enable** the email provider. HomeVault has no email addresses of its own —
+- **Enable** the email provider. AssetDiary has no email addresses of its own —
   members log in with a username inside a family — but Supabase Auth identifies
   users by email, so each member gets a synthetic address derived from
   `(familyId, username)`. Nobody ever sees or types it. See `syntheticEmail` in

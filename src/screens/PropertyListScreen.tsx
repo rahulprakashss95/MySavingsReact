@@ -79,7 +79,7 @@ const PropertyListScreen = () => {
       sections={sections}
       keyOf={(item) => item.id}
       noun="property"
-      addLabel="Add property"
+      addLabel="Add Property"
       onAdd={() => navigateAddEdit(null)}
       emptyIcon="home-outline"
       emptyTitle="No properties yet"

@@ -211,7 +211,7 @@ const AdminScreen = () => {
 
   const removeMember = async (member: LoginUserModel) => {
     const confirmed = await showConfirmationAlert(
-      "Remove member",
+      "Remove Member",
       `Remove ${displayNameOf(member)}? They will no longer be able to log in. Their records stay in the family.`
     );
     if (!confirmed) return;
@@ -264,7 +264,7 @@ const AdminScreen = () => {
         />
         <Button
           onPress={saveFamily}
-          title="Save family"
+          title="Save Family"
           loading={savingFamily}
           buttonStyle={styles.inlineButton}
         />

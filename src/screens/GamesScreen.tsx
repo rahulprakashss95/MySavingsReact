@@ -59,7 +59,7 @@ const GamesScreen = () => {
             accessibilityLabel={`${game.label} leaderboard`}
           >
             <Ionicons name="trophy-outline" size={15} color={colors.primary} />
-            <Text style={styles.leaderboardText}>Family leaderboard</Text>
+            <Text style={styles.leaderboardText}>Family Leaderboard</Text>
           </Pressable>
         </View>
       ))}

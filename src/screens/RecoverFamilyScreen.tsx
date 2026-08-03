@@ -158,7 +158,7 @@ const RecoverFamilyScreen = () => {
 
           <Button
             onPress={handleFind}
-            title="Find my family"
+            title="Find My Family"
             loading={isLoading}
             buttonStyle={styles.findButton}
           />
@@ -181,7 +181,7 @@ const RecoverFamilyScreen = () => {
             </Pressable>
             <Button
               onPress={() => continueAs(match)}
-              title="Continue to HomeVault"
+              title="Continue to AssetDiary"
               buttonStyle={styles.continueButton}
             />
           </View>
@@ -201,7 +201,7 @@ const RecoverFamilyScreen = () => {
           style={styles.backLink}
         >
           <Text style={styles.backText}>
-            <Text style={styles.backCta}>Back to login</Text>
+            <Text style={styles.backCta}>Back to Login</Text>
           </Text>
         </Pressable>
       </ScrollView>

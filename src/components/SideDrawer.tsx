@@ -226,7 +226,7 @@ const SideDrawer = () => {
       </Animated.View>
 
       <Animated.View
-        nativeID="homevault-drawer-panel"
+        nativeID="assetdiary-drawer-panel"
         style={[
           styles.panel,
           { width: panelWidth, transform: [{ translateX }] },
@@ -331,7 +331,7 @@ const SideDrawer = () => {
             color={colors.negative}
             style={styles.rowIcon}
           />
-          <Text style={styles.logoutText}>Log out</Text>
+          <Text style={styles.logoutText}>Log Out</Text>
         </Pressable>
       </Animated.View>
     </View>

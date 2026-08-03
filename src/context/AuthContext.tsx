@@ -10,6 +10,8 @@ import { queryClient } from "../query/client";
 import type { Avatar, FeatureKey } from "../models/common";
 import type { UserRole } from "../models/LoginUserModel";
 
+// Keeps the pre-AssetDiary prefix: it addresses a session already stored on the
+// device. Renaming it would sign every existing user out on upgrade.
 const SESSION_STORAGE_KEY = "@homevault/session";
 
 export type SessionUser = {

@@ -108,7 +108,7 @@ const retryingFetch: typeof fetch = async (input, init) => {
 };
 
 /**
- * HomeVault logs in by username within a family, with no email — Supabase Auth
+ * AssetDiary logs in by username within a family, with no email — Supabase Auth
  * still does the actual authenticating, via a synthetic address derived from
  * (familyId, username). See `syntheticEmail` in `query.ts` and the `auth` Edge
  * Function for the whole picture.
