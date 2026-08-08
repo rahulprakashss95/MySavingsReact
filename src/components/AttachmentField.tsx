@@ -2,20 +2,14 @@ import { Ionicons } from "@expo/vector-icons";
 import * as DocumentPicker from "expo-document-picker";
 import * as ImagePicker from "expo-image-picker";
 import React, { useCallback, useMemo, useState } from "react";
-import {
-  Image,
-  Modal,
-  Platform,
-  Pressable,
-  StyleSheet,
-  Text,
-  View,
-} from "react-native";
+import { Image, Platform, Pressable, StyleSheet, View } from "react-native";
+import Text from "./Text";
 import {
   deleteAttachments,
   uploadAttachment,
   type StagedFile,
 } from "../../database/query";
+import BottomSheet from "./BottomSheet";
 import { useTheme } from "../context/ThemeContext";
 import {
   ATTACHMENT_MAX_PER_RECORD,
@@ -373,24 +367,19 @@ const PickerSheet = ({
   ];
 
   return (
-    <Modal visible={visible} transparent animationType="fade" onRequestClose={onClose}>
-      <View style={styles.backdrop}>
-        <Pressable style={StyleSheet.absoluteFill} onPress={onClose} />
-        <View style={styles.sheet}>
-          {sources.map((source) => (
-            <Pressable
-              key={source.label}
-              style={styles.sourceRow}
-              onPress={source.onPress}
-              accessibilityRole="button"
-            >
-              <Ionicons name={source.icon} size={20} color={colors.primary} />
-              <Text style={styles.sourceText}>{source.label}</Text>
-            </Pressable>
-          ))}
-        </View>
-      </View>
-    </Modal>
+    <BottomSheet visible={visible} onClose={onClose} accessibilityLabel="Add attachment">
+      {sources.map((source) => (
+        <Pressable
+          key={source.label}
+          style={styles.sourceRow}
+          onPress={source.onPress}
+          accessibilityRole="button"
+        >
+          <Ionicons name={source.icon} size={20} color={colors.primary} />
+          <Text style={styles.sourceText}>{source.label}</Text>
+        </Pressable>
+      ))}
+    </BottomSheet>
   );
 };
 
@@ -469,18 +458,6 @@ const createStyles = (colors: ThemeColors) =>
       color: colors.textMuted,
       textAlign: "center",
       paddingVertical: 8,
-    },
-    backdrop: {
-      flex: 1,
-      backgroundColor: colors.overlay,
-      justifyContent: "flex-end",
-    },
-    sheet: {
-      backgroundColor: colors.card,
-      borderTopLeftRadius: 18,
-      borderTopRightRadius: 18,
-      padding: 12,
-      paddingBottom: 28,
     },
     sourceRow: {
       flexDirection: "row",

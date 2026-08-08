@@ -1,7 +1,8 @@
 import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 import { useMemo } from "react";
-import { ScrollView, StyleSheet, Text, View } from "react-native";
+import { ScrollView, StyleSheet, View } from "react-native";
+import Text from "../components/Text";
 import FeatureTile from "../components/FeatureTile";
 import { useTheme } from "../context/ThemeContext";
 import { ThemeColors } from "../utils/Color";
@@ -32,6 +33,7 @@ const DocumentScreen = () => {
             <Ionicons name="shield-checkmark-outline" size={24} color={color} />
           )}
           onPress={() => router.push("/records/government")}
+          index={0}
         />
         <FeatureTile
           title="Bank"
@@ -41,6 +43,7 @@ const DocumentScreen = () => {
             <Ionicons name="business-outline" size={24} color={color} />
           )}
           onPress={() => router.push("/records/bank-accounts")}
+          index={1}
         />
       </View>
     </ScrollView>

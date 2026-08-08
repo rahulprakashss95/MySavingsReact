@@ -1,21 +1,13 @@
 import { Ionicons } from "@expo/vector-icons";
-import React, { useEffect, useMemo, useState } from "react";
-import {
-  FlatList,
-  Keyboard,
-  Modal,
-  Platform,
-  Pressable,
-  ScrollView,
-  StyleSheet,
-  Text,
-  TextInput,
-  useWindowDimensions,
-  View,
-} from "react-native";
+import * as Haptics from "expo-haptics";
+import React, { useMemo, useState } from "react";
+import { FlatList, Pressable, ScrollView, StyleSheet, View } from "react-native";
+import Text from "./Text";
+import TextInput from "./TextInput";
+import BottomSheet from "./BottomSheet";
 import { useTheme } from "../context/ThemeContext";
 import { ThemeColors, tint } from "../utils/Color";
-import { radius } from "../utils/tokens";
+import { radius, spacing } from "../utils/tokens";
 
 export type Option = { id: string; name: string };
 
@@ -47,9 +39,12 @@ type Props = {
   renderAddForm?: (handlers: AddFormHandlers) => React.ReactNode;
 };
 
+/** First glyph for an option's avatar chip — the initial, or a bullet for a blank name. */
+const initialOf = (name: string) => (name?.trim()?.[0] ?? "•").toUpperCase();
+
 /**
- * A Zoho-Creator-style lookup field: tap to open a searchable sheet of options,
- * or use the "Add" row to create a new record in a popup form and have it
+ * A tap-to-open bottom sheet lookup field: search or scan a list of options,
+ * or use the "Add" row to create a new record in a nested sheet and have it
  * selected on save — all without leaving the current screen.
  */
 const SearchableSelect = ({
@@ -65,30 +60,10 @@ const SearchableSelect = ({
 }: Props) => {
   const { colors } = useTheme();
   const styles = useMemo(() => createStyles(colors), [colors]);
-  const { height: windowHeight } = useWindowDimensions();
 
   const [open, setOpen] = useState(false);
   const [adding, setAdding] = useState(false);
   const [query, setQuery] = useState("");
-  const [keyboardHeight, setKeyboardHeight] = useState(0);
-
-  // Lift the sheet above the keyboard ourselves: a RN Modal is its own window
-  // and doesn't resize for the keyboard, so KeyboardAvoidingView can't see it.
-  useEffect(() => {
-    if (!open) {
-      return;
-    }
-    const showEvent = Platform.OS === "ios" ? "keyboardWillShow" : "keyboardDidShow";
-    const hideEvent = Platform.OS === "ios" ? "keyboardWillHide" : "keyboardDidHide";
-    const showSub = Keyboard.addListener(showEvent, (e) =>
-      setKeyboardHeight(e.endCoordinates?.height ?? 0)
-    );
-    const hideSub = Keyboard.addListener(hideEvent, () => setKeyboardHeight(0));
-    return () => {
-      showSub.remove();
-      hideSub.remove();
-    };
-  }, [open]);
 
   // A directory sorts alphabetically because you scan or search it. A fixed
   // short list is authored in a meaningful order (broadest type first, say) and
@@ -112,13 +87,12 @@ const SearchableSelect = ({
   }, [sorted, trimmed]);
 
   const closeSheet = () => {
-    Keyboard.dismiss();
-    setKeyboardHeight(0);
     setOpen(false);
     setQuery("");
   };
 
   const choose = (option: Option) => {
+    Haptics.selectionAsync().catch(() => {});
     onSelect(option.id, option.name);
     closeSheet();
   };
@@ -133,7 +107,7 @@ const SearchableSelect = ({
     <>
       <Text style={styles.label}>{label}</Text>
       <Pressable
-        style={styles.field}
+        style={({ pressed }) => [styles.field, pressed && styles.fieldPressed]}
         onPress={() => setOpen(true)}
         accessibilityRole="button"
       >
@@ -146,107 +120,131 @@ const SearchableSelect = ({
         <Ionicons name="chevron-down" size={18} color={colors.textMuted} />
       </Pressable>
 
-      {/* Searchable option sheet */}
-      <Modal visible={open} transparent animationType="fade" onRequestClose={closeSheet}>
-        <View style={[styles.backdrop, { paddingBottom: keyboardHeight }]}>
-          <Pressable style={StyleSheet.absoluteFill} onPress={closeSheet} />
-          <View
-            style={[
-              styles.sheet,
-              // Centered in the space left above the keyboard, never taller than it.
-              { maxHeight: windowHeight - keyboardHeight - 120 },
-            ]}
-          >
-            {searchable ? (
-              <View style={styles.searchRow}>
-                <Ionicons name="search" size={18} color={colors.textMuted} />
-                <TextInput
-                  style={styles.searchInput}
-                  value={query}
-                  onChangeText={setQuery}
-                  placeholder={`Search ${label.toLowerCase()}`}
-                  placeholderTextColor={colors.placeholder}
-                  autoFocus
-                  returnKeyType="done"
-                />
-              </View>
-            ) : (
-              <Text style={styles.sheetTitle}>{label}</Text>
-            )}
-
-            <FlatList
-              data={filtered}
-              keyExtractor={(option) => option.id}
-              keyboardShouldPersistTaps="handled"
-              style={styles.list}
-              renderItem={({ item }) => (
-                <Pressable
-                  style={styles.row}
-                  onPress={() => choose(item)}
-                  accessibilityRole="button"
-                >
-                  <Text style={styles.rowText} numberOfLines={1}>
-                    {item.name}
-                  </Text>
-                  {item.id === selectedId && (
-                    <Ionicons name="checkmark" size={18} color={colors.primary} />
-                  )}
-                </Pressable>
-              )}
-              ListEmptyComponent={
-                <Text style={styles.empty}>
-                  {trimmed ? "No matches" : "Nothing here yet"}
-                </Text>
-              }
-            />
-
-            {renderAddForm && (
-              <Pressable
-                style={styles.addButton}
-                onPress={() => setAdding(true)}
-                accessibilityRole="button"
-              >
-                <Ionicons name="add" size={18} color={colors.primary} />
-                <Text style={styles.addText}>{addLabel ?? "Add New"}</Text>
-              </Pressable>
-            )}
-          </View>
-        </View>
-      </Modal>
-
-      {/* Add-new popup form */}
-      <Modal
-        visible={adding}
-        transparent
-        animationType="slide"
-        onRequestClose={() => setAdding(false)}
+      <BottomSheet
+        visible={open}
+        onClose={closeSheet}
+        accessibilityLabel={label}
+        contentContainerStyle={styles.sheetContent}
       >
-        <View style={styles.formBackdrop}>
-          <View style={styles.formCard}>
-            <View style={styles.formHeader}>
-              <Text style={styles.formTitle}>{addLabel}</Text>
+        {searchable ? (
+          <View style={styles.searchRow}>
+            <Ionicons name="search" size={18} color={colors.textMuted} />
+            <TextInput
+              style={styles.searchInput}
+              value={query}
+              onChangeText={setQuery}
+              placeholder={`Search ${label.toLowerCase()}`}
+              placeholderTextColor={colors.placeholder}
+              autoFocus
+              returnKeyType="done"
+            />
+            {!!query && (
               <Pressable
-                onPress={() => setAdding(false)}
+                onPress={() => setQuery("")}
                 hitSlop={8}
                 accessibilityRole="button"
-                accessibilityLabel="Close"
+                accessibilityLabel="Clear search"
               >
-                <Ionicons name="close" size={22} color={colors.textMuted} />
+                <Ionicons name="close-circle" size={18} color={colors.textMuted} />
               </Pressable>
-            </View>
-            <ScrollView
-              contentContainerStyle={styles.formContent}
-              keyboardShouldPersistTaps="handled"
-              showsVerticalScrollIndicator={false}
-            >
-              {renderAddForm?.({
-                onCreated: handleCreated,
-                onCancel: () => setAdding(false),
-              })}
-            </ScrollView>
+            )}
           </View>
+        ) : (
+          <Text style={styles.sheetTitle}>{label}</Text>
+        )}
+
+        <FlatList
+          data={filtered}
+          keyExtractor={(option) => option.id}
+          keyboardShouldPersistTaps="handled"
+          style={styles.list}
+          renderItem={({ item }) => {
+            const isSelected = item.id === selectedId;
+            return (
+              <Pressable
+                style={({ pressed }) => [
+                  styles.row,
+                  isSelected && styles.rowSelected,
+                  pressed && styles.rowPressed,
+                ]}
+                onPress={() => choose(item)}
+                accessibilityRole="button"
+              >
+                <View
+                  style={[
+                    styles.avatar,
+                    { backgroundColor: tint(colors.primary) },
+                    isSelected && { backgroundColor: colors.primary },
+                  ]}
+                >
+                  <Text
+                    style={[styles.avatarText, isSelected && styles.avatarTextSelected]}
+                  >
+                    {initialOf(item.name)}
+                  </Text>
+                </View>
+                <Text
+                  style={[styles.rowText, isSelected && styles.rowTextSelected]}
+                  numberOfLines={1}
+                >
+                  {item.name}
+                </Text>
+                {isSelected && (
+                  <Ionicons name="checkmark-circle" size={20} color={colors.primary} />
+                )}
+              </Pressable>
+            );
+          }}
+          ListEmptyComponent={
+            <Text style={styles.empty}>{trimmed ? "No matches" : "Nothing here yet"}</Text>
+          }
+        />
+
+        {renderAddForm && (
+          <Pressable
+            style={({ pressed }) => [styles.addButton, pressed && styles.rowPressed]}
+            onPress={() => {
+              Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light).catch(() => {});
+              setAdding(true);
+            }}
+            accessibilityRole="button"
+          >
+            <View style={[styles.avatar, styles.addAvatar]}>
+              <Ionicons name="add" size={18} color={colors.primary} />
+            </View>
+            <Text style={styles.addText}>{addLabel ?? "Add New"}</Text>
+          </Pressable>
+        )}
+      </BottomSheet>
+
+      <BottomSheet
+        visible={adding}
+        onClose={() => setAdding(false)}
+        accessibilityLabel={addLabel}
+        maxHeightRatio={0.92}
+      >
+        <View style={styles.formHeader}>
+          <Text style={styles.formTitle}>{addLabel}</Text>
+          <Pressable
+            onPress={() => setAdding(false)}
+            hitSlop={8}
+            accessibilityRole="button"
+            accessibilityLabel="Close"
+          >
+            <Ionicons name="close" size={22} color={colors.textMuted} />
+          </Pressable>
         </View>
-      </Modal>
+        <ScrollView
+          contentContainerStyle={styles.formContent}
+          keyboardShouldPersistTaps="handled"
+          showsVerticalScrollIndicator={false}
+        >
+          {renderAddForm?.({
+            onCreated: handleCreated,
+            onCancel: () => setAdding(false),
+          })}
+        </ScrollView>
+      </BottomSheet>
     </>
   );
 };
@@ -263,13 +261,16 @@ const createStyles = (colors: ThemeColors) =>
       flexDirection: "row",
       alignItems: "center",
       justifyContent: "space-between",
-      borderWidth: 1,
-      borderColor: colors.border,
-      borderRadius: radius.control,
       backgroundColor: colors.inputBackground,
+      borderWidth: 1.5,
+      borderColor: "transparent",
+      borderRadius: radius.control,
       paddingHorizontal: 12,
       height: 50,
       marginBottom: 18,
+    },
+    fieldPressed: {
+      borderColor: colors.primary,
     },
     fieldText: {
       flex: 1,
@@ -280,26 +281,15 @@ const createStyles = (colors: ThemeColors) =>
     placeholderText: {
       color: colors.placeholder,
     },
-    backdrop: {
-      flex: 1,
-      backgroundColor: colors.overlay,
-      justifyContent: "center",
-      paddingHorizontal: 20,
-    },
-    sheet: {
-      backgroundColor: colors.card,
-      borderRadius: radius.sheet,
-      padding: 12,
-      paddingBottom: 16,
+    sheetContent: {
+      paddingHorizontal: 12,
     },
     searchRow: {
       flexDirection: "row",
       alignItems: "center",
       gap: 8,
-      borderWidth: 1,
-      borderColor: colors.border,
-      borderRadius: radius.control,
       backgroundColor: colors.inputBackground,
+      borderRadius: radius.control,
       paddingHorizontal: 12,
       height: 46,
       marginBottom: 8,
@@ -327,17 +317,46 @@ const createStyles = (colors: ThemeColors) =>
     row: {
       flexDirection: "row",
       alignItems: "center",
-      justifyContent: "space-between",
-      paddingVertical: 14,
+      gap: 12,
+      paddingVertical: 10,
       paddingHorizontal: 8,
-      borderBottomWidth: StyleSheet.hairlineWidth,
-      borderBottomColor: colors.border,
+      borderRadius: radius.control,
+    },
+    rowSelected: {
+      backgroundColor: tint(colors.primary),
+    },
+    rowPressed: {
+      opacity: 0.7,
+    },
+    avatar: {
+      width: 34,
+      height: 34,
+      borderRadius: 12,
+      alignItems: "center",
+      justifyContent: "center",
+    },
+    avatarText: {
+      fontSize: 14,
+      fontWeight: "700",
+      color: colors.primary,
+    },
+    avatarTextSelected: {
+      color: colors.onPrimary,
+    },
+    addAvatar: {
+      backgroundColor: "transparent",
+      borderWidth: 1.5,
+      borderStyle: "dashed",
+      borderColor: colors.border,
     },
     rowText: {
       flex: 1,
       fontSize: 15,
       color: colors.text,
-      marginRight: 8,
+    },
+    rowTextSelected: {
+      fontWeight: "700",
+      color: colors.primary,
     },
     empty: {
       textAlign: "center",
@@ -348,35 +367,23 @@ const createStyles = (colors: ThemeColors) =>
     addButton: {
       flexDirection: "row",
       alignItems: "center",
-      justifyContent: "center",
-      gap: 6,
-      marginTop: 8,
-      paddingVertical: 14,
+      gap: 12,
+      marginTop: 4,
+      paddingVertical: 10,
+      paddingHorizontal: 8,
       borderRadius: radius.control,
-      backgroundColor: tint(colors.primary),
     },
     addText: {
       fontSize: 15,
       fontWeight: "600",
       color: colors.primary,
     },
-    formBackdrop: {
-      flex: 1,
-      backgroundColor: colors.overlay,
-      justifyContent: "flex-end",
-    },
-    formCard: {
-      backgroundColor: colors.background,
-      borderTopLeftRadius: radius.sheet,
-      borderTopRightRadius: radius.sheet,
-      maxHeight: "92%",
-    },
     formHeader: {
       flexDirection: "row",
       alignItems: "center",
       justifyContent: "space-between",
       paddingHorizontal: 20,
-      paddingTop: 18,
+      paddingTop: 6,
       paddingBottom: 6,
     },
     formTitle: {

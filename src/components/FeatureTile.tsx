@@ -1,11 +1,13 @@
 import React, { useMemo } from "react";
-import { Pressable, StyleSheet, Text, View } from "react-native";
-import Animated from "react-native-reanimated";
+import { Pressable, StyleSheet, View } from "react-native";
+import Text from "./Text";
+import { LinearGradient } from "expo-linear-gradient";
+import Animated, { FadeInDown } from "react-native-reanimated";
 import { Ionicons } from "@expo/vector-icons";
 import { useTheme } from "../context/ThemeContext";
 import { usePressAnimation } from "../hooks/usePressAnimation";
-import { ThemeColors, tint } from "../utils/Color";
-import { radius } from "../utils/tokens";
+import { ThemeColors } from "../utils/Color";
+import { gradientAngle, motion, radius } from "../utils/tokens";
 
 type IFeatureTile = {
   title: string;
@@ -19,6 +21,8 @@ type IFeatureTile = {
   wide?: boolean;
   /** Short status label shown in place of the arrow, e.g. "Soon". */
   badge?: string;
+  /** Position in a grid/list — staggers the mount-in animation. Omit for no delay. */
+  index?: number;
 };
 
 const FeatureTile = (props: IFeatureTile) => {
@@ -28,18 +32,21 @@ const FeatureTile = (props: IFeatureTile) => {
   const { onPressIn, onPressOut, animatedStyle } = usePressAnimation();
 
   const disabled = !onPress;
+  const staggerDelay = Math.min(
+    (props.index ?? 0) * motion.staggerDelay,
+    motion.staggerMaxDelay
+  );
 
   const content = (
     <>
-      <View
-        style={[
-          styles.iconChip,
-          wide && styles.wideIconChip,
-          { backgroundColor: tint(accent) },
-        ]}
+      <LinearGradient
+        colors={[`${accent}3d`, `${accent}12`]}
+        start={gradientAngle.start}
+        end={gradientAngle.end}
+        style={[styles.iconChip, wide && styles.wideIconChip]}
       >
         {renderIcon(accent)}
-      </View>
+      </LinearGradient>
 
       {wide ? (
         <View style={styles.wideText}>
@@ -76,11 +83,12 @@ const FeatureTile = (props: IFeatureTile) => {
         accessibilityLabel={badge ? `${title}, ${badge}` : title}
         style={[styles.tileBox, wide && styles.wideTileBox]}
       >
-        <View
+        <Animated.View
+          entering={FadeInDown.delay(staggerDelay).duration(motion.staggerDuration)}
           style={[styles.tile, wide && styles.wideTile, styles.tileDisabled]}
         >
           {content}
-        </View>
+        </Animated.View>
       </View>
     );
   }
@@ -100,10 +108,21 @@ const FeatureTile = (props: IFeatureTile) => {
       accessibilityLabel={title}
       style={[styles.tileBox, wide && styles.wideTileBox]}
     >
+      {/* The mount-in `entering` layout animation and the press-scale
+          `animatedStyle` transform can't safely share one node — Reanimated
+          warns that a layout animation may clobber a custom `transform`
+          style on the same component. So `entering` lives on this outer
+          wrapper (no styling of its own beyond stretching to fill the
+          Pressable, same as the single-node version used to) and the visual
+          box + press transform live on the inner `Animated.View`. */}
       <Animated.View
-        style={[styles.tile, wide && styles.wideTile, animatedStyle]}
+        entering={FadeInDown.delay(staggerDelay).duration(motion.staggerDuration)}
       >
-        {content}
+        <Animated.View
+          style={[styles.tile, wide && styles.wideTile, animatedStyle]}
+        >
+          {content}
+        </Animated.View>
       </Animated.View>
     </Pressable>
   );

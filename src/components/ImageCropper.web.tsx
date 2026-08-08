@@ -1,5 +1,6 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { Image, Modal, Pressable, StyleSheet, Text, View } from "react-native";
+import { Image, Modal, Pressable, StyleSheet, View } from "react-native";
+import Text from "./Text";
 import type { StagedFile } from "../../database/query";
 import { useTheme } from "../context/ThemeContext";
 import { ThemeColors } from "../utils/Color";

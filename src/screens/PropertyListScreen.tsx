@@ -1,6 +1,7 @@
 ﻿import { Ionicons } from "@expo/vector-icons";
 import React, { useMemo } from "react";
-import { StyleSheet, Text, View } from "react-native";
+import { StyleSheet, View } from "react-native";
+import Text from "../components/Text";
 import GroupedList from "../components/GroupedList";
 import { useCollectionState, useOwnerName } from "../query/hooks";
 import GroupedRow from "../components/GroupedRow";

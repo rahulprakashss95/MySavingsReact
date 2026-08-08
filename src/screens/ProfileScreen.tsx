@@ -2,16 +2,8 @@ import { Ionicons } from "@expo/vector-icons";
 import * as Clipboard from "expo-clipboard";
 import * as ImagePicker from "expo-image-picker";
 import React, { useMemo, useState } from "react";
-import {
-  Modal,
-  Platform,
-  Pressable,
-  ScrollView,
-  StyleSheet,
-  Text,
-  TextInput,
-  View,
-} from "react-native";
+import { Platform, Pressable, ScrollView, StyleSheet, View } from "react-native";
+import Text from "../components/Text";
 import {
   changeOwnPassword,
   removeAvatarObject,
@@ -20,11 +12,13 @@ import {
   type StagedFile,
 } from "../../database/query";
 import Avatar from "../components/Avatar";
+import BottomSheet from "../components/BottomSheet";
 import Button from "../components/Button";
 import ImageCropper from "../components/ImageCropper";
 import Card from "../components/Card";
 import { confirmSignOut } from "../components/HeaderActions";
 import Loader from "../components/Loader";
+import TextField from "../components/TextField";
 import { useAuth } from "../context/AuthContext";
 import { useTheme } from "../context/ThemeContext";
 import { formatFileSize, UPLOAD_MAX_BYTES } from "../models/common";
@@ -362,35 +356,30 @@ const PhotoSheet = ({
   ];
 
   return (
-    <Modal visible={visible} transparent animationType="fade" onRequestClose={onClose}>
-      <View style={styles.sheetBackdrop}>
-        <Pressable style={StyleSheet.absoluteFill} onPress={onClose} />
-        <View style={styles.sheet}>
-          {options.map((option) => (
-            <Pressable
-              key={option.label}
-              style={styles.sheetRow}
-              onPress={option.onPress}
-              accessibilityRole="button"
-            >
-              <Ionicons
-                name={option.icon}
-                size={20}
-                color={option.destructive ? colors.negative : colors.primary}
-              />
-              <Text
-                style={[
-                  styles.sheetText,
-                  option.destructive && { color: colors.negative },
-                ]}
-              >
-                {option.label}
-              </Text>
-            </Pressable>
-          ))}
-        </View>
-      </View>
-    </Modal>
+    <BottomSheet visible={visible} onClose={onClose} accessibilityLabel="Change profile picture">
+      {options.map((option) => (
+        <Pressable
+          key={option.label}
+          style={styles.sheetRow}
+          onPress={option.onPress}
+          accessibilityRole="button"
+        >
+          <Ionicons
+            name={option.icon}
+            size={20}
+            color={option.destructive ? colors.negative : colors.primary}
+          />
+          <Text
+            style={[
+              styles.sheetText,
+              option.destructive && { color: colors.negative },
+            ]}
+          >
+            {option.label}
+          </Text>
+        </Pressable>
+      ))}
+    </BottomSheet>
   );
 };
 
@@ -452,69 +441,66 @@ const ChangePasswordModal = ({
   };
 
   return (
-    <Modal visible={visible} transparent animationType="slide" onRequestClose={close}>
-      <View style={styles.modalBackdrop}>
-        <View style={styles.modalCard}>
-          <Loader loading={isLoading} />
+    <BottomSheet
+      visible={visible}
+      onClose={close}
+      accessibilityLabel="Change password"
+      maxHeightRatio={0.92}
+      avoidKeyboard
+    >
+      <Loader loading={isLoading} />
 
-          <View style={styles.modalHeader}>
-            <Text style={styles.modalTitle}>Change password</Text>
-            <Pressable
-              onPress={close}
-              hitSlop={8}
-              accessibilityRole="button"
-              accessibilityLabel="Close"
-            >
-              <Ionicons name="close" size={22} color={colors.textMuted} />
-            </Pressable>
-          </View>
-
-          <ScrollView
-            contentContainerStyle={styles.modalContent}
-            keyboardShouldPersistTaps="handled"
-          >
-            <Text style={styles.label}>Current password</Text>
-            <TextInput
-              style={styles.input}
-              value={current}
-              onChangeText={setCurrent}
-              placeholder="Your current password"
-              placeholderTextColor={colors.placeholder}
-              secureTextEntry
-              autoCapitalize="none"
-            />
-
-            <Text style={[styles.label, styles.labelSpaced]}>New password</Text>
-            <TextInput
-              style={styles.input}
-              value={next}
-              onChangeText={setNext}
-              placeholder={`At least ${MIN_PASSWORD_LENGTH} characters`}
-              placeholderTextColor={colors.placeholder}
-              secureTextEntry
-              autoCapitalize="none"
-            />
-
-            <Text style={[styles.label, styles.labelSpaced]}>Confirm new password</Text>
-            <TextInput
-              style={styles.input}
-              value={confirm}
-              onChangeText={setConfirm}
-              placeholder="Type it again"
-              placeholderTextColor={colors.placeholder}
-              secureTextEntry
-              autoCapitalize="none"
-            />
-
-            <Button
-              title="Change Password"
-              onPress={handleSave}
-              buttonStyle={styles.modalButton}
-            />
-          </ScrollView>
-        </View>
+      <View style={styles.modalHeader}>
+        <Text style={styles.modalTitle}>Change password</Text>
+        <Pressable
+          onPress={close}
+          hitSlop={8}
+          accessibilityRole="button"
+          accessibilityLabel="Close"
+        >
+          <Ionicons name="close" size={22} color={colors.textMuted} />
+        </Pressable>
       </View>
-    </Modal>
+
+      <ScrollView
+        contentContainerStyle={styles.modalContent}
+        keyboardShouldPersistTaps="handled"
+        showsVerticalScrollIndicator={false}
+      >
+        <TextField
+          label="Current password"
+          value={current}
+          onChangeText={setCurrent}
+          placeholder="Your current password"
+          secureTextEntry
+          autoCapitalize="none"
+        />
+
+        <TextField
+          label="New password"
+          value={next}
+          onChangeText={setNext}
+          placeholder={`At least ${MIN_PASSWORD_LENGTH} characters`}
+          secureTextEntry
+          autoCapitalize="none"
+        />
+
+        <TextField
+          label="Confirm new password"
+          value={confirm}
+          onChangeText={setConfirm}
+          placeholder="Type it again"
+          secureTextEntry
+          autoCapitalize="none"
+        />
+
+        <Button
+          title="Change Password"
+          onPress={handleSave}
+          buttonStyle={styles.modalButton}
+        />
+      </ScrollView>
+    </BottomSheet>
   );
 };
 
@@ -627,23 +613,12 @@ const createStyles = (colors: ThemeColors) =>
       color: colors.negative,
       fontWeight: "500",
     },
-    modalBackdrop: {
-      flex: 1,
-      backgroundColor: colors.overlay,
-      justifyContent: "flex-end",
-    },
-    modalCard: {
-      backgroundColor: colors.background,
-      borderTopLeftRadius: 18,
-      borderTopRightRadius: 18,
-      maxHeight: "92%",
-    },
     modalHeader: {
       flexDirection: "row",
       alignItems: "center",
       justifyContent: "space-between",
       paddingHorizontal: 20,
-      paddingTop: 18,
+      paddingTop: 6,
       paddingBottom: 6,
     },
     modalTitle: {
@@ -655,40 +630,9 @@ const createStyles = (colors: ThemeColors) =>
       padding: 20,
       paddingBottom: 32,
     },
-    label: {
-      fontSize: 13,
-      fontWeight: "600",
-      color: colors.text,
-      marginBottom: 8,
-    },
-    labelSpaced: {
-      marginTop: 18,
-    },
-    input: {
-      borderWidth: 1,
-      borderColor: colors.border,
-      backgroundColor: colors.inputBackground,
-      borderRadius: radius.control,
-      paddingHorizontal: 12,
-      paddingVertical: 14,
-      fontSize: 16,
-      color: colors.text,
-    },
     modalButton: {
       width: "100%",
       marginTop: 24,
-    },
-    sheetBackdrop: {
-      flex: 1,
-      backgroundColor: colors.overlay,
-      justifyContent: "flex-end",
-    },
-    sheet: {
-      backgroundColor: colors.card,
-      borderTopLeftRadius: 18,
-      borderTopRightRadius: 18,
-      padding: 12,
-      paddingBottom: 28,
     },
     sheetRow: {
       flexDirection: "row",

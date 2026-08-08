@@ -1,5 +1,6 @@
 import React, { useEffect, useMemo, useState } from "react";
-import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
+import { Pressable, ScrollView, StyleSheet, View } from "react-native";
+import Text from "../components/Text";
 import { useRouter } from "expo-router";
 import DatePicker from "../components/DatePicker";
 import { amountFormat, showConfirmationAlert, showToast } from "../utils/Utils";

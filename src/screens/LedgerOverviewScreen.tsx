@@ -1,17 +1,15 @@
-﻿import React, { useMemo } from "react";
-import {
-  RefreshControl,
-  ScrollView,
-  StyleSheet,
-  Text,
-  View,
-} from "react-native";
+﻿import { LinearGradient } from "expo-linear-gradient";
+import React, { useMemo } from "react";
+import { RefreshControl, ScrollView, StyleSheet, View } from "react-native";
+import Animated, { FadeInDown } from "react-native-reanimated";
+import Text from "../components/Text";
 import { useCollectionState } from "../query/hooks";
 import MonthlyEarningsChart from "../components/MonthlyEarningsChart";
 import ProgressBar from "../components/ProgressBar";
 import { OverviewSkeleton } from "../components/Skeleton";
 import { useTheme } from "../context/ThemeContext";
 import { useAuth } from "../context/AuthContext";
+import { useCountUp } from "../hooks/useCountUp";
 import { hasFeature } from "../models/common";
 import { EarningModel, SavingModel } from "../models/LedgerModel";
 import { ExpenseModel } from "../models/ExpenseModel";
@@ -23,9 +21,14 @@ import {
   sumAmount,
   totalsBy,
 } from "../utils/ledger";
+import { gradientAngle, motion } from "../utils/tokens";
 import { amountFormat } from "../utils/Utils";
 
 const rupees = (value: number) => `₹ ${amountFormat(Math.round(value))}`;
+
+/** Staggered mount-in for the screen's card blocks below the hero. */
+const sectionDelay = (index: number) =>
+  Math.min(index * motion.staggerDelay * 2, motion.staggerMaxDelay);
 
 const LedgerOverviewScreen = () => {
   const { colors } = useTheme();
@@ -60,6 +63,7 @@ const LedgerOverviewScreen = () => {
   const totalSaved = useMemo(() => sumAmount(savings), [savings]);
   const totalSpent = useMemo(() => sumAmount(expenses), [expenses]);
   const rate = savingsRate(totalEarned, totalSaved);
+  const animatedEarned = useCountUp(totalEarned);
 
   const byClient = useMemo(
     () => totalsBy(earnings, (entry) => entry.clientName),
@@ -122,32 +126,41 @@ const LedgerOverviewScreen = () => {
       }
     >
       <View style={styles.heroCard}>
-        <Text style={styles.heroLabel}>Total earned</Text>
-        <Text style={styles.heroValue}>{rupees(totalEarned)}</Text>
+        <LinearGradient
+          colors={colors.gradientPrimary}
+          start={gradientAngle.start}
+          end={gradientAngle.end}
+          style={styles.heroTop}
+        >
+          <Text style={styles.heroLabel}>Total earned</Text>
+          <Text style={styles.heroValue}>{rupees(animatedEarned)}</Text>
+        </LinearGradient>
 
-        <View style={styles.heroSplit}>
-          <View style={styles.stat}>
-            <Text style={styles.statLabel}>Saved</Text>
-            <Text style={[styles.statValue, styles.saved]}>
-              {rupees(totalSaved)}
-            </Text>
-          </View>
-          {showExpenses && (
+        <View style={styles.heroBottom}>
+          <View style={styles.heroSplit}>
             <View style={styles.stat}>
-              <Text style={styles.statLabel}>Spent</Text>
-              <Text style={[styles.statValue, styles.spent]}>
-                {rupees(totalSpent)}
+              <Text style={styles.statLabel}>Saved</Text>
+              <Text style={[styles.statValue, styles.saved]}>
+                {rupees(totalSaved)}
               </Text>
             </View>
-          )}
-          <View style={styles.stat}>
-            <Text style={styles.statLabel}>Savings rate</Text>
-            <Text style={styles.statValue}>{Math.round(rate * 100)}%</Text>
+            {showExpenses && (
+              <View style={styles.stat}>
+                <Text style={styles.statLabel}>Spent</Text>
+                <Text style={[styles.statValue, styles.spent]}>
+                  {rupees(totalSpent)}
+                </Text>
+              </View>
+            )}
+            <View style={styles.stat}>
+              <Text style={styles.statLabel}>Savings rate</Text>
+              <Text style={styles.statValue}>{Math.round(rate * 100)}%</Text>
+            </View>
           </View>
-        </View>
 
-        <View style={styles.barWrap}>
-          <ProgressBar progress={rate} />
+          <View style={styles.barWrap}>
+            <ProgressBar progress={rate} />
+          </View>
         </View>
       </View>
 
@@ -161,31 +174,43 @@ const LedgerOverviewScreen = () => {
       )}
 
       {monthlyEarnings.months.length > 0 && monthlyEarnings.maxTotal > 0 && (
-        <View style={styles.card}>
+        <Animated.View
+          entering={FadeInDown.delay(sectionDelay(1)).duration(motion.staggerDuration)}
+          style={styles.card}
+        >
           <Text style={styles.sectionTitle}>Earnings by month</Text>
           <MonthlyEarningsChart data={monthlyEarnings} />
-        </View>
+        </Animated.View>
       )}
 
       {byClient.length > 0 && (
-        <View style={styles.card}>
+        <Animated.View
+          entering={FadeInDown.delay(sectionDelay(2)).duration(motion.staggerDuration)}
+          style={styles.card}
+        >
           <Text style={styles.sectionTitle}>Earnings by client</Text>
           {renderBuckets(byClient, colors.chartAmount)}
-        </View>
+        </Animated.View>
       )}
 
       {savingsByAccount.length > 0 && (
-        <View style={styles.card}>
+        <Animated.View
+          entering={FadeInDown.delay(sectionDelay(3)).duration(motion.staggerDuration)}
+          style={styles.card}
+        >
           <Text style={styles.sectionTitle}>Savings by account</Text>
           {renderBuckets(savingsByAccount, colors.chartInterest)}
-        </View>
+        </Animated.View>
       )}
 
       {showExpenses && expensesByType.length > 0 && (
-        <View style={styles.card}>
+        <Animated.View
+          entering={FadeInDown.delay(sectionDelay(4)).duration(motion.staggerDuration)}
+          style={styles.card}
+        >
           <Text style={styles.sectionTitle}>Expenses by type</Text>
           {renderBuckets(expensesByType, colors.chartAmount)}
-        </View>
+        </Animated.View>
       )}
     </ScrollView>
   );
@@ -201,32 +226,46 @@ const createStyles = (colors: ThemeColors) =>
       padding: 20,
       paddingBottom: 40,
     },
+    // Gradient top zone + flat bottom zone — see AssetOverviewScreen's
+    // `HeroCard` for the same split-card pattern and the reasoning.
     heroCard: {
-      backgroundColor: colors.card,
       borderRadius: 18,
-      borderWidth: StyleSheet.hairlineWidth,
-      borderColor: colors.border,
-      padding: 20,
+      overflow: "hidden",
+      backgroundColor: colors.card,
       marginBottom: 14,
+      shadowColor: colors.shadow,
+      shadowOffset: { width: 0, height: 4 },
+      shadowOpacity: 0.16,
+      shadowRadius: 14,
+      elevation: 4,
+    },
+    heroTop: {
+      padding: 20,
+      paddingBottom: 22,
+    },
+    heroBottom: {
+      paddingHorizontal: 20,
+      paddingBottom: 20,
     },
     heroLabel: {
       fontSize: 13,
       fontWeight: "600",
       textTransform: "uppercase",
       letterSpacing: 0.6,
-      color: colors.textMuted,
+      color: colors.onPrimary,
+      opacity: 0.75,
     },
     heroValue: {
       fontSize: 34,
-      fontWeight: "700",
-      color: colors.text,
+      fontWeight: "800",
+      color: colors.onPrimary,
       marginTop: 8,
       fontVariant: ["tabular-nums"],
     },
     heroSplit: {
       flexDirection: "row",
       justifyContent: "space-between",
-      marginTop: 20,
+      marginTop: 16,
       marginBottom: 14,
     },
     stat: {

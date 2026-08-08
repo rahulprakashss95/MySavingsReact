@@ -1,12 +1,8 @@
 import { Ionicons } from "@expo/vector-icons";
 import React, { useMemo, useState } from "react";
-import {
-  Pressable,
-  ScrollView,
-  StyleSheet,
-  Text,
-  View,
-} from "react-native";
+import { Pressable, ScrollView, StyleSheet, View } from "react-native";
+import Text from "./Text";
+import Svg, { Circle, Defs, LinearGradient, Path, Stop } from "react-native-svg";
 import { useTheme } from "../context/ThemeContext";
 import { ThemeColors } from "../utils/Color";
 import { MonthlyTypeData, OTHER_TYPE } from "../utils/ledger";
@@ -26,8 +22,31 @@ const COLUMN_WIDTH = 34;
 const COLUMN_GAP = 14;
 const SLOT = COLUMN_WIDTH + COLUMN_GAP;
 const SEGMENT_GAP = 2;
-const DOT = 9;
-const LINE_THICKNESS = 2;
+const DOT_RADIUS = 4.5;
+const DOT_RADIUS_SELECTED = 5.5;
+
+/**
+ * Catmull-Rom to cubic-bezier conversion (tension 1/6) — a smooth curve
+ * through every point without overshooting past its neighbours, the standard
+ * technique for turning a polyline into a natural-looking line chart.
+ */
+const smoothLinePath = (points: { x: number; y: number }[]) => {
+  if (points.length === 0) return "";
+  if (points.length === 1) return `M ${points[0].x} ${points[0].y}`;
+  let d = `M ${points[0].x} ${points[0].y}`;
+  for (let i = 0; i < points.length - 1; i++) {
+    const p0 = points[i - 1] ?? points[i];
+    const p1 = points[i];
+    const p2 = points[i + 1];
+    const p3 = points[i + 2] ?? p2;
+    const cp1x = p1.x + (p2.x - p0.x) / 6;
+    const cp1y = p1.y + (p2.y - p0.y) / 6;
+    const cp2x = p2.x - (p3.x - p1.x) / 6;
+    const cp2y = p2.y - (p3.y - p1.y) / 6;
+    d += ` C ${cp1x} ${cp1y} ${cp2x} ${cp2y} ${p2.x} ${p2.y}`;
+  }
+  return d;
+};
 
 const rupees = (value: number) => `₹ ${amountFormat(Math.round(value))}`;
 
@@ -149,58 +168,58 @@ const MonthlyEarningsChart = ({ data }: IMonthlyEarningsChart) => {
       );
     });
 
-  // Points at each column's centre. Without react-native-svg the line is drawn
-  // as rotated View segments: a bar of length |AB|, centred on AB's midpoint and
-  // rotated to its angle, lands its ends exactly on A and B.
+  // Points at each column's centre, plotted with a smooth Catmull-Rom curve
+  // through them via react-native-svg rather than straight rotated segments.
   const points = data.months.map((month, index) => ({
     month,
     x: index * SLOT + COLUMN_WIDTH / 2,
     y: CHART_HEIGHT - scale(month.total),
   }));
+  const linePath = useMemo(() => smoothLinePath(points), [points]);
+  const areaPath = useMemo(() => {
+    if (points.length === 0) return "";
+    const first = points[0];
+    const last = points[points.length - 1];
+    return `${linePath} L ${last.x} ${CHART_HEIGHT} L ${first.x} ${CHART_HEIGHT} Z`;
+  }, [linePath, points]);
 
   const renderLine = () => (
     <View style={{ width: plotWidth }}>
       <View style={{ width: plotWidth, height: CHART_HEIGHT }}>
-        {points.slice(1).map((point, index) => {
-          const start = points[index];
-          const dx = point.x - start.x;
-          const dy = point.y - start.y;
-          const length = Math.sqrt(dx * dx + dy * dy);
-          const angle = (Math.atan2(dy, dx) * 180) / Math.PI;
-          return (
-            <View
-              key={point.month.key}
-              pointerEvents="none"
-              style={[
-                styles.lineSegment,
-                {
-                  width: length,
-                  left: (start.x + point.x) / 2 - length / 2,
-                  top: (start.y + point.y) / 2 - LINE_THICKNESS / 2,
-                  transform: [{ rotate: `${angle}deg` }],
-                },
-              ]}
+        <Svg width={plotWidth} height={CHART_HEIGHT} style={StyleSheet.absoluteFill}>
+          <Defs>
+            <LinearGradient id="monthlyAreaFill" x1="0" y1="0" x2="0" y2="1">
+              <Stop offset="0" stopColor={colors.chartAmount} stopOpacity={0.28} />
+              <Stop offset="1" stopColor={colors.chartAmount} stopOpacity={0} />
+            </LinearGradient>
+          </Defs>
+          {!!areaPath && <Path d={areaPath} fill="url(#monthlyAreaFill)" />}
+          {!!linePath && (
+            <Path
+              d={linePath}
+              fill="none"
+              stroke={colors.chartAmount}
+              strokeWidth={2}
+              strokeLinecap="round"
+              strokeLinejoin="round"
             />
-          );
-        })}
-
-        {points.map((point) => {
-          const isSelected = point.month.key === selected?.key;
-          return (
-            <View
-              key={point.month.key}
-              pointerEvents="none"
-              style={[
-                styles.dot,
-                {
-                  left: point.x - DOT / 2,
-                  top: point.y - DOT / 2,
-                },
-                isSelected && styles.dotSelected,
-              ]}
-            />
-          );
-        })}
+          )}
+          {points.map((point) => {
+            const isSelected = point.month.key === selected?.key;
+            return (
+              <Circle
+                key={point.month.key}
+                cx={point.x}
+                cy={point.y}
+                r={isSelected ? DOT_RADIUS_SELECTED : DOT_RADIUS}
+                // A surface ring lifts the active point off the line.
+                fill={isSelected ? colors.text : colors.chartAmount}
+                stroke={colors.card}
+                strokeWidth={isSelected ? 2 : 0}
+              />
+            );
+          })}
+        </Svg>
 
         {/* Total above each point, sitting in the headroom left by the scale. */}
         {points.map((point) =>
@@ -429,25 +448,6 @@ const createStyles = (colors: ThemeColors) =>
       height: 2,
       borderRadius: 1,
       backgroundColor: colors.border,
-    },
-    lineSegment: {
-      position: "absolute",
-      height: LINE_THICKNESS,
-      borderRadius: LINE_THICKNESS / 2,
-      backgroundColor: colors.chartAmount,
-    },
-    dot: {
-      position: "absolute",
-      width: DOT,
-      height: DOT,
-      borderRadius: DOT / 2,
-      backgroundColor: colors.chartAmount,
-    },
-    dotSelected: {
-      // A surface ring lifts the active point off the line.
-      borderWidth: 2,
-      borderColor: colors.card,
-      backgroundColor: colors.text,
     },
     hitTarget: {
       position: "absolute",

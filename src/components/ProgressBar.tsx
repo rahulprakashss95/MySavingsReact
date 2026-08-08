@@ -1,6 +1,13 @@
-import React from "react";
+import React, { useEffect } from "react";
 import { StyleSheet, View } from "react-native";
+import Animated, {
+  Easing,
+  useAnimatedStyle,
+  useSharedValue,
+  withTiming,
+} from "react-native-reanimated";
 import { useTheme } from "../context/ThemeContext";
+import { motion } from "../utils/tokens";
 
 type IProgressBar = {
   /** 0–1. Clamped, so a rounding error can't overflow the track. */
@@ -11,6 +18,21 @@ type IProgressBar = {
 const ProgressBar = ({ progress, color }: IProgressBar) => {
   const { colors } = useTheme();
   const clamped = Math.max(0, Math.min(progress, 1));
+  const width = useSharedValue(0);
+
+  // Fills in from empty on mount, and eases toward the new value whenever the
+  // underlying figure changes — matches the app's stagger/count-up timing
+  // rather than snapping the bar straight to its target width.
+  useEffect(() => {
+    width.value = withTiming(clamped, {
+      duration: motion.staggerDuration,
+      easing: Easing.out(Easing.cubic),
+    });
+  }, [clamped, width]);
+
+  const animatedStyle = useAnimatedStyle(() => ({
+    width: `${width.value * 100}%`,
+  }));
 
   return (
     <View
@@ -18,13 +40,11 @@ const ProgressBar = ({ progress, color }: IProgressBar) => {
       accessibilityValue={{ now: Math.round(clamped * 100), min: 0, max: 100 }}
       style={[styles.track, { backgroundColor: colors.chartTrack }]}
     >
-      <View
+      <Animated.View
         style={[
           styles.fill,
-          {
-            width: `${clamped * 100}%`,
-            backgroundColor: color ?? colors.positive,
-          },
+          animatedStyle,
+          { backgroundColor: color ?? colors.positive },
         ]}
       />
     </View>

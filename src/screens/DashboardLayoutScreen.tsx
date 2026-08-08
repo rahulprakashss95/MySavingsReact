@@ -1,6 +1,8 @@
 import { Ionicons } from "@expo/vector-icons";
+import { LinearGradient } from "expo-linear-gradient";
 import React, { useMemo } from "react";
-import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
+import { Pressable, ScrollView, StyleSheet, View } from "react-native";
+import Text from "../components/Text";
 
 import Card from "../components/Card";
 import { useAuth } from "../context/AuthContext";
@@ -17,7 +19,8 @@ import {
   QuickAccessItem,
   resolveQuickAccess,
 } from "../models/quickAccess";
-import { ThemeColors, tint } from "../utils/Color";
+import { ThemeColors } from "../utils/Color";
+import { gradientAngle } from "../utils/tokens";
 
 const SECTION_META: Record<
   DashboardSection,
@@ -216,9 +219,14 @@ const DashboardLayoutScreen = () => {
               key={item.id}
               style={[styles.row, index > 0 && styles.rowDivider]}
             >
-              <View style={[styles.chipIcon, { backgroundColor: tint(accent) }]}>
+              <LinearGradient
+                colors={[`${accent}3d`, `${accent}12`]}
+                start={gradientAngle.start}
+                end={gradientAngle.end}
+                style={styles.chipIcon}
+              >
                 <Ionicons name={item.icon} size={18} color={accent} />
-              </View>
+              </LinearGradient>
               <View style={styles.rowText}>
                 <Text style={styles.rowLabel}>{item.label}</Text>
                 <Text style={styles.rowDescription}>{item.group}</Text>
@@ -311,11 +319,14 @@ const DashboardLayoutScreen = () => {
                     isFull && styles.rowDisabled,
                   ]}
                 >
-                  <View
-                    style={[styles.chipIcon, { backgroundColor: tint(accent) }]}
+                  <LinearGradient
+                    colors={[`${accent}3d`, `${accent}12`]}
+                    start={gradientAngle.start}
+                    end={gradientAngle.end}
+                    style={styles.chipIcon}
                   >
                     <Ionicons name={item.icon} size={18} color={accent} />
-                  </View>
+                  </LinearGradient>
                   <Text style={[styles.rowLabel, styles.rowText]}>
                     {item.label}
                   </Text>

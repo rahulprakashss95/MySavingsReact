@@ -49,4 +49,13 @@ export const motion = {
   pressDuration: 150,
   pressScale: 0.97,
   fabPressScale: 0.94,
+  /** Entrance stagger for grouped rows / tiles / dashboard cards on mount. */
+  staggerDelay: 35,
+  staggerMaxDelay: 280,
+  staggerDuration: 320,
+  /** Hero numeric count-up (Home Worth/Month, overview heroes). */
+  countUpDuration: 700,
 } as const;
+
+/** Diagonal wash for hero cards/icon chips — paired with `gradientX` color tokens. */
+export const gradientAngle = { start: { x: 0, y: 0 }, end: { x: 1, y: 1 } } as const;

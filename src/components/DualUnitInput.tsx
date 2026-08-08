@@ -1,5 +1,7 @@
 import React, { useMemo, useState } from "react";
-import { StyleSheet, Text, TextInput, View } from "react-native";
+import { StyleSheet, View } from "react-native";
+import Text from "./Text";
+import TextField from "./TextField";
 import { useTheme } from "../context/ThemeContext";
 import { ThemeColors } from "../utils/Color";
 import { fromUnit, toUnit } from "../utils/assets";
@@ -20,6 +22,10 @@ type IDualUnitInput = {
 /**
  * Two fields, one value. Only the canonical unit is stored; the derived one is
  * recomputed from it, so the two can never drift apart in the database.
+ *
+ * Built on the shared `TextField` so both halves get the same focus glow,
+ * border and background as every other input in the app, instead of a
+ * hand-rolled bordered row with no focus state of its own.
  *
  * While the derived field has focus its text is left alone — otherwise typing
  * "1.5" would round-trip through the conversion after the "1." keystroke and
@@ -51,34 +57,28 @@ const DualUnitInput = (props: IDualUnitInput) => {
     <View>
       <Text style={styles.label}>{label}</Text>
       <View style={styles.row}>
-        <View style={[styles.field, styles.fieldSpacing]}>
-          <TextInput
-            style={styles.input}
-            value={value}
-            onChangeText={handleCanonicalChange}
-            placeholder="0"
-            placeholderTextColor={colors.placeholder}
-            keyboardType="decimal-pad"
-          />
-          <Text style={styles.unit}>{props.canonicalUnit}</Text>
-        </View>
+        <TextField
+          containerStyle={[styles.field, styles.fieldSpacing]}
+          value={value}
+          onChangeText={handleCanonicalChange}
+          placeholder="0"
+          keyboardType="decimal-pad"
+          suffix={props.canonicalUnit}
+        />
 
-        <View style={styles.field}>
-          <TextInput
-            style={styles.input}
-            value={derivedValue}
-            onChangeText={handleDerivedChange}
-            onFocus={() => {
-              setDerivedText(toUnit(value, perDerivedUnit));
-              setIsEditingDerived(true);
-            }}
-            onBlur={() => setIsEditingDerived(false)}
-            placeholder="0"
-            placeholderTextColor={colors.placeholder}
-            keyboardType="decimal-pad"
-          />
-          <Text style={styles.unit}>{props.derivedUnit}</Text>
-        </View>
+        <TextField
+          containerStyle={styles.field}
+          value={derivedValue}
+          onChangeText={handleDerivedChange}
+          onFocus={() => {
+            setDerivedText(toUnit(value, perDerivedUnit));
+            setIsEditingDerived(true);
+          }}
+          onBlur={() => setIsEditingDerived(false)}
+          placeholder="0"
+          keyboardType="decimal-pad"
+          suffix={props.derivedUnit}
+        />
       </View>
     </View>
   );
@@ -94,31 +94,12 @@ const createStyles = (colors: ThemeColors) =>
     },
     row: {
       flexDirection: "row",
-      marginBottom: 18,
     },
     field: {
       flex: 1,
-      flexDirection: "row",
-      alignItems: "center",
-      borderWidth: 1,
-      borderColor: colors.border,
-      backgroundColor: colors.inputBackground,
-      borderRadius: 10,
-      paddingHorizontal: 12,
     },
     fieldSpacing: {
       marginRight: 10,
-    },
-    input: {
-      flex: 1,
-      paddingVertical: 14,
-      fontSize: 16,
-      color: colors.text,
-    },
-    unit: {
-      fontSize: 13,
-      color: colors.textMuted,
-      marginLeft: 6,
     },
   });
 

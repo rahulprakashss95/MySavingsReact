@@ -1,16 +1,8 @@
 import { Ionicons } from "@expo/vector-icons";
 import React, { useCallback, useMemo, useState } from "react";
 import { useFocusEffect } from "expo-router";
-import {
-  ActivityIndicator,
-  Modal,
-  Pressable,
-  ScrollView,
-  StyleSheet,
-  Text,
-  TextInput,
-  View,
-} from "react-native";
+import { ActivityIndicator, Pressable, ScrollView, StyleSheet, View } from "react-native";
+import Text from "../components/Text";
 import {
   createLoginUser,
   deleteLoginUser,
@@ -24,8 +16,11 @@ import {
 } from "../../database/query";
 import Toast from "react-native-toast-message";
 import Avatar from "../components/Avatar";
+import BottomSheet from "../components/BottomSheet";
 import Button from "../components/Button";
+import FormSection from "../components/FormSection";
 import ModuleAccessPicker from "../components/ModuleAccessPicker";
+import TextField from "../components/TextField";
 import { useAuth } from "../context/AuthContext";
 import { useTheme } from "../context/ThemeContext";
 import { ALL_FEATURE_KEYS, FeatureKey } from "../models/common";
@@ -245,22 +240,18 @@ const AdminScreen = () => {
     >
       {/* Family settings */}
       <Text style={styles.sectionTitle}>Family</Text>
-      <View style={styles.card}>
-        <Text style={styles.label}>Family name</Text>
-        <TextInput
-          style={styles.input}
+      <FormSection>
+        <TextField
+          label="Family name"
           value={familyName}
           onChangeText={setFamilyName}
           placeholder="Family name"
-          placeholderTextColor={colors.placeholder}
         />
-        <Text style={[styles.label, styles.labelSpacing]}>Family ID</Text>
-        <TextInput
-          style={styles.input}
+        <TextField
+          label="Family ID"
           value={familyCode}
           onChangeText={setFamilyCode}
           placeholder="family_id"
-          placeholderTextColor={colors.placeholder}
           autoCapitalize="none"
         />
         <Button
@@ -269,7 +260,7 @@ const AdminScreen = () => {
           loading={savingFamily}
           buttonStyle={styles.inlineButton}
         />
-      </View>
+      </FormSection>
 
       {/* Members */}
       <View style={styles.membersHeader}>
@@ -348,137 +339,139 @@ const AdminScreen = () => {
         ))
       )}
 
-      {/* Member add/edit modal */}
-      <Modal
+      {/* Member add/edit sheet */}
+      <BottomSheet
         visible={!!form}
-        transparent
-        animationType="fade"
-        onRequestClose={() => setForm(null)}
+        onClose={() => setForm(null)}
+        accessibilityLabel={form?.editingId ? "Edit member" : "Add member"}
+        maxHeightRatio={0.92}
+        avoidKeyboard
       >
-        <View style={styles.modalBackdrop}>
-          <View style={styles.modalCard}>
-            <ScrollView showsVerticalScrollIndicator={false}>
-              <Text style={styles.modalTitle}>
-                {form?.editingId ? "Edit member" : "Add member"}
-              </Text>
-
-              <Text style={styles.label}>Username</Text>
-              <TextInput
-                style={styles.input}
-                value={form?.username}
-                onChangeText={(v) =>
-                  setForm((f) => (f ? { ...f, username: v } : f))
-                }
-                placeholder="Username"
-                placeholderTextColor={colors.placeholder}
-                autoCapitalize="none"
-              />
-
-              <Text style={[styles.label, styles.labelSpacing]}>
-                Name (optional)
-              </Text>
-              <TextInput
-                style={styles.input}
-                value={form?.name}
-                onChangeText={(v) => setForm((f) => (f ? { ...f, name: v } : f))}
-                placeholder="Display name"
-                placeholderTextColor={colors.placeholder}
-              />
-
-              <Text style={[styles.label, styles.labelSpacing]}>
-                {form?.editingId ? "New password (optional)" : "Password"}
-              </Text>
-              <TextInput
-                style={styles.input}
-                value={form?.password}
-                onChangeText={(v) =>
-                  setForm((f) => (f ? { ...f, password: v } : f))
-                }
-                placeholder={
-                  form?.editingId
-                    ? "Leave blank to keep current"
-                    : `${MIN_PASSWORD_LENGTH}+ chars, a letter and a number`
-                }
-                placeholderTextColor={colors.placeholder}
-                secureTextEntry
-                autoCapitalize="none"
-              />
-
-              <Text style={[styles.label, styles.labelSpacing]}>Role</Text>
-              <View style={styles.roleRow}>
-                {(["member", "admin"] as UserRole[]).map((role) => {
-                  const active = form?.role === role;
-                  const isSelf = form?.editingId === user?.id;
-                  // Don't let an admin demote themselves and risk locking out.
-                  const locked = isSelf && role === "member";
-                  return (
-                    <Pressable
-                      key={role}
-                      onPress={() =>
-                        !locked &&
-                        setForm((f) => (f ? { ...f, role } : f))
-                      }
-                      style={[
-                        styles.roleOption,
-                        active && styles.roleOptionActive,
-                        locked && styles.roleOptionLocked,
-                      ]}
-                    >
-                      <Text
-                        style={[
-                          styles.roleOptionText,
-                          active && styles.roleOptionTextActive,
-                        ]}
-                      >
-                        {role === "admin" ? "Admin" : "Member"}
-                      </Text>
-                    </Pressable>
-                  );
-                })}
-              </View>
-
-              <Text style={[styles.label, styles.labelSpacing]}>
-                Module access
-              </Text>
-              <Text style={styles.helper}>
-                {form?.role === "admin"
-                  ? "Admins can open every module."
-                  : "Pick which modules this member can open."}
-              </Text>
-              <ModuleAccessPicker
-                value={
-                  form?.role === "admin"
-                    ? [...ALL_FEATURE_KEYS]
-                    : form?.moduleAccess ?? []
-                }
-                onChange={(next) =>
-                  setForm((f) => (f ? { ...f, moduleAccess: next } : f))
-                }
-                disabled={form?.role === "admin"}
-              />
-
-              <View style={styles.modalActions}>
-                <Pressable
-                  onPress={() => setForm(null)}
-                  style={styles.cancelButton}
-                  accessibilityRole="button"
-                >
-                  <Text style={styles.cancelText}>Cancel</Text>
-                </Pressable>
-                <Button
-                  onPress={saveMember}
-                  title="Save"
-                  loading={savingMember}
-                  buttonStyle={styles.saveButton}
-                />
-              </View>
-            </ScrollView>
-          </View>
+        <View style={styles.modalHeader}>
+          <Text style={styles.modalTitle}>
+            {form?.editingId ? "Edit member" : "Add member"}
+          </Text>
+          <Pressable
+            onPress={() => setForm(null)}
+            hitSlop={8}
+            accessibilityRole="button"
+            accessibilityLabel="Close"
+          >
+            <Ionicons name="close" size={22} color={colors.textMuted} />
+          </Pressable>
         </View>
-        {/* A Modal renders above the app-root <Toast />, so mount a second
-            Toast inside it to keep toasts visible while the modal is open. */}
+
+        <ScrollView
+          contentContainerStyle={styles.modalContent}
+          keyboardShouldPersistTaps="handled"
+          showsVerticalScrollIndicator={false}
+        >
+          <TextField
+            label="Username"
+            value={form?.username}
+            onChangeText={(v) =>
+              setForm((f) => (f ? { ...f, username: v } : f))
+            }
+            placeholder="Username"
+            autoCapitalize="none"
+          />
+
+          <TextField
+            label="Name (optional)"
+            value={form?.name}
+            onChangeText={(v) => setForm((f) => (f ? { ...f, name: v } : f))}
+            placeholder="Display name"
+          />
+
+          <TextField
+            label={form?.editingId ? "New password (optional)" : "Password"}
+            value={form?.password}
+            onChangeText={(v) =>
+              setForm((f) => (f ? { ...f, password: v } : f))
+            }
+            placeholder={
+              form?.editingId
+                ? "Leave blank to keep current"
+                : `${MIN_PASSWORD_LENGTH}+ chars, a letter and a number`
+            }
+            secureTextEntry
+            autoCapitalize="none"
+          />
+
+          <Text style={styles.label}>Role</Text>
+          <View style={styles.roleRow}>
+            {(["member", "admin"] as UserRole[]).map((role) => {
+              const active = form?.role === role;
+              const isSelf = form?.editingId === user?.id;
+              // Don't let an admin demote themselves and risk locking out.
+              const locked = isSelf && role === "member";
+              return (
+                <Pressable
+                  key={role}
+                  onPress={() =>
+                    !locked &&
+                    setForm((f) => (f ? { ...f, role } : f))
+                  }
+                  style={[
+                    styles.roleOption,
+                    active && styles.roleOptionActive,
+                    locked && styles.roleOptionLocked,
+                  ]}
+                >
+                  <Text
+                    style={[
+                      styles.roleOptionText,
+                      active && styles.roleOptionTextActive,
+                    ]}
+                  >
+                    {role === "admin" ? "Admin" : "Member"}
+                  </Text>
+                </Pressable>
+              );
+            })}
+          </View>
+
+          <Text style={[styles.label, styles.labelSpacing]}>
+            Module access
+          </Text>
+          <Text style={styles.helper}>
+            {form?.role === "admin"
+              ? "Admins can open every module."
+              : "Pick which modules this member can open."}
+          </Text>
+          <ModuleAccessPicker
+            value={
+              form?.role === "admin"
+                ? [...ALL_FEATURE_KEYS]
+                : form?.moduleAccess ?? []
+            }
+            onChange={(next) =>
+              setForm((f) => (f ? { ...f, moduleAccess: next } : f))
+            }
+            disabled={form?.role === "admin"}
+          />
+
+          <View style={styles.modalActions}>
+            <Pressable
+              onPress={() => setForm(null)}
+              style={styles.cancelButton}
+              accessibilityRole="button"
+            >
+              <Text style={styles.cancelText}>Cancel</Text>
+            </Pressable>
+            <Button
+              onPress={saveMember}
+              title="Save"
+              loading={savingMember}
+              buttonStyle={styles.saveButton}
+            />
+          </View>
+        </ScrollView>
+
+        {/* BottomSheet renders its own Modal above the app-root <Toast />, so
+            mount a second Toast inside it to keep toasts visible while open. */}
         <Toast />
-      </Modal>
+      </BottomSheet>
     </ScrollView>
   );
 };
@@ -509,14 +502,6 @@ const createStyles = (colors: ThemeColors) =>
       color: colors.textMuted,
       marginBottom: 12,
     },
-    card: {
-      backgroundColor: colors.card,
-      borderRadius: radius.card,
-      borderWidth: StyleSheet.hairlineWidth,
-      borderColor: colors.border,
-      padding: 16,
-      marginBottom: 26,
-    },
     label: {
       fontSize: 13,
       fontWeight: "600",
@@ -524,16 +509,6 @@ const createStyles = (colors: ThemeColors) =>
       marginBottom: 8,
     },
     labelSpacing: { marginTop: 14 },
-    input: {
-      borderWidth: 1,
-      borderColor: colors.border,
-      backgroundColor: colors.inputBackground,
-      borderRadius: radius.control,
-      paddingHorizontal: 12,
-      paddingVertical: 12,
-      fontSize: 15,
-      color: colors.text,
-    },
     inlineButton: { width: "100%", marginTop: 18 },
     membersHeader: {
       flexDirection: "row",
@@ -596,23 +571,22 @@ const createStyles = (colors: ThemeColors) =>
     },
     memberSub: { fontSize: 13, color: colors.textMuted, marginTop: 2 },
     iconButton: { padding: 8 },
-    modalBackdrop: {
-      flex: 1,
-      backgroundColor: colors.overlay,
-      justifyContent: "center",
-      padding: 20,
-    },
-    modalCard: {
-      backgroundColor: colors.card,
-      borderRadius: radius.sheet,
-      padding: 20,
-      maxHeight: "88%",
+    modalHeader: {
+      flexDirection: "row",
+      alignItems: "center",
+      justifyContent: "space-between",
+      paddingHorizontal: 20,
+      paddingTop: 6,
+      paddingBottom: 6,
     },
     modalTitle: {
       fontSize: 18,
       fontWeight: "700",
       color: colors.text,
-      marginBottom: 18,
+    },
+    modalContent: {
+      padding: 20,
+      paddingBottom: 32,
     },
     helper: {
       fontSize: 12,

@@ -37,6 +37,14 @@ export type ThemeColors = {
    */
   chartSeries: string[];
   chartOther: string;
+  /**
+   * Gradient stops for hero moments only (Home Worth/Month cards, overview
+   * heroes, primary Button/FAB fill) — see DESIGN.md "Gradient hero moments,
+   * not gradient everywhere". Never used on grouped rows/lists.
+   */
+  gradientPrimary: [string, string];
+  gradientAmber: [string, string];
+  gradientViolet: [string, string];
 };
 
 /**
@@ -72,6 +80,9 @@ export const LightColors: ThemeColors = {
   chartTrack: "#eceff2",
   chartSeries: ["#2a78d6", "#1baf7a", "#eda100", "#008300", "#4a3aa7", "#e34948"],
   chartOther: "#898781",
+  gradientPrimary: ["#3679b8", "#193f68"],
+  gradientAmber: ["#d99328", "#8a5300"],
+  gradientViolet: ["#8659d1", "#4a2d80"],
 };
 
 export const DarkColors: ThemeColors = {
@@ -96,4 +107,7 @@ export const DarkColors: ThemeColors = {
   chartTrack: "#2b2b2e",
   chartSeries: ["#3987e5", "#199e70", "#c98500", "#008300", "#9085e9", "#e66767"],
   chartOther: "#9ba1a6",
+  gradientPrimary: ["#7db4e3", "#33638f"],
+  gradientAmber: ["#f7c878", "#b57e26"],
+  gradientViolet: ["#c0abe8", "#6f5aa8"],
 };

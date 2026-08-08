@@ -1,5 +1,7 @@
 import { useMemo, useState } from "react";
-import { StyleSheet, Text, TextInput, TextInputProps, View } from "react-native";
+import { StyleSheet, TextInputProps, View } from "react-native";
+import Text from "./Text";
+import TextInput from "./TextInput";
 import { useTheme } from "../context/ThemeContext";
 import { ThemeColors } from "../utils/Color";
 import { radius, spacing } from "../utils/tokens";
@@ -117,9 +119,19 @@ const createStyles = (colors: ThemeColors) =>
     },
     inputFocused: {
       borderColor: colors.primary,
+      shadowColor: colors.primary,
+      shadowOffset: { width: 0, height: 0 },
+      shadowOpacity: 0.22,
+      shadowRadius: 6,
+      elevation: 2,
     },
     inputError: {
       borderColor: colors.negative,
+      shadowColor: colors.negative,
+      shadowOffset: { width: 0, height: 0 },
+      shadowOpacity: 0.18,
+      shadowRadius: 5,
+      elevation: 1,
     },
     multiline: {
       minHeight: 96,

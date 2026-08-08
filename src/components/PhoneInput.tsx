@@ -1,17 +1,9 @@
 import { Ionicons } from "@expo/vector-icons";
-import React, { useEffect, useMemo, useState } from "react";
-import {
-  FlatList,
-  Keyboard,
-  Modal,
-  Platform,
-  Pressable,
-  StyleSheet,
-  Text,
-  TextInput,
-  useWindowDimensions,
-  View,
-} from "react-native";
+import React, { useMemo, useState } from "react";
+import { FlatList, Pressable, StyleSheet, View } from "react-native";
+import Text from "./Text";
+import TextInput from "./TextInput";
+import BottomSheet from "./BottomSheet";
 import { useTheme } from "../context/ThemeContext";
 import { COUNTRIES, Country } from "../utils/countryCodes";
 import { ThemeColors } from "../utils/Color";
@@ -45,31 +37,9 @@ const PhoneInput = ({
 }: Props) => {
   const { colors } = useTheme();
   const styles = useMemo(() => createStyles(colors), [colors]);
-  const { height: windowHeight } = useWindowDimensions();
 
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState("");
-  const [keyboardHeight, setKeyboardHeight] = useState(0);
-
-  // Lift the sheet above the keyboard ourselves: a RN Modal is its own window
-  // and doesn't resize for the keyboard, so KeyboardAvoidingView can't see it.
-  useEffect(() => {
-    if (!open) {
-      return;
-    }
-    const showEvent =
-      Platform.OS === "ios" ? "keyboardWillShow" : "keyboardDidShow";
-    const hideEvent =
-      Platform.OS === "ios" ? "keyboardWillHide" : "keyboardDidHide";
-    const showSub = Keyboard.addListener(showEvent, (e) =>
-      setKeyboardHeight(e.endCoordinates?.height ?? 0)
-    );
-    const hideSub = Keyboard.addListener(hideEvent, () => setKeyboardHeight(0));
-    return () => {
-      showSub.remove();
-      hideSub.remove();
-    };
-  }, [open]);
 
   const trimmed = query.trim();
   const filtered = useMemo(() => {
@@ -88,8 +58,6 @@ const PhoneInput = ({
   }, [trimmed]);
 
   const closeSheet = () => {
-    Keyboard.dismiss();
-    setKeyboardHeight(0);
     setOpen(false);
     setQuery("");
   };
@@ -123,66 +91,55 @@ const PhoneInput = ({
         />
       </View>
 
-      <Modal
+      <BottomSheet
         visible={open}
-        transparent
-        animationType="fade"
-        onRequestClose={closeSheet}
+        onClose={closeSheet}
+        accessibilityLabel="Choose a country code"
+        contentContainerStyle={styles.sheetContent}
       >
-        <View style={[styles.backdrop, { paddingBottom: keyboardHeight }]}>
-          <Pressable style={StyleSheet.absoluteFill} onPress={closeSheet} />
-          <View
-            style={[
-              styles.sheet,
-              // Centered in the space left above the keyboard, never taller.
-              { maxHeight: windowHeight - keyboardHeight - 120 },
-            ]}
-          >
-            <View style={styles.searchRow}>
-              <Ionicons name="search" size={18} color={colors.textMuted} />
-              <TextInput
-                style={styles.searchInput}
-                value={query}
-                onChangeText={setQuery}
-                placeholder="Search country or code"
-                placeholderTextColor={colors.placeholder}
-                autoFocus
-                autoCapitalize="none"
-                autoCorrect={false}
-                returnKeyType="done"
-              />
-            </View>
-
-            <FlatList
-              data={filtered}
-              keyExtractor={(country) => country.code}
-              keyboardShouldPersistTaps="handled"
-              style={styles.list}
-              renderItem={({ item }) => (
-                <Pressable
-                  style={styles.countryRow}
-                  onPress={() => choose(item)}
-                  accessibilityRole="button"
-                >
-                  <Text style={styles.countryName} numberOfLines={1}>
-                    {item.name}
-                  </Text>
-                  <Text style={styles.countryDial}>{item.dial}</Text>
-                  {/* Matched on the dial code, so shared codes (+1, +44) tick
-                      every country that uses them — the record only stores the
-                      code, so that is honestly all we know. */}
-                  {item.dial === dialCode && (
-                    <Ionicons name="checkmark" size={18} color={colors.primary} />
-                  )}
-                </Pressable>
-              )}
-              ListEmptyComponent={
-                <Text style={styles.empty}>No matches</Text>
-              }
-            />
-          </View>
+        <View style={styles.searchRow}>
+          <Ionicons name="search" size={18} color={colors.textMuted} />
+          <TextInput
+            style={styles.searchInput}
+            value={query}
+            onChangeText={setQuery}
+            placeholder="Search country or code"
+            placeholderTextColor={colors.placeholder}
+            autoFocus
+            autoCapitalize="none"
+            autoCorrect={false}
+            returnKeyType="done"
+          />
         </View>
-      </Modal>
+
+        <FlatList
+          data={filtered}
+          keyExtractor={(country) => country.code}
+          keyboardShouldPersistTaps="handled"
+          style={styles.list}
+          renderItem={({ item }) => (
+            <Pressable
+              style={styles.countryRow}
+              onPress={() => choose(item)}
+              accessibilityRole="button"
+            >
+              <Text style={styles.countryName} numberOfLines={1}>
+                {item.name}
+              </Text>
+              <Text style={styles.countryDial}>{item.dial}</Text>
+              {/* Matched on the dial code, so shared codes (+1, +44) tick
+                  every country that uses them — the record only stores the
+                  code, so that is honestly all we know. */}
+              {item.dial === dialCode && (
+                <Ionicons name="checkmark" size={18} color={colors.primary} />
+              )}
+            </Pressable>
+          )}
+          ListEmptyComponent={
+            <Text style={styles.empty}>No matches</Text>
+          }
+        />
+      </BottomSheet>
     </>
   );
 };
@@ -227,17 +184,8 @@ const createStyles = (colors: ThemeColors) =>
       fontSize: 16,
       color: colors.text,
     },
-    backdrop: {
-      flex: 1,
-      backgroundColor: colors.overlay,
-      justifyContent: "center",
-      paddingHorizontal: 20,
-    },
-    sheet: {
-      backgroundColor: colors.card,
-      borderRadius: 16,
-      padding: 12,
-      paddingBottom: 16,
+    sheetContent: {
+      paddingHorizontal: 12,
     },
     searchRow: {
       flexDirection: "row",

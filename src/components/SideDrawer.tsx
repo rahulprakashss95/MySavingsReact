@@ -1,16 +1,7 @@
 import { Ionicons } from "@expo/vector-icons";
 import React, { useEffect, useMemo, useRef, useState } from "react";
-import {
-  Animated,
-  Easing,
-  Platform,
-  Pressable,
-  ScrollView,
-  StyleSheet,
-  Text,
-  View,
-  useWindowDimensions,
-} from "react-native";
+import { Animated, Easing, Platform, Pressable, ScrollView, StyleSheet, View, useWindowDimensions } from "react-native";
+import Text from "./Text";
 import { usePathname, useRouter } from "expo-router";
 import { APP_VERSION } from "../appVersion";
 import { useAuth } from "../context/AuthContext";

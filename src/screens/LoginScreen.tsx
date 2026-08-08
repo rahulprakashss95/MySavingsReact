@@ -1,16 +1,10 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { Ionicons } from "@expo/vector-icons";
 import React, { useEffect, useMemo, useRef, useState } from "react";
-import {
-  Image,
-  KeyboardAvoidingView,
-  Pressable,
-  ScrollView,
-  StyleSheet,
-  Text,
-  TextInput,
-  View,
-} from "react-native";
+import { Image, KeyboardAvoidingView, Pressable, ScrollView, StyleSheet, View } from "react-native";
+import type { TextInput as RNTextInput } from "react-native";
+import Text from "../components/Text";
+import TextInput from "../components/TextInput";
 import { getFamilyByCode } from "../../database/query";
 import Button from "../components/Button";
 import { useAuth } from "../context/AuthContext";
@@ -46,8 +40,8 @@ const LoginScreen = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [focusedField, setFocusedField] = useState<FocusField>(null);
 
-  const usernameRef = useRef<TextInput>(null);
-  const passwordRef = useRef<TextInput>(null);
+  const usernameRef = useRef<RNTextInput>(null);
+  const passwordRef = useRef<RNTextInput>(null);
   const { signIn } = useAuth();
   const { colors } = useTheme();
   const styles = useMemo(() => createStyles(colors), [colors]);

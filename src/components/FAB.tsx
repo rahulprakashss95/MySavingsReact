@@ -1,11 +1,15 @@
 import { Pressable, StyleSheet } from "react-native";
+import { LinearGradient } from "expo-linear-gradient";
+import * as Haptics from "expo-haptics";
 import Animated from "react-native-reanimated";
 import { useMemo } from "react";
 import { AntDesign } from "@expo/vector-icons";
 import { useTheme } from "../context/ThemeContext";
 import { usePressAnimation } from "../hooks/usePressAnimation";
 import { ThemeColors } from "../utils/Color";
-import { elevation, motion } from "../utils/tokens";
+import { elevation, gradientAngle, motion } from "../utils/tokens";
+
+const AnimatedGradient = Animated.createAnimatedComponent(LinearGradient);
 
 type IFAB = {
   onPress: () => void;
@@ -19,18 +23,28 @@ const FAB = (props: IFAB) => {
     motion.fabPressScale
   );
 
+  const handlePress = () => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light).catch(() => {});
+    props.onPress();
+  };
+
   return (
     <Pressable
-      onPress={props.onPress}
+      onPress={handlePress}
       onPressIn={onPressIn}
       onPressOut={onPressOut}
       accessibilityRole="button"
       accessibilityLabel={props.accessibilityLabel ?? "Add"}
       style={styles.container}
     >
-      <Animated.View style={[styles.button, animatedStyle]}>
+      <AnimatedGradient
+        colors={colors.gradientPrimary}
+        start={gradientAngle.start}
+        end={gradientAngle.end}
+        style={[styles.button, animatedStyle]}
+      >
         <AntDesign name="plus" size={24} color={colors.onPrimary} />
-      </Animated.View>
+      </AnimatedGradient>
     </Pressable>
   );
 };
@@ -48,7 +62,6 @@ const createStyles = (colors: ThemeColors) =>
       width: 60,
       height: 60,
       borderRadius: 30,
-      backgroundColor: colors.primary,
       justifyContent: "center",
       alignItems: "center",
       ...elevation.ambient,

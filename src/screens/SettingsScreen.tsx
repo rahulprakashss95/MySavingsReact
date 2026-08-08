@@ -1,18 +1,16 @@
 import React, { useMemo } from "react";
-import {
-  Pressable,
-  ScrollView,
-  StyleSheet,
-  Switch,
-  Text,
-  View,
-} from "react-native";
+import { Pressable, ScrollView, StyleSheet, Switch, View } from "react-native";
+import Animated, { FadeInDown } from "react-native-reanimated";
+import Text from "../components/Text";
 import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 import Card from "../components/Card";
 import { usePasscode } from "../context/PasscodeContext";
 import { ThemeMode, useTheme } from "../context/ThemeContext";
 import { ThemeColors } from "../utils/Color";
+import { motion } from "../utils/tokens";
+
+const sectionDelay = (index: number) => index * motion.staggerDelay * 2;
 
 const THEME_OPTIONS: {
   mode: ThemeMode;
@@ -59,8 +57,9 @@ const SettingsScreen = () => {
       style={styles.container}
       contentContainerStyle={styles.contentContainer}
     >
-      <Text style={styles.sectionTitle}>Security</Text>
-      <Card customStyle={styles.card}>
+      <Animated.View entering={FadeInDown.delay(sectionDelay(0)).duration(motion.staggerDuration)}>
+        <Text style={styles.sectionTitle}>Security</Text>
+        <Card customStyle={styles.card}>
         <View style={styles.row}>
           <Ionicons
             name="lock-closed-outline"
@@ -80,66 +79,71 @@ const SettingsScreen = () => {
             thumbColor={colors.card}
           />
         </View>
-      </Card>
+        </Card>
+      </Animated.View>
 
-      <Text style={styles.sectionTitle}>Home</Text>
-      <Card customStyle={styles.card}>
-        <Pressable
-          onPress={() => router.push("/settings/dashboard")}
-          accessibilityRole="button"
-          style={({ pressed }) => [styles.row, pressed && styles.rowPressed]}
-        >
-          <Ionicons
-            name="reorder-three-outline"
-            size={22}
-            color={colors.textMuted}
-          />
-          <View style={styles.rowText}>
-            <Text style={styles.rowLabel}>Rearrange Dashboard</Text>
-            <Text style={styles.rowDescription}>
-              Choose the order the Home sections appear in
-            </Text>
-          </View>
-          <Ionicons
-            name="chevron-forward"
-            size={20}
-            color={colors.textMuted}
-          />
-        </Pressable>
-      </Card>
+      <Animated.View entering={FadeInDown.delay(sectionDelay(1)).duration(motion.staggerDuration)}>
+        <Text style={styles.sectionTitle}>Home</Text>
+        <Card customStyle={styles.card}>
+          <Pressable
+            onPress={() => router.push("/settings/dashboard")}
+            accessibilityRole="button"
+            style={({ pressed }) => [styles.row, pressed && styles.rowPressed]}
+          >
+            <Ionicons
+              name="reorder-three-outline"
+              size={22}
+              color={colors.textMuted}
+            />
+            <View style={styles.rowText}>
+              <Text style={styles.rowLabel}>Rearrange Dashboard</Text>
+              <Text style={styles.rowDescription}>
+                Choose the order the Home sections appear in
+              </Text>
+            </View>
+            <Ionicons
+              name="chevron-forward"
+              size={20}
+              color={colors.textMuted}
+            />
+          </Pressable>
+        </Card>
+      </Animated.View>
 
-      <Text style={styles.sectionTitle}>Appearance</Text>
-      <Card customStyle={styles.card}>
-        {THEME_OPTIONS.map((option, index) => {
-          const isSelected = option.mode === mode;
-          return (
-            <Pressable
-              key={option.mode}
-              onPress={() => setMode(option.mode)}
-              accessibilityRole="radio"
-              accessibilityState={{ selected: isSelected }}
-              style={({ pressed }) => [
-                styles.row,
-                index > 0 && styles.rowDivider,
-                pressed && styles.rowPressed,
-              ]}
-            >
-              <Ionicons
-                name={option.icon}
-                size={22}
-                color={isSelected ? colors.primary : colors.textMuted}
-              />
-              <View style={styles.rowText}>
-                <Text style={styles.rowLabel}>{option.label}</Text>
-                <Text style={styles.rowDescription}>{option.description}</Text>
-              </View>
-              {isSelected && (
-                <Ionicons name="checkmark" size={22} color={colors.primary} />
-              )}
-            </Pressable>
-          );
-        })}
-      </Card>
+      <Animated.View entering={FadeInDown.delay(sectionDelay(2)).duration(motion.staggerDuration)}>
+        <Text style={styles.sectionTitle}>Appearance</Text>
+        <Card customStyle={styles.card}>
+          {THEME_OPTIONS.map((option, index) => {
+            const isSelected = option.mode === mode;
+            return (
+              <Pressable
+                key={option.mode}
+                onPress={() => setMode(option.mode)}
+                accessibilityRole="radio"
+                accessibilityState={{ selected: isSelected }}
+                style={({ pressed }) => [
+                  styles.row,
+                  index > 0 && styles.rowDivider,
+                  pressed && styles.rowPressed,
+                ]}
+              >
+                <Ionicons
+                  name={option.icon}
+                  size={22}
+                  color={isSelected ? colors.primary : colors.textMuted}
+                />
+                <View style={styles.rowText}>
+                  <Text style={styles.rowLabel}>{option.label}</Text>
+                  <Text style={styles.rowDescription}>{option.description}</Text>
+                </View>
+                {isSelected && (
+                  <Ionicons name="checkmark" size={22} color={colors.primary} />
+                )}
+              </Pressable>
+            );
+          })}
+        </Card>
+      </Animated.View>
     </ScrollView>
   );
 };

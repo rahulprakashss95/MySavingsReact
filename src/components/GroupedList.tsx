@@ -1,6 +1,7 @@
 import { Ionicons } from "@expo/vector-icons";
 import React from "react";
-import { RefreshControl, SectionList, StyleSheet, Text, View } from "react-native";
+import { RefreshControl, SectionList, StyleSheet, View } from "react-native";
+import Text from "./Text";
 import { useTheme } from "../context/ThemeContext";
 import { ThemeColors } from "../utils/Color";
 import { Section } from "../utils/grouping";
@@ -100,6 +101,7 @@ const GroupedList = <T,>(props: IGroupedList<T>) => {
           props.renderItem(item, {
             isFirst: index === 0,
             isLast: index === section.data.length - 1,
+            index,
           })
         }
       />

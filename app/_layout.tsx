@@ -1,6 +1,7 @@
 import { Stack } from "expo-router";
 import { StatusBar } from "expo-status-bar";
 import * as SplashScreen from "expo-splash-screen";
+import { useFonts } from "expo-font";
 import { useEffect } from "react";
 import { Platform, StyleSheet, View, useWindowDimensions } from "react-native";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
@@ -17,6 +18,7 @@ import { useAuth } from "../src/context/AuthContext";
 import { usePasscode } from "../src/context/PasscodeContext";
 import { useTheme } from "../src/context/ThemeContext";
 import { DarkColors, LightColors } from "../src/utils/Color";
+import { fontAssets } from "../src/utils/typography";
 import SideDrawer from "../src/components/SideDrawer";
 import PasscodeLockScreen from "../src/components/PasscodeLockScreen";
 import { installWebStyles } from "../src/utils/webStyles";
@@ -75,6 +77,7 @@ function RootNavigator() {
     isLocked,
     isRestoring: passcodeRestoring,
   } = usePasscode();
+  const [fontsLoaded] = useFonts(fontAssets);
 
   // Only frame the app once the viewport is actually wider than the cap; at or
   // below it the frame fills the window and there is no gutter to draw.
@@ -107,7 +110,8 @@ function RootNavigator() {
   // until auth resolves, so no route flickers and there's no unmounted-navigator
   // crash. Waiting on the passcode too means the lock is decided before the
   // splash lifts, so signed-in content never flashes behind it.
-  const ready = !authRestoring && !themeRestoring && !passcodeRestoring;
+  const ready =
+    !authRestoring && !themeRestoring && !passcodeRestoring && fontsLoaded;
 
   // Gate the whole app at launch, but only for a signed-in user — a logged-out
   // launch falls through to the login screen with no passcode.

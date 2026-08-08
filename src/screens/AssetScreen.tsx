@@ -1,7 +1,8 @@
 import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 import { useMemo } from "react";
-import { ScrollView, StyleSheet, Text, View } from "react-native";
+import { ScrollView, StyleSheet, View } from "react-native";
+import Text from "../components/Text";
 import FeatureTile from "../components/FeatureTile";
 import { useAuth } from "../context/AuthContext";
 import { useTheme } from "../context/ThemeContext";
@@ -35,6 +36,7 @@ const AssetScreen = () => {
         <>
           <Text style={styles.sectionTitle}>Banking</Text>
           <FeatureTile
+            index={0}
             wide
             title="Cash, Deposits & Dues"
             subtitle="Balances, deposits, cash, and money lent or borrowed"
@@ -58,6 +60,7 @@ const AssetScreen = () => {
       <View style={styles.grid}>
         {show("ornaments") && (
           <FeatureTile
+            index={1}
             title="Ornaments"
             subtitle="Gold, silver & stones"
             accent={colors.accentAmber}
@@ -69,6 +72,7 @@ const AssetScreen = () => {
         )}
         {show("properties") && (
           <FeatureTile
+            index={2}
             title="Properties"
             subtitle="Land & homes"
             accent={colors.accentBlue}
@@ -83,6 +87,7 @@ const AssetScreen = () => {
       {show("vehicles") && (
         <View style={styles.tileSpacing}>
           <FeatureTile
+            index={3}
             wide
             title="Vehicles"
             subtitle="Cars, bikes & insurance"
@@ -98,6 +103,7 @@ const AssetScreen = () => {
       <Text style={[styles.sectionTitle, styles.sectionSpacing]}>Insights</Text>
 
       <FeatureTile
+        index={4}
         wide
         title="Overview"
         subtitle="Metal rates, totals & balances"

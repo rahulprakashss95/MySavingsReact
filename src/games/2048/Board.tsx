@@ -1,5 +1,6 @@
 import React, { useEffect, useRef } from "react";
-import { Platform, StyleSheet, Text, View } from "react-native";
+import { Platform, StyleSheet, View } from "react-native";
+import Text from "../../components/Text";
 import { Gesture, GestureDetector } from "react-native-gesture-handler";
 import Animated, {
   runOnJS,
@@ -124,13 +125,17 @@ const Tile = ({ value }: { value: number }) => {
   const { bg, fg } = tileColors(value);
 
   return (
-    <Animated.View
-      entering={ZoomIn.duration(140)}
-      style={[styles.tile, { backgroundColor: bg }, animatedStyle]}
-    >
-      <Text style={[styles.tileText, { color: fg, fontSize: tileFontSize(value) }]}>
-        {value}
-      </Text>
+    // Same split as `FeatureTile`: a mount-in `entering` layout animation and
+    // a custom `transform` (the merge pulse) can't safely share one node —
+    // Reanimated warns the layout animation may clobber the transform. The
+    // outer view owns the absolute positioning + `entering`; the inner one
+    // owns the visual fill + press/merge transform.
+    <Animated.View entering={ZoomIn.duration(140)} style={styles.tile}>
+      <Animated.View style={[styles.tileFill, { backgroundColor: bg }, animatedStyle]}>
+        <Text style={[styles.tileText, { color: fg, fontSize: tileFontSize(value) }]}>
+          {value}
+        </Text>
+      </Animated.View>
     </Animated.View>
   );
 };
@@ -163,6 +168,9 @@ const styles = StyleSheet.create({
     right: 0,
     bottom: 0,
     left: 0,
+  },
+  tileFill: {
+    flex: 1,
     borderRadius: 8,
     alignItems: "center",
     justifyContent: "center",

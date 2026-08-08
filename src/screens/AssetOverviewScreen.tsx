@@ -1,15 +1,11 @@
 import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
+import { LinearGradient } from "expo-linear-gradient";
 import moment from "moment";
 import React, { useMemo, useState } from "react";
-import {
-  Pressable,
-  RefreshControl,
-  ScrollView,
-  StyleSheet,
-  Text,
-  View,
-} from "react-native";
+import { Pressable, RefreshControl, ScrollView, StyleSheet, View } from "react-native";
+import Animated, { FadeInDown } from "react-native-reanimated";
+import Text from "../components/Text";
 import { saveMetalRates } from "../../database/query";
 import {
   commitMetalRates,
@@ -22,6 +18,7 @@ import MetalRatesModal from "../components/MetalRatesModal";
 import ProgressBar from "../components/ProgressBar";
 import { OverviewSkeleton } from "../components/Skeleton";
 import { useTheme } from "../context/ThemeContext";
+import { useCountUp } from "../hooks/useCountUp";
 import {
   EMPTY_METAL_RATES,
   MetalRates,
@@ -37,12 +34,16 @@ import {
   propertyPortfolio,
 } from "../utils/assets";
 import { ThemeColors } from "../utils/Color";
-import { radius } from "../utils/tokens";
+import { gradientAngle, motion, radius } from "../utils/tokens";
 import { amountFormat, showToast } from "../utils/Utils";
 import { useAuth } from "../context/AuthContext";
 import { hasFeature } from "../models/common";
 import { AccountModel } from "../models/AccountModel";
 import { buildAccountTotals } from "../utils/deposits";
+
+/** Staggered mount-in for the screen's top-level card blocks. */
+const sectionDelay = (index: number) =>
+  Math.min(index * motion.staggerDelay * 2, motion.staggerMaxDelay);
 
 /**
  * `amountFormat` returns "" for anything falsy, so a zero would render as a
@@ -429,78 +430,25 @@ const AssetOverviewScreen = () => {
         }
       >
         {/* ---- Headline ------------------------------------------------- */}
-        <View style={styles.heroCard}>
-          <Text style={styles.heroLabel}>
-            {showOwed ? "Net asset value" : "Total asset value"}
-          </Text>
-          <Text style={styles.heroValue}>{rupees(netValue)}</Text>
-
-          {showOwed && (
-            <Text style={styles.heroDeduction}>
-              {rupees(grossValue)} held, less {rupees(liabilities)} borrowed
-            </Text>
-          )}
-
-          {priced.length > 0 && (
-            <View
-              style={styles.compositionBar}
-              accessibilityLabel="Composition of total asset value"
-            >
-              {priced.map((segment) => (
-                <View
-                  key={segment.key}
-                  style={{
-                    flex: segment.value / grossValue,
-                    backgroundColor: segment.color,
-                  }}
-                />
-              ))}
-            </View>
-          )}
-
-          <View style={styles.chipWrap}>
-            {segments.map((segment) => (
-              <Pressable
-                key={segment.key}
-                onPress={() => open(segment.href)}
-                accessibilityRole="button"
-                accessibilityLabel={`${segment.label}, ${rupees(
-                  segment.value
-                )}`}
-                style={({ pressed }) => [
-                  styles.chip,
-                  pressed && styles.pressed,
-                ]}
-              >
-                <View
-                  style={[styles.chipDot, { backgroundColor: segment.color }]}
-                />
-                <Text style={styles.chipLabel}>{segment.label}</Text>
-                <Text style={styles.chipValue}>{rupees(segment.value)}</Text>
-              </Pressable>
-            ))}
-          </View>
-
-          {notes.length > 0 && (
-            <View style={styles.notes}>
-              {notes.map((note) => (
-                <View key={note} style={styles.noteRow}>
-                  <Ionicons
-                    name="information-circle-outline"
-                    size={15}
-                    color={colors.accentAmber}
-                    style={styles.noteIcon}
-                  />
-                  <Text style={styles.noteText}>{note}</Text>
-                </View>
-              ))}
-            </View>
-          )}
-        </View>
+        <HeroCard
+          netValue={netValue}
+          showOwed={showOwed}
+          grossValue={grossValue}
+          liabilities={liabilities}
+          priced={priced}
+          segments={segments}
+          notes={notes}
+          onOpen={open}
+          colors={colors}
+          styles={styles}
+        />
 
         {/* ---- The figures worth knowing without opening a section ------- */}
         {(interest > 0 || portfolio.remaining > 0 || showOwed) && (
-          <View style={styles.statGrid}>
+          <Animated.View
+            entering={FadeInDown.delay(sectionDelay(1)).duration(motion.staggerDuration)}
+            style={styles.statGrid}
+          >
             {interest > 0 && (
               <View style={styles.statTile}>
                 <Text style={styles.statLabel}>Deposit interest</Text>
@@ -534,7 +482,7 @@ const AssetOverviewScreen = () => {
                 </Text>
               </View>
             )}
-          </View>
+          </Animated.View>
         )}
 
         {isEmpty && (
@@ -547,7 +495,10 @@ const AssetOverviewScreen = () => {
         )}
 
         {/* ---- Ornaments ------------------------------------------------- */}
-        <View style={styles.card}>
+        <Animated.View
+          entering={FadeInDown.delay(sectionDelay(2)).duration(motion.staggerDuration)}
+          style={styles.card}
+        >
           <SectionHeader
             colors={colors}
             styles={styles}
@@ -601,11 +552,14 @@ const AssetOverviewScreen = () => {
           ) : (
             ornamentSummary.rows.map(renderMetalRow)
           )}
-        </View>
+        </Animated.View>
 
         {/* ---- By holder -------------------------------------------------- */}
         {holders.length > 0 && (
-          <View style={styles.card}>
+          <Animated.View
+            entering={FadeInDown.delay(sectionDelay(3)).duration(motion.staggerDuration)}
+            style={styles.card}
+          >
             <SectionHeader
               colors={colors}
               styles={styles}
@@ -623,11 +577,14 @@ const AssetOverviewScreen = () => {
                 color={colors.accentAmber}
               />
             ))}
-          </View>
+          </Animated.View>
         )}
 
         {/* ---- Property --------------------------------------------------- */}
-        <View style={styles.card}>
+        <Animated.View
+          entering={FadeInDown.delay(sectionDelay(4)).duration(motion.staggerDuration)}
+          style={styles.card}
+        >
           <SectionHeader
             colors={colors}
             styles={styles}
@@ -675,11 +632,14 @@ const AssetOverviewScreen = () => {
               </Text>
             </>
           )}
-        </View>
+        </Animated.View>
 
         {/* ---- Cash, deposits and dues ------------------------------------ */}
         {showAccounts && (
-          <View style={styles.card}>
+          <Animated.View
+            entering={FadeInDown.delay(sectionDelay(5)).duration(motion.staggerDuration)}
+            style={styles.card}
+          >
             <SectionHeader
               colors={colors}
               styles={styles}
@@ -772,9 +732,112 @@ const AssetOverviewScreen = () => {
                 )}
               </>
             )}
-          </View>
+          </Animated.View>
         )}
       </ScrollView>
+    </View>
+  );
+};
+
+/**
+ * The one hero moment on this screen: a gradient banner for the headline
+ * figure over a flat zone that keeps the accent-coloured composition bar and
+ * chips legible (see HomeScreen's `WorthCard` for the same split-card
+ * pattern and the reasoning behind it).
+ */
+const HeroCard = ({
+  netValue,
+  showOwed,
+  grossValue,
+  liabilities,
+  priced,
+  segments,
+  notes,
+  onOpen,
+  colors,
+  styles,
+}: Chrome & {
+  netValue: number;
+  showOwed: boolean;
+  grossValue: number;
+  liabilities: number;
+  priced: Segment[];
+  segments: Segment[];
+  notes: string[];
+  onOpen: (href: string) => void;
+}) => {
+  const animatedNet = useCountUp(netValue);
+
+  return (
+    <View style={styles.heroCard}>
+      <LinearGradient
+        colors={colors.gradientPrimary}
+        start={gradientAngle.start}
+        end={gradientAngle.end}
+        style={styles.heroTop}
+      >
+        <Text style={styles.heroLabel}>
+          {showOwed ? "Net asset value" : "Total asset value"}
+        </Text>
+        <Text style={styles.heroValue}>{rupees(animatedNet)}</Text>
+
+        {showOwed && (
+          <Text style={styles.heroDeduction}>
+            {rupees(grossValue)} held, less {rupees(liabilities)} borrowed
+          </Text>
+        )}
+      </LinearGradient>
+
+      <View style={styles.heroBottom}>
+        {priced.length > 0 && (
+          <View
+            style={styles.compositionBar}
+            accessibilityLabel="Composition of total asset value"
+          >
+            {priced.map((segment) => (
+              <View
+                key={segment.key}
+                style={{
+                  flex: segment.value / grossValue,
+                  backgroundColor: segment.color,
+                }}
+              />
+            ))}
+          </View>
+        )}
+
+        <View style={styles.chipWrap}>
+          {segments.map((segment) => (
+            <Pressable
+              key={segment.key}
+              onPress={() => onOpen(segment.href)}
+              accessibilityRole="button"
+              accessibilityLabel={`${segment.label}, ${rupees(segment.value)}`}
+              style={({ pressed }) => [styles.chip, pressed && styles.pressed]}
+            >
+              <View style={[styles.chipDot, { backgroundColor: segment.color }]} />
+              <Text style={styles.chipLabel}>{segment.label}</Text>
+              <Text style={styles.chipValue}>{rupees(segment.value)}</Text>
+            </Pressable>
+          ))}
+        </View>
+
+        {notes.length > 0 && (
+          <View style={styles.notes}>
+            {notes.map((note) => (
+              <View key={note} style={styles.noteRow}>
+                <Ionicons
+                  name="information-circle-outline"
+                  size={15}
+                  color={colors.accentAmber}
+                  style={styles.noteIcon}
+                />
+                <Text style={styles.noteText}>{note}</Text>
+              </View>
+            ))}
+          </View>
+        )}
+      </View>
     </View>
   );
 };
@@ -790,32 +853,45 @@ const createStyles = (colors: ThemeColors) =>
       paddingBottom: 40,
     },
 
-    // Headline
+    // Headline — gradient top zone + flat bottom zone, see `HeroCard`.
     heroCard: {
-      backgroundColor: colors.card,
       borderRadius: 18,
-      borderWidth: StyleSheet.hairlineWidth,
-      borderColor: colors.border,
-      padding: 20,
+      overflow: "hidden",
+      backgroundColor: colors.card,
       marginBottom: 14,
+      shadowColor: colors.shadow,
+      shadowOffset: { width: 0, height: 4 },
+      shadowOpacity: 0.16,
+      shadowRadius: 14,
+      elevation: 4,
+    },
+    heroTop: {
+      padding: 20,
+      paddingBottom: 22,
+    },
+    heroBottom: {
+      paddingHorizontal: 20,
+      paddingBottom: 20,
     },
     heroLabel: {
       fontSize: 12,
       fontWeight: "600",
       textTransform: "uppercase",
       letterSpacing: 0.6,
-      color: colors.textMuted,
+      color: colors.onPrimary,
+      opacity: 0.75,
     },
     heroValue: {
       fontSize: 34,
-      fontWeight: "700",
-      color: colors.text,
+      fontWeight: "800",
+      color: colors.onPrimary,
       marginTop: 8,
       fontVariant: ["tabular-nums"],
     },
     heroDeduction: {
       fontSize: 13,
-      color: colors.textMuted,
+      color: colors.onPrimary,
+      opacity: 0.75,
       marginTop: 6,
       fontVariant: ["tabular-nums"],
     },
@@ -824,7 +900,7 @@ const createStyles = (colors: ThemeColors) =>
       height: 8,
       borderRadius: 4,
       overflow: "hidden",
-      marginTop: 18,
+      marginTop: 16,
       backgroundColor: colors.chartTrack,
     },
     chipWrap: {

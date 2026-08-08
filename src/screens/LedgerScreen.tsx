@@ -1,7 +1,8 @@
 import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 import { useMemo } from "react";
-import { ScrollView, StyleSheet, Text, View } from "react-native";
+import { ScrollView, StyleSheet, View } from "react-native";
+import Text from "../components/Text";
 import FeatureTile from "../components/FeatureTile";
 import { useAuth } from "../context/AuthContext";
 import { useTheme } from "../context/ThemeContext";
@@ -19,6 +20,15 @@ const LedgerScreen = () => {
     hasFeature(user, feature);
   const cashflow = show("earnings") || show("savings") || show("expenses");
 
+  // Tiles are gated individually rather than mapped from an array, but the
+  // stagger should still read top-to-bottom across whichever ones are
+  // visible — so hand out indices in source order as each one renders.
+  let tileIndex = -1;
+  const nextTileIndex = () => {
+    tileIndex += 1;
+    return tileIndex;
+  };
+
   return (
     <ScrollView
       style={styles.container}
@@ -34,6 +44,7 @@ const LedgerScreen = () => {
       <View style={styles.grid}>
         {show("earnings") && (
           <FeatureTile
+            index={nextTileIndex()}
             title="Earnings"
             subtitle="Salary & incentives"
             accent={colors.accentBlue}
@@ -45,6 +56,7 @@ const LedgerScreen = () => {
         )}
         {show("expenses") && (
           <FeatureTile
+            index={nextTileIndex()}
             title="Expenses"
             subtitle="What you spend"
             accent={colors.accentAmber}
@@ -56,6 +68,7 @@ const LedgerScreen = () => {
         )}
         {show("savings") && (
           <FeatureTile
+            index={nextTileIndex()}
             title="Savings"
             subtitle="What you set aside"
             accent={colors.positive}
@@ -70,6 +83,7 @@ const LedgerScreen = () => {
       {show("setup") && (
         <View style={styles.tileSpacing}>
           <FeatureTile
+            index={nextTileIndex()}
             wide
             title="Setup"
             subtitle="Earning types, contacts & expense types"
@@ -85,6 +99,7 @@ const LedgerScreen = () => {
       <Text style={[styles.sectionTitle, styles.sectionSpacing]}>Insights</Text>
 
       <FeatureTile
+        index={nextTileIndex()}
         wide
         title="Overview"
         subtitle="Totals, rate & monthly trend"

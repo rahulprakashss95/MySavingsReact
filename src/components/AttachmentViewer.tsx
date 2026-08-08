@@ -1,15 +1,7 @@
 import { Ionicons } from "@expo/vector-icons";
 import React, { useEffect, useMemo, useState } from "react";
-import {
-  ActivityIndicator,
-  Image,
-  Linking,
-  Modal,
-  Pressable,
-  StyleSheet,
-  Text,
-  View,
-} from "react-native";
+import { ActivityIndicator, Image, Linking, Modal, Pressable, StyleSheet, View } from "react-native";
+import Text from "./Text";
 import { useTheme } from "../context/ThemeContext";
 import { isImageAttachment } from "../models/common";
 import { ThemeColors } from "../utils/Color";

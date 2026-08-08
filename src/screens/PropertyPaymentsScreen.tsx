@@ -1,22 +1,24 @@
 import { Ionicons } from "@expo/vector-icons";
+import { LinearGradient } from "expo-linear-gradient";
 import moment from "moment";
 import React, { useMemo, useState } from "react";
-import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
+import { Pressable, ScrollView, StyleSheet, View } from "react-native";
+import Text from "../components/Text";
 import { updateProperty } from "../../database/query";
 import { commitSave, useAppDispatch } from "../query/hooks";
 import Button from "../components/Button";
-import Card from "../components/Card";
 import DatePicker from "../components/DatePicker";
 import FormSection from "../components/FormSection";
 import Loader from "../components/Loader";
 import ProgressBar from "../components/ProgressBar";
 import TextField from "../components/TextField";
 import { useTheme } from "../context/ThemeContext";
+import { useCountUp } from "../hooks/useCountUp";
 import { PaymentEntry, PropertyModel } from "../models/AssetModel";
 import { newEntryId, paymentTotals, sortEntries } from "../utils/assets";
 import { isValidAmount } from "../utils/amount";
 import { ThemeColors } from "../utils/Color";
-import { radius } from "../utils/tokens";
+import { gradientAngle, radius } from "../utils/tokens";
 import { DATE_FORMAT } from "../utils/deposits";
 import {
   amountFormat,
@@ -54,6 +56,10 @@ const PropertyPaymentsScreen = ({ property }: Props) => {
 
   const totals = paymentTotals({ totalAmount: property.totalAmount, entries });
   const sorted = useMemo(() => sortEntries(entries), [entries]);
+  // The one hero moment on this screen — same gradient-top/flat-bottom split
+  // card as the Overview screen's headline, so "what's still owed" reads as
+  // this screen's one big number rather than another card among cards.
+  const animatedRemaining = useCountUp(totals.remaining);
 
   /** Writes the new set, rolling back the local state if the write fails. */
   const persist = (next: PaymentEntry[], failureTitle: string) => {
@@ -179,35 +185,44 @@ const PropertyPaymentsScreen = ({ property }: Props) => {
     >
       <Loader loading={isLoading} />
 
-      <Card elevated>
-        <Text style={styles.propertyName}>{property.name}</Text>
-        {isLoan && !!property.lender && (
-          <Text style={styles.lender}>
-            {property.lender}
-            {property.interestRate ? ` · ${property.interestRate}% p.a.` : ""}
-          </Text>
-        )}
-
-        <Text style={styles.remaining}>₹ {amountFormat(totals.remaining)}</Text>
-        <Text style={styles.remainingLabel}>
-          remaining of ₹ {amountFormat(totals.total)}
-        </Text>
-
-        <View style={styles.progressWrap}>
-          <ProgressBar progress={totals.progress} />
-        </View>
-
-        <View style={styles.totalsRow}>
-          <Text style={styles.totalsPaid}>
-            ₹ {amountFormat(totals.paid)} paid
-          </Text>
-          {!isLoan && totals.entryCount > 0 && (
-            <Text style={styles.totalsCount}>
-              {totals.paidCount} of {totals.entryCount} installments
+      <View style={styles.heroCard}>
+        <LinearGradient
+          colors={colors.gradientPrimary}
+          start={gradientAngle.start}
+          end={gradientAngle.end}
+          style={styles.heroTop}
+        >
+          <Text style={styles.propertyName}>{property.name}</Text>
+          {isLoan && !!property.lender && (
+            <Text style={styles.lender}>
+              {property.lender}
+              {property.interestRate ? ` · ${property.interestRate}% p.a.` : ""}
             </Text>
           )}
+
+          <Text style={styles.remaining}>
+            ₹ {amountFormat(Math.round(animatedRemaining))}
+          </Text>
+          <Text style={styles.remainingLabel}>
+            remaining of ₹ {amountFormat(totals.total)}
+          </Text>
+        </LinearGradient>
+
+        <View style={styles.heroBottom}>
+          <ProgressBar progress={totals.progress} />
+
+          <View style={styles.totalsRow}>
+            <Text style={styles.totalsPaid}>
+              ₹ {amountFormat(totals.paid)} paid
+            </Text>
+            {!isLoan && totals.entryCount > 0 && (
+              <Text style={styles.totalsCount}>
+                {totals.paidCount} of {totals.entryCount} installments
+              </Text>
+            )}
+          </View>
         </View>
-      </Card>
+      </View>
 
       <FormSection title={isLoan ? "Payments made" : "Installments"}>
         {sorted.length === 0 ? (
@@ -263,30 +278,51 @@ const createStyles = (colors: ThemeColors) =>
       padding: 20,
       paddingBottom: 40,
     },
+    // Headline — gradient top zone + flat bottom zone, same split-card
+    // pattern as the Overview screen's hero (see AssetOverviewScreen).
+    heroCard: {
+      borderRadius: radius.card,
+      overflow: "hidden",
+      backgroundColor: colors.card,
+      marginBottom: 14,
+      shadowColor: colors.shadow,
+      shadowOffset: { width: 0, height: 4 },
+      shadowOpacity: 0.16,
+      shadowRadius: 14,
+      elevation: 4,
+    },
+    heroTop: {
+      padding: 20,
+      paddingBottom: 22,
+    },
+    heroBottom: {
+      paddingHorizontal: 20,
+      paddingTop: 16,
+      paddingBottom: 20,
+    },
     propertyName: {
       fontSize: 17,
       fontWeight: "700",
-      color: colors.text,
+      color: colors.onPrimary,
     },
     lender: {
       fontSize: 13,
-      color: colors.textMuted,
+      color: colors.onPrimary,
+      opacity: 0.75,
       marginTop: 2,
     },
     remaining: {
       fontSize: 32,
       fontWeight: "700",
-      color: colors.text,
+      color: colors.onPrimary,
       marginTop: 16,
       fontVariant: ["tabular-nums"],
     },
     remainingLabel: {
       fontSize: 13,
-      color: colors.textMuted,
+      color: colors.onPrimary,
+      opacity: 0.75,
       marginTop: 2,
-    },
-    progressWrap: {
-      marginTop: 16,
     },
     totalsRow: {
       flexDirection: "row",

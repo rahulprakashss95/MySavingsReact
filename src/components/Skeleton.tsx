@@ -1,9 +1,17 @@
-import React, { useEffect, useMemo, useRef } from "react";
-import { Animated, Easing, StyleSheet, View } from "react-native";
+import React, { useEffect, useMemo, useState } from "react";
+import { LayoutChangeEvent, StyleSheet, View } from "react-native";
+import { LinearGradient } from "expo-linear-gradient";
+import Animated, {
+  Easing,
+  interpolate,
+  useAnimatedStyle,
+  useSharedValue,
+  withRepeat,
+  withTiming,
+} from "react-native-reanimated";
 import type { DashboardSection } from "../context/DashboardLayoutContext";
 import { useTheme } from "../context/ThemeContext";
 import { ThemeColors } from "../utils/Color";
-import { currentOS } from "../utils/Utils";
 
 type ISkeleton = {
   width?: number | string;
@@ -12,41 +20,40 @@ type ISkeleton = {
   style?: any;
 };
 
-/** Shared pulse so every placeholder on a screen breathes in step. */
-const usePulse = () => {
-  const pulse = useRef(new Animated.Value(0.5)).current;
+/** A moving highlight band, clipped to the placeholder's own measured width. */
+export const Skeleton = ({ width, height = 14, radius = 6, style }: ISkeleton) => {
+  const { colors, isDark } = useTheme();
+  const [boxWidth, setBoxWidth] = useState(0);
+  const progress = useSharedValue(0);
 
   useEffect(() => {
-    const animation = Animated.loop(
-      Animated.sequence([
-        Animated.timing(pulse, {
-          toValue: 1,
-          duration: 700,
-          easing: Easing.inOut(Easing.ease),
-          // react-native-web's Animated has no native driver.
-          useNativeDriver: currentOS !== "web",
-        }),
-        Animated.timing(pulse, {
-          toValue: 0.5,
-          duration: 700,
-          easing: Easing.inOut(Easing.ease),
-          useNativeDriver: currentOS !== "web",
-        }),
-      ])
+    progress.value = withRepeat(
+      withTiming(1, { duration: 1200, easing: Easing.inOut(Easing.ease) }),
+      -1,
+      false
     );
-    animation.start();
-    return () => animation.stop();
-  }, [pulse]);
+  }, [progress]);
 
-  return pulse;
-};
+  const bandWidth = Math.max(boxWidth * 0.55, 32);
+  const bandStyle = useAnimatedStyle(() => ({
+    transform: [
+      {
+        translateX: interpolate(
+          progress.value,
+          [0, 1],
+          [-bandWidth, boxWidth + bandWidth]
+        ),
+      },
+    ],
+  }));
 
-export const Skeleton = ({ width, height = 14, radius = 6, style }: ISkeleton) => {
-  const { colors } = useTheme();
-  const pulse = usePulse();
+  const onLayout = (event: LayoutChangeEvent) => {
+    setBoxWidth(event.nativeEvent.layout.width);
+  };
 
   return (
-    <Animated.View
+    <View
+      onLayout={onLayout}
       // Decorative only — screen readers should skip it and hear the busy state.
       accessibilityElementsHidden
       importantForAccessibility="no-hide-descendants"
@@ -56,11 +63,28 @@ export const Skeleton = ({ width, height = 14, radius = 6, style }: ISkeleton) =
           height,
           borderRadius: radius,
           backgroundColor: colors.border,
-          opacity: pulse,
+          overflow: "hidden",
         },
         style,
       ]}
-    />
+    >
+      {boxWidth > 0 && (
+        <Animated.View
+          style={[StyleSheet.absoluteFill, { width: bandWidth }, bandStyle]}
+        >
+          <LinearGradient
+            colors={
+              isDark
+                ? ["transparent", "rgba(255,255,255,0.10)", "transparent"]
+                : ["transparent", "rgba(255,255,255,0.65)", "transparent"]
+            }
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 0 }}
+            style={StyleSheet.absoluteFill}
+          />
+        </Animated.View>
+      )}
+    </View>
   );
 };
 

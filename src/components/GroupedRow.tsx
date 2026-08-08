@@ -1,15 +1,26 @@
 import { Ionicons } from "@expo/vector-icons";
 import React, { useMemo } from "react";
-import { Pressable, StyleSheet, Text, View } from "react-native";
+import { Pressable, StyleSheet, View } from "react-native";
+import Text from "./Text";
+import { LinearGradient } from "expo-linear-gradient";
+import * as Haptics from "expo-haptics";
+import Animated, { FadeInDown } from "react-native-reanimated";
 import { useTheme } from "../context/ThemeContext";
-import { ThemeColors, tint } from "../utils/Color";
-import { radius, spacing } from "../utils/tokens";
+import { ThemeColors } from "../utils/Color";
+import { gradientAngle, motion, radius, spacing } from "../utils/tokens";
 import CopyButton from "./CopyButton";
+
+const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
 
 type IconName = React.ComponentProps<typeof Ionicons>["name"];
 
 /** Where the row sits in its group, so the card's corners land right. */
-export type RowPosition = { isFirst: boolean; isLast: boolean };
+export type RowPosition = {
+  isFirst: boolean;
+  isLast: boolean;
+  /** Position within the section — staggers the mount-in animation. */
+  index?: number;
+};
 
 type IGroupedRow = {
   icon: IconName;
@@ -48,18 +59,25 @@ type IGroupedRow = {
  */
 const GroupedRow = (props: IGroupedRow) => {
   const { icon, accent, title, value, meta, description, onPress } = props;
-  const { isFirst, isLast } = props.position;
+  const { isFirst, isLast, index } = props.position;
   const { colors } = useTheme();
   const styles = useMemo(() => createStyles(colors), [colors]);
 
   const showsCopy = !!props.copyValue && !!props.valueLabel;
+  const staggerDelay = Math.min((index ?? 0) * motion.staggerDelay, motion.staggerMaxDelay);
+
+  const handlePress = () => {
+    Haptics.selectionAsync().catch(() => {});
+    onPress();
+  };
 
   return (
-    <Pressable
-      onPress={onPress}
+    <AnimatedPressable
+      entering={FadeInDown.delay(staggerDelay).duration(motion.staggerDuration)}
+      onPress={handlePress}
       accessibilityRole="button"
       accessibilityLabel={[title, value].filter(Boolean).join(", ")}
-      style={({ pressed }) => [
+      style={({ pressed }: { pressed: boolean }) => [
         styles.row,
         isFirst && styles.rowFirst,
         isLast && styles.rowLast,
@@ -71,9 +89,14 @@ const GroupedRow = (props: IGroupedRow) => {
       {!isFirst && <View style={styles.separator} />}
 
       <View style={[styles.body, !!props.footer && styles.bodyWithFooter]}>
-        <View style={[styles.iconChip, { backgroundColor: tint(accent) }]}>
+        <LinearGradient
+          colors={[`${accent}3d`, `${accent}12`]}
+          start={gradientAngle.start}
+          end={gradientAngle.end}
+          style={styles.iconChip}
+        >
           <Ionicons name={icon} size={18} color={accent} />
-        </View>
+        </LinearGradient>
 
         <View style={styles.text}>
           {!!title && (
@@ -122,7 +145,7 @@ const GroupedRow = (props: IGroupedRow) => {
       </View>
 
       {!!props.footer && <View style={styles.footer}>{props.footer}</View>}
-    </Pressable>
+    </AnimatedPressable>
   );
 };
 

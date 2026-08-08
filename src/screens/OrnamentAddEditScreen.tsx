@@ -1,5 +1,6 @@
 import React, { useMemo, useState } from "react";
-import { ScrollView, StyleSheet, Text } from "react-native";
+import { ScrollView, StyleSheet } from "react-native";
+import Text from "../components/Text";
 import {
   addOrnament,
   deleteOrnament,

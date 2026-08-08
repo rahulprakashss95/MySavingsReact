@@ -1,13 +1,6 @@
 import React from "react";
-import {
-  Image,
-  StyleSheet,
-  Text,
-  View,
-  type ImageStyle,
-  type StyleProp,
-  type ViewStyle,
-} from "react-native";
+import { Image, StyleSheet, View, type ImageStyle, type StyleProp, type ViewStyle } from "react-native";
+import Text from "./Text";
 import { avatarUrl } from "../../database/query";
 import { useTheme } from "../context/ThemeContext";
 import type { Avatar as AvatarData } from "../models/common";

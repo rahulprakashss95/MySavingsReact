@@ -1,15 +1,9 @@
 import { Ionicons } from "@expo/vector-icons";
 import React, { useEffect, useMemo, useState } from "react";
-import {
-  KeyboardAvoidingView,
-  Modal,
-  Platform,
-  Pressable,
-  StyleSheet,
-  Text,
-  TextInput,
-  View,
-} from "react-native";
+import { Pressable, StyleSheet, View } from "react-native";
+import Text from "./Text";
+import TextInput from "./TextInput";
+import BottomSheet from "./BottomSheet";
 import { MetalRates } from "../models/AssetModel";
 import { useTheme } from "../context/ThemeContext";
 import { ThemeColors } from "../utils/Color";
@@ -72,156 +66,113 @@ const MetalRatesModal = (props: IMetalRatesModal) => {
   const busy = isFetching || isSaving;
 
   return (
-    <Modal
-      visible={visible}
-      transparent
-      animationType="fade"
-      onRequestClose={onClose}
-    >
-      <View style={styles.backdrop}>
-        {/* Tapping outside dismisses, matching the platform convention. */}
+    <BottomSheet visible={visible} onClose={onClose} accessibilityLabel="Metal rates">
+      <View style={styles.sheet}>
+        <View style={styles.header}>
+          <Text style={styles.title}>Metal rates</Text>
+          <Pressable
+            onPress={onClose}
+            hitSlop={10}
+            accessibilityRole="button"
+            accessibilityLabel="Close"
+          >
+            <Ionicons name="close" size={22} color={colors.textMuted} />
+          </Pressable>
+        </View>
+
+        <Text style={styles.label}>Gold / gram</Text>
+        <View style={[styles.affixRow, styles.fieldSpacing]}>
+          <Text style={styles.affix}>₹</Text>
+          <TextInput
+            style={styles.affixInput}
+            value={draft.goldPerGram}
+            onChangeText={(text) =>
+              setDraft((current) => ({ ...current, goldPerGram: text }))
+            }
+            placeholder="0"
+            placeholderTextColor={colors.placeholder}
+            keyboardType="decimal-pad"
+          />
+        </View>
+
+        <Text style={styles.label}>Silver / gram</Text>
+        <View style={[styles.affixRow, styles.fieldSpacing]}>
+          <Text style={styles.affix}>₹</Text>
+          <TextInput
+            style={styles.affixInput}
+            value={draft.silverPerGram}
+            onChangeText={(text) =>
+              setDraft((current) => ({ ...current, silverPerGram: text }))
+            }
+            placeholder="0"
+            placeholderTextColor={colors.placeholder}
+            keyboardType="decimal-pad"
+          />
+        </View>
+
+        <Text style={styles.hint}>
+          Rates are the 24K India (IBJA) benchmark. Each ornament is valued
+          at its own purity, so a 22K piece counts at 22/24 of the gold rate.
+        </Text>
+
         <Pressable
-          style={StyleSheet.absoluteFill}
-          onPress={onClose}
+          onPress={handleFetch}
+          disabled={busy}
           accessibilityRole="button"
-          accessibilityLabel="Close"
-        />
-
-        <KeyboardAvoidingView
-          behavior={Platform.OS === "ios" ? "padding" : undefined}
-          style={styles.centre}
-          pointerEvents="box-none"
+          style={({ pressed }) => [
+            styles.fetchButton,
+            pressed && styles.pressed,
+            busy && styles.disabled,
+          ]}
         >
-          <View style={styles.sheet}>
-            <View style={styles.header}>
-              <Text style={styles.title}>Metal rates</Text>
-              <Pressable
-                onPress={onClose}
-                hitSlop={10}
-                accessibilityRole="button"
-                accessibilityLabel="Close"
-              >
-                <Ionicons name="close" size={22} color={colors.textMuted} />
-              </Pressable>
-            </View>
+          <Ionicons
+            name="cloud-download-outline"
+            size={16}
+            color={colors.primary}
+            style={styles.buttonIcon}
+          />
+          <Text style={styles.fetchText}>
+            {isFetching ? "Fetching…" : "Fetch latest"}
+          </Text>
+        </Pressable>
 
-            <Text style={styles.label}>Gold / gram</Text>
-            <View style={[styles.affixRow, styles.fieldSpacing]}>
-              <Text style={styles.affix}>₹</Text>
-              <TextInput
-                style={styles.affixInput}
-                value={draft.goldPerGram}
-                onChangeText={(text) =>
-                  setDraft((current) => ({ ...current, goldPerGram: text }))
-                }
-                placeholder="0"
-                placeholderTextColor={colors.placeholder}
-                keyboardType="decimal-pad"
-              />
-            </View>
+        <View style={styles.actions}>
+          <Pressable
+            onPress={onClose}
+            disabled={busy}
+            accessibilityRole="button"
+            style={({ pressed }) => [
+              styles.cancelButton,
+              pressed && styles.pressed,
+            ]}
+          >
+            <Text style={styles.cancelText}>Cancel</Text>
+          </Pressable>
 
-            <Text style={styles.label}>Silver / gram</Text>
-            <View style={[styles.affixRow, styles.fieldSpacing]}>
-              <Text style={styles.affix}>₹</Text>
-              <TextInput
-                style={styles.affixInput}
-                value={draft.silverPerGram}
-                onChangeText={(text) =>
-                  setDraft((current) => ({ ...current, silverPerGram: text }))
-                }
-                placeholder="0"
-                placeholderTextColor={colors.placeholder}
-                keyboardType="decimal-pad"
-              />
-            </View>
-
-            <Text style={styles.hint}>
-              Rates are the 24K India (IBJA) benchmark. Each ornament is valued
-              at its own purity, so a 22K piece counts at 22/24 of the gold rate.
+          <Pressable
+            onPress={() => onSave(draft)}
+            disabled={busy}
+            accessibilityRole="button"
+            style={({ pressed }) => [
+              styles.saveButton,
+              pressed && styles.pressed,
+              busy && styles.disabled,
+            ]}
+          >
+            <Text style={styles.saveText}>
+              {isSaving ? "Saving…" : "Save"}
             </Text>
-
-            <Pressable
-              onPress={handleFetch}
-              disabled={busy}
-              accessibilityRole="button"
-              style={({ pressed }) => [
-                styles.fetchButton,
-                pressed && styles.pressed,
-                busy && styles.disabled,
-              ]}
-            >
-              <Ionicons
-                name="cloud-download-outline"
-                size={16}
-                color={colors.primary}
-                style={styles.buttonIcon}
-              />
-              <Text style={styles.fetchText}>
-                {isFetching ? "Fetching…" : "Fetch latest"}
-              </Text>
-            </Pressable>
-
-            <View style={styles.actions}>
-              <Pressable
-                onPress={onClose}
-                disabled={busy}
-                accessibilityRole="button"
-                style={({ pressed }) => [
-                  styles.cancelButton,
-                  pressed && styles.pressed,
-                ]}
-              >
-                <Text style={styles.cancelText}>Cancel</Text>
-              </Pressable>
-
-              <Pressable
-                onPress={() => onSave(draft)}
-                disabled={busy}
-                accessibilityRole="button"
-                style={({ pressed }) => [
-                  styles.saveButton,
-                  pressed && styles.pressed,
-                  busy && styles.disabled,
-                ]}
-              >
-                <Text style={styles.saveText}>
-                  {isSaving ? "Saving…" : "Save"}
-                </Text>
-              </Pressable>
-            </View>
-          </View>
-        </KeyboardAvoidingView>
+          </Pressable>
+        </View>
       </View>
-    </Modal>
+    </BottomSheet>
   );
 };
 
 const createStyles = (colors: ThemeColors) =>
   StyleSheet.create({
-    backdrop: {
-      flex: 1,
-      backgroundColor: colors.overlay,
-    },
-    centre: {
-      flex: 1,
-      justifyContent: "center",
-      padding: 24,
-    },
     sheet: {
-      backgroundColor: colors.card,
-      borderRadius: radius.sheet,
-      borderWidth: StyleSheet.hairlineWidth,
-      borderColor: colors.border,
       padding: 20,
-      shadowColor: colors.shadow,
-      shadowOffset: { width: 0, height: -2 },
-      shadowOpacity: 0.15,
-      shadowRadius: 16,
-      elevation: 8,
-      // Never wider than a phone card, even on a desktop browser.
-      maxWidth: 420,
-      width: "100%",
-      alignSelf: "center",
     },
     header: {
       flexDirection: "row",

@@ -1,9 +1,13 @@
-import { View, Text, TouchableOpacity, StyleSheet } from "react-native";
+import { View, TouchableOpacity, StyleSheet } from "react-native";
+import Text from "./Text";
+import { Ionicons } from "@expo/vector-icons";
+import * as Haptics from "expo-haptics";
 import DateTimePickerModal from "react-native-modal-datetime-picker";
 import { useMemo, useState } from "react";
 import moment from "moment";
 import { useTheme } from "../context/ThemeContext";
 import { ThemeColors } from "../utils/Color";
+import { radius } from "../utils/tokens";
 import { DATE_FORMAT } from "../utils/deposits";
 import { currentOS } from "../utils/Utils";
 
@@ -70,7 +74,7 @@ const DatePicker = (props: IDatePicker) => {
             borderColor: colors.border,
             backgroundColor: colors.inputBackground,
             color: colors.text,
-            borderRadius: 10,
+            borderRadius: radius.control,
             paddingTop: 14,
             paddingBottom: 14,
             paddingLeft: 12,
@@ -94,7 +98,10 @@ const DatePicker = (props: IDatePicker) => {
     <View>
       <Text style={styles.label}>{label}</Text>
       <TouchableOpacity
-        onPress={() => setShowDatePicker(true)}
+        onPress={() => {
+          Haptics.selectionAsync().catch(() => {});
+          setShowDatePicker(true);
+        }}
         accessibilityRole="button"
         accessibilityLabel={label}
         style={styles.dateInput}
@@ -102,6 +109,7 @@ const DatePicker = (props: IDatePicker) => {
         <Text style={parsed ? styles.dateText : styles.datePlaceholder}>
           {parsed ? parsed.format(DATE_FORMAT) : "Select a date"}
         </Text>
+        <Ionicons name="calendar-outline" size={18} color={colors.textMuted} />
       </TouchableOpacity>
       <DateTimePickerModal
         date={parsed ? parsed.toDate() : new Date()}
@@ -130,11 +138,15 @@ const createStyles = (colors: ThemeColors) =>
       color: colors.text,
     },
     dateInput: {
-      borderWidth: 1,
-      borderColor: colors.border,
+      flexDirection: "row",
+      alignItems: "center",
+      justifyContent: "space-between",
+      borderWidth: 1.5,
+      borderColor: "transparent",
       backgroundColor: colors.inputBackground,
-      borderRadius: 10,
-      padding: 15,
+      borderRadius: radius.control,
+      paddingHorizontal: 12,
+      paddingVertical: 14,
       marginBottom: 18,
     },
     dateText: {

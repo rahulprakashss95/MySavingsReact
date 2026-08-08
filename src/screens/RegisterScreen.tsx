@@ -1,14 +1,9 @@
 import { Ionicons } from "@expo/vector-icons";
+import { LinearGradient } from "expo-linear-gradient";
 import React, { useMemo, useState } from "react";
-import {
-  KeyboardAvoidingView,
-  Pressable,
-  ScrollView,
-  StyleSheet,
-  Text,
-  TextInput,
-  View,
-} from "react-native";
+import { KeyboardAvoidingView, Pressable, ScrollView, StyleSheet, View } from "react-native";
+import Text from "../components/Text";
+import TextInput from "../components/TextInput";
 import {
   createFamily,
   createLoginUser,
@@ -22,8 +17,8 @@ import { normalizeFamilyCode } from "../models/FamilyModel";
 import { signInWithCredentials } from "../utils/auth";
 import { MIN_PASSWORD_LENGTH, validatePassword } from "../utils/passwordStrength";
 import { useRouter } from "expo-router";
-import { ThemeColors, tint } from "../utils/Color";
-import { elevation, radius } from "../utils/tokens";
+import { ThemeColors } from "../utils/Color";
+import { elevation, gradientAngle, radius } from "../utils/tokens";
 import { showToast } from "../utils/Utils";
 
 const RegisterScreen = () => {
@@ -136,9 +131,14 @@ const RegisterScreen = () => {
         showsVerticalScrollIndicator={false}
       >
         <View style={styles.brand}>
-          <View style={styles.logo}>
-            <Ionicons name="home-outline" size={30} color={colors.primary} />
-          </View>
+          <LinearGradient
+            colors={colors.gradientPrimary}
+            start={gradientAngle.start}
+            end={gradientAngle.end}
+            style={styles.logo}
+          >
+            <Ionicons name="home-outline" size={30} color={colors.onPrimary} />
+          </LinearGradient>
           <Text style={styles.title}>Register your family</Text>
           <Text style={styles.subtitle}>
             Create a family space and its admin account. You can add members and
@@ -363,7 +363,6 @@ const createStyles = (colors: ThemeColors) =>
       borderRadius: radius.card,
       alignItems: "center",
       justifyContent: "center",
-      backgroundColor: tint(colors.primary),
       marginBottom: 16,
     },
     title: {

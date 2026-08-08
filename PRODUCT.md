@@ -30,7 +30,8 @@ Not a bank-linked fintech aggregator and not a generic spreadsheet: it's a manua
 
 - React Native (0.86) + Expo SDK 57, expo-router, Zustand + React Query, Supabase backend.
 - Styling today is 100% `StyleSheet.create` driven by a `useTheme()` hook and a light/dark `ThemeColors` token object (`src/utils/Color.ts`) — NativeWind/Tailwind classes are configured but unused in `src/`. New work should keep using this established StyleSheet + token pattern rather than introducing `className`.
-- No `expo-blur` or `expo-haptics` installed yet; may be added for native materials/tactile feedback as part of the redesign.
+- `expo-blur`, `expo-haptics`, `expo-linear-gradient`, `react-native-svg`, and `@expo-google-fonts/plus-jakarta-sans` are installed (added 2026-08 for native materials/haptics/gradients/charts/typography — see DESIGN.md). `react-native-gesture-handler` and `react-native-reanimated` (already present) power the gesture-driven `BottomSheet` primitive.
+- Repo-wide `npx eslint "src/**"` is currently broken (ESLint 10.8.1 installed, but only a legacy `.eslintrc.json` exists — no flat `eslint.config.js`) — pre-existing, not introduced by any UI pass. `npx tsc --noEmit` is the reliable verification command until that's fixed.
 - Module-based access control (`canSeeModule`) gates tabs and content per member; admins see everything.
 
 ## Brand Commitments

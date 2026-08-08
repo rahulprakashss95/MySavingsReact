@@ -21,6 +21,16 @@ colors:
   accent-blue: "#26619c"
   accent-amber: "#b26a00"
   accent-violet: "#6a3fb5"
+typography:
+  family: "Plus Jakarta Sans"
+  weights: [400, 500, 600, 700, 800]
+gradients:
+  primary-light: ["#3679b8", "#193f68"]
+  primary-dark: ["#7db4e3", "#33638f"]
+  amber-light: ["#d99328", "#8a5300"]
+  amber-dark: ["#f7c878", "#b57e26"]
+  violet-light: ["#8659d1", "#4a2d80"]
+  violet-dark: ["#c0abe8", "#6f5aa8"]
 rounded:
   chip: "8px"
   control: "12px"
@@ -61,17 +71,18 @@ components:
 
 ## Overview
 
-**Creative North Star: "The Family Ledger, Rebuilt in Glass and Paper"**
+**Creative North Star: "Ledger, Illuminated"**
 
-AssetDiary is read like a well-kept household ledger and used like a native phone settings app: calm, dense with real numbers, and instantly trustworthy. The redesign keeps the incumbent system's best instinct — grouped, inset list rows with icon chips (`GroupedRow`, `GroupedList`, `FeatureTile` were already close to this) — and formalizes it into the single vocabulary every screen uses, while replacing the dated, flat-shadow primitives (`Button`, `Card`, `FAB`) that had drifted from it.
+AssetDiary is read like a well-kept household ledger and used like a native phone settings app: calm, dense with real numbers, and instantly trustworthy — lit with real materials, gradient hero moments, and motion rather than left flat. The 2026-08 pass kept the incumbent system's best instinct — grouped, inset list rows with icon chips (`GroupedRow`, `GroupedList`, `FeatureTile`) — and formalized it into the single vocabulary every screen uses. The follow-up pass documented here (same month) kept that grouped-list skeleton but changed almost everything about how it's *rendered*: a distinct app-wide typeface, gradient-washed hero cards, real native materials (`expo-blur`) and haptics (`expo-haptics`), meaningful entrance/data motion, and a gesture-driven bottom-sheet system replacing every flat `Modal`.
 
-This is an **Operate**-mode surface, not a marketing one: familiarity earns trust here, boldness is spent on craft (materials, motion, precision) rather than on reinvented affordances. The one place the app gets to feel genuinely "native platform, 2026" is the chrome each OS actually owns — iOS's real Liquid Glass tab bar (already implemented via `NativeTabs`, unchanged by this pass), translucent system materials behind bars/sheets on iOS, tonal surfaces on Android, and clean flat panels on web.
+This is still an **Operate**-mode surface, not a marketing one: familiarity earns trust, and boldness is spent deliberately — one true gradient hero moment per screen, not gradient everywhere; a distinctive typeface carrying the whole app rather than a bespoke display face reserved for hero text. The one place the app gets to feel genuinely "native platform, 2026" beyond the shared token system is the chrome each OS actually owns — iOS's real Liquid Glass tab bar (already implemented via `NativeTabs`, untouched by either pass), translucent system materials behind sheets/bottom-sheet backdrops on iOS, tonal surfaces on Android, and clean flat panels + shadow on web.
 
 **Key Characteristics:**
-- Grouped, inset lists with icon chips as the default way to show anything — never a bare `<FlatList>` row.
-- Restrained color: brand steel-blue as the one tint, spent on primary actions, active state, and the three fixed accent hues (blue/amber/violet) that identify asset/ledger categories — never decoration.
-- Depth from hairlines + soft ambient shadow, not heavy drop shadows.
-- One shared token system (color, spacing, radius, type) across iOS/Android/web; platform divergence lives in chrome (nav, materials, motion), not in bespoke per-OS component forks — a deliberate scope decision for a one-person-maintained app, not an oversight.
+- Grouped, inset lists with icon chips as the default way to show anything — never a bare `<FlatList>` row. Rows/tiles stagger in on mount and fire a light haptic on press.
+- Restrained color on ordinary surfaces: brand steel-blue as the one tint, the three fixed accent hues (blue/amber/violet) for category identity — never decoration. The one deliberate exception is **the single hero card per screen** (see Gradients below), which earns a full gradient wash.
+- Depth from hairlines + soft ambient shadow on ordinary cards; the hero card and floating elements (FAB, sheets) get a stronger, deliberately more present shadow.
+- One shared token system (color, spacing, radius, type, gradients, motion) across iOS/Android/web; platform divergence lives in chrome (nav, materials, motion), not in bespoke per-OS component forks — a deliberate scope decision for a one-person-maintained app, not an oversight.
+- One app-wide typeface (Plus Jakarta Sans) carrying both body copy and hero numbers — see Typography.
 
 ## Colors
 
@@ -99,9 +110,9 @@ Restrained strategy: one brand tint (steel blue, unchanged — see PRODUCT.md Br
 
 ## Typography
 
-**Font:** System (SF Pro on iOS, Roboto on Android, system-ui on web) — Operate surfaces don't need a display face; RN's default (no explicit `fontFamily`) already resolves to the platform system font. Numbers (amounts, dates, counts) always use `fontVariant: ["tabular-nums"]`.
+**Font:** Plus Jakarta Sans (400/500/600/700/800), app-wide — replaced the platform system font in the 2026-08 "Ledger, Illuminated" pass. Loaded via `useFonts` in `app/_layout.tsx` (splash holds until ready, same pattern as auth/theme restore). Applied through two drop-in wrapper components, `src/components/Text.tsx` and `src/components/TextInput.tsx` — same prop API as RN's `Text`/`TextInput`, but they read the flattened `fontWeight` and resolve the matching *static* font file, since Android doesn't synthesize bold for custom fonts. Every screen imports `Text`/`TextInput` from these wrappers, never from `"react-native"` directly. Numbers (amounts, dates, counts) always use `fontVariant: ["tabular-nums"]`.
 
-**Character:** Plain, confident, dense where the data is dense. No display moments — the numbers are the content.
+**Character:** Plain, confident, dense where the data is dense — a distinct typeface, not a display face; it carries body copy and hero numbers alike rather than being reserved for a handful of marketing-style moments.
 
 ### Hierarchy
 Fixed pt scale (not fluid — this is Operate, per-device DPI is consistent):
@@ -132,9 +143,25 @@ Hybrid: flat-by-default with hairline borders doing most of the separation (grou
 **The Hairline-First Rule.** Reach for a 1px border before a shadow. Shadow is for things that float; borders are for things that sit.
 
 ### Materials (platform-specific)
-- **iOS:** system materials (`expo-blur` `BlurView`, `systemMaterial`/`regular` — a real translucent material, never a hand-rolled semi-transparent overlay) behind the tab bar (already native/Liquid Glass via `NativeTabs`, untouched), sheet headers, and any floating toolbar. 
+- **iOS:** `expo-blur` `BlurView` (now installed and in use) behind the `BottomSheet` primitive's backdrop and any floating toolbar — a real translucent material, never a hand-rolled semi-transparent overlay. The tab bar's own Liquid Glass stays native via `NativeTabs`, untouched.
 - **Android:** tonal elevation — a slightly lifted surface tone, no blur.
-- **Web:** solid surface, no blur (unsupported/inconsistent); rely on the ambient shadow instead.
+- **Web:** solid surface, no blur (unsupported/inconsistent); rely on the ambient/sheet shadow instead.
+
+## Gradients
+
+One deliberate hero moment per screen, never decoration on ordinary surfaces — the counterweight to The One Tint Rule, not a repeal of it.
+
+- **Where:** the single headline-total card on a hub/overview screen (Home's Worth card, `AssetOverviewScreen`/`LedgerOverviewScreen`'s hero card), the primary filled `Button`, and the `FAB`. Never a `GroupedRow`, a plain `Card`, or a `FeatureTile` grid tile's background.
+- **Tokens:** `colors.gradientPrimary` / `gradientAmber` / `gradientViolet` on `ThemeColors`, each a `[start, end]` hex tuple, paired with `gradientAngle` (`{start:{x:0,y:0}, end:{x:1,y:1}}`) from `src/utils/tokens.ts`. Rendered via `expo-linear-gradient`.
+- **The Split-Card Pattern.** A hero card is two zones in one rounded, shadowed, `overflow:"hidden"` container: a gradient **top zone** holding the headline label + number in `colors.onPrimary` (with the label at reduced opacity, not a separate muted token), and a flat `colors.card` **bottom zone** underneath for anything that depends on the accent-hue vocabulary (a composition bar, coloured legend chips) — an accent hue would wash out against a same-family gradient, so accent-coded content always sits on the flat zone, never the gradient one. See `HomeScreen.tsx`'s `WorthCard`, `AssetOverviewScreen.tsx`'s `HeroCard`, or `LedgerOverviewScreen.tsx` for the reference implementation.
+- **Icon chips** (`GroupedRow`, `FeatureTile`) get a *much* subtler treatment — not this pattern: a two-stop wash of the row's own accent colour at ~24%→7% alpha (`` `${accent}3d` `` → `` `${accent}12` ``), diagonal, staying inside the existing small icon-chip box. This is polish, not a hero moment.
+
+## Motion
+
+- **Entrance stagger:** grouped-list rows, `FeatureTile` grids, and a hub screen's top-level card blocks fade+slide in (`FadeInDown`) on mount, each roughly 35–70ms after the previous, capped at `motion.staggerMaxDelay` (280ms) so a long list doesn't take seconds to finish appearing. Tokens in `src/utils/tokens.ts`'s `motion` object; `GroupedRow`/`GroupedList` wire this automatically via the `position.index` passed through `GroupedList`'s `renderItem`, `FeatureTile` via an optional `index` prop callers must pass explicitly when mapping a grid.
+- **Count-up:** a headline total (Home Worth/Month, an overview hero figure) eases from its previous value to the new one via `src/hooks/useCountUp.ts` (`motion.countUpDuration`, 700ms) whenever the underlying number changes — not on every render, and it respects the OS reduce-motion setting.
+- **Haptics:** `expo-haptics` light impact on `Button`/`FAB`/`GroupedRow` press and `DatePicker` open, medium impact on a destructive-tone `Button`, selection haptic on a `SearchableSelect` row choice. Tactile feedback confirms an action landed; it is not decoration, so it's reserved for things that actually did something (a press, a selection) — never a passive state change.
+- Existing press-scale feedback (`usePressAnimation`, scale 0.97/0.94, ~150ms) is unchanged and layers underneath the above.
 
 ## Shapes
 
@@ -144,10 +171,10 @@ Continuous, generous corners — nothing under 8px. Scale: `chip` 8 (badges, sma
 
 ### Buttons
 - **Shape:** 12px radius (`control`), fixed 50pt height (was fixed 200pt *width* before — now full-width or content-width, never a fixed narrow box).
-- **Primary (filled):** `primary` background, `on-primary` text, 600 weight. Used once per screen/section for the one recommended action.
+- **Primary (filled, primary tone):** `gradientPrimary` fill (diagonal, see Gradients), `on-primary` text, 600 weight, light haptic on press. Used once per screen/section for the one recommended action.
 - **Tonal:** `tint(primary)` background (~13% alpha), `primary` text — the default secondary action, used more often than outline.
 - **Plain:** no background, `primary` text — tertiary/cancel actions.
-- **Destructive:** same three variants, `negative` in place of `primary`.
+- **Destructive:** same three variants, `negative` in place of `primary` — filled destructive stays a *flat* `negative` fill, not a gradient (a gradient delete button reads as an invitation, not a warning), and fires a medium haptic instead of light.
 - **States:** every variant gets pressed (scale 0.97 + slight opacity drop, ~150ms), disabled (40% opacity, no press feedback), and loading (spinner replaces label at identical height — kept from incumbent `Button`).
 
 ### Cards / Containers
@@ -157,15 +184,20 @@ Continuous, generous corners — nothing under 8px. Scale: `chip` 8 (badges, sma
 - **Internal Padding:** 16px (`base`).
 
 ### Grouped Rows / Lists
-- **Style:** unchanged in spirit from the incumbent `GroupedRow`/`GroupedList` — hairline-separated rows sharing one 14px-radius rounded container per section, icon chip + text column + trailing content. This is the canonical way to present any collection; screens still using a bespoke `FlatList` row are migrated to it.
+- **Style:** unchanged in spirit from the incumbent `GroupedRow`/`GroupedList` — hairline-separated rows sharing one 14px-radius rounded container per section, icon chip + text column + trailing content. This is the canonical way to present any collection; screens still using a bespoke `FlatList` row are migrated to it. Icon chip is a subtle accent-hue gradient wash (see Gradients); rows stagger in on mount and fire a light haptic on press.
 
 ### FAB
-- **Style:** 60pt circle, `primary` fill, `on-primary` icon, Ambient shadow, spring press (scale to 0.94 on press-in). No glass treatment — glass is reserved for the OS-owned tab bar.
+- **Style:** 60pt circle, `gradientPrimary` fill, `on-primary` icon, Ambient shadow, spring press (scale to 0.94 on press-in), light haptic on press. No glass treatment — glass is reserved for the OS-owned tab bar.
 
 ### Inputs / Fields
 - **Style:** `inputBackground` fill, 12px radius (`control`), no border at rest.
-- **Focus:** 1.5px `primary` border appears (not a glow — matches the app's flat-hairline language).
-- **Error:** 1.5px `negative` border + footnote-sized helper text below.
+- **Focus:** 1.5px `primary` border, plus a subtle `primary`-coloured glow shadow (a controlled exception to hairline-first — the glow is soft/low-opacity, not a heavy ring, and only ever on the field that currently has focus).
+- **Error:** 1.5px `negative` border + matching subtle glow + footnote-sized helper text below.
+- **Date fields:** a calendar glyph trailing the value, selection haptic on open.
+
+### Bottom Sheets
+- **`BottomSheet` (`src/components/BottomSheet.tsx`):** the standard primitive for any bottom-anchored picker/sheet-style popup — gesture-driven drag-to-dismiss from a handle, spring open/close, blurred+dimmed backdrop on iOS (flat dim elsewhere). `SearchableSelect` and `MetalRatesModal` are both built on it. A full-screen viewer or a small centered alert-style dialog does **not** need to move onto this — it's for sheets, not every `Modal`.
+- **`SearchableSelect`:** rebuilt on `BottomSheet` — sticky search bar with a clear button, icon-chip avatar (initial letter) per row, tonal-highlighted selected row with a checkmark, selection haptic. Same external prop API as before.
 
 ### Navigation
 - **iOS:** native Liquid Glass `NativeTabs` bottom bar (kept, untouched). Native-stack headers with `headerLargeTitle` on top-level hub screens (Home, module index screens), inline title on detail/edit screens.
@@ -178,9 +210,14 @@ Continuous, generous corners — nothing under 8px. Scale: `chip` 8 (badges, sma
 - **Do** reuse `GroupedRow`/`GroupedList`/`FeatureTile`'s existing pattern language for any new or migrated list/tile UI.
 - **Do** use real `expo-blur` system materials on iOS for anything meant to feel like glass; never a semi-transparent `View` standing in for it.
 - **Do** keep the iOS `NativeTabs` Liquid Glass bar exactly as implemented.
+- **Do** import `Text`/`TextInput` from `src/components/Text.tsx`/`TextInput.tsx`, never from `"react-native"` directly.
+- **Do** use the Split-Card Pattern (see Gradients) for a new hero-total moment, and put any accent-coded content on its flat zone, not its gradient zone.
+- **Do** use `BottomSheet` for any new bottom-anchored picker/sheet popup instead of a bare `Modal`.
 
 ### Don't:
 - **Don't** give any element a fixed narrow width button box (the old 200pt `Button` width) — buttons size to content or container.
 - **Don't** stack shadows on every card in a list — hairlines separate rows; shadow is reserved for floating elements.
 - **Don't** introduce NativeWind/Tailwind `className` usage — the codebase's established pattern is `StyleSheet.create` + `useTheme()`, and this pass keeps it.
-- **Don't** touch data models, Supabase queries, navigation structure/tab order, or access-control logic — this is a visual pass only.
+- **Don't** touch data models, Supabase queries, navigation structure/tab order, or access-control logic — this remains a visual pass only.
+- **Don't** put a gradient wash on an ordinary `GroupedRow`, `Card`, or `FeatureTile` background — one hero moment per screen, not decoration everywhere.
+- **Don't** fire a haptic on a passive state change (a value updating, a screen loading) — only on an action the user actually took.

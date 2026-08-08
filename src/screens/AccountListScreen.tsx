@@ -1,13 +1,6 @@
 ﻿import React, { useMemo, useState } from "react";
-import {
-  View,
-  Text,
-  StyleSheet,
-  FlatList,
-  ScrollView,
-  Pressable,
-  RefreshControl,
-} from "react-native";
+import { View, StyleSheet, FlatList, ScrollView, Pressable, RefreshControl } from "react-native";
+import Text from "../components/Text";
 import { Ionicons } from "@expo/vector-icons";
 import { useTheme } from "../context/ThemeContext";
 import { ThemeColors, tint } from "../utils/Color";
@@ -42,6 +35,7 @@ import { DepositListSkeleton } from "../components/Skeleton";
 import AccountCard from "../components/AccountCard";
 import FloatingButton from "../components/FAB";
 import { useRouter } from "expo-router";
+import { useCountUp } from "../hooks/useCountUp";
 
 /** The list tabs, in the order they appear. `type` is the stored account type. */
 const TABS: { type: AccountType; label: string }[] = [
@@ -95,6 +89,9 @@ const AccountListScreen = () => {
     () => visible.reduce((sum, a) => sum + (Number(a.balance) || 0), 0),
     [visible]
   );
+  // Eases between tabs' totals, not just changes within one — switching from
+  // Cash to Fixed Deposit reads as a count rather than a jump-cut.
+  const animatedSubtotal = useCountUp(subtotal);
 
   const navigateAddEdit = (data: AccountModel | null) => {
     router.push(
@@ -165,7 +162,7 @@ const AccountListScreen = () => {
           {directionNote ? ` · ${directionNote}` : ""}
         </Text>
         <Text style={[styles.summaryValue, owes && styles.summaryOwed]}>
-          ₹ {amountFormat(subtotal)}
+          ₹ {amountFormat(Math.round(animatedSubtotal))}
         </Text>
       </View>
     );

@@ -1,8 +1,11 @@
 import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
+import { LinearGradient } from "expo-linear-gradient";
 import moment from "moment";
 import React, { useMemo } from "react";
-import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
+import { Pressable, ScrollView, StyleSheet, View } from "react-native";
+import Animated, { FadeInDown } from "react-native-reanimated";
+import Text from "../components/Text";
 
 import QuoteCard from "../components/QuoteCard";
 import { DashboardSkeleton } from "../components/Skeleton";
@@ -12,6 +15,7 @@ import {
   useDashboardLayoutStore,
 } from "../context/DashboardLayoutContext";
 import { useTheme } from "../context/ThemeContext";
+import { useCountUp } from "../hooks/useCountUp";
 import {
   DashboardData,
   MaturityItem,
@@ -24,6 +28,7 @@ import { canSeeModule, ModuleKey } from "../models/common";
 import { QuickAccessItem, resolveQuickAccess } from "../models/quickAccess";
 import { ThemeColors, tint } from "../utils/Color";
 import { DATE_FORMAT } from "../utils/deposits";
+import { gradientAngle, motion } from "../utils/tokens";
 import { amountFormat } from "../utils/Utils";
 
 type GreetingIcon = React.ComponentProps<
@@ -214,8 +219,15 @@ const HomeScreen = () => {
         </View>
       )}
 
-      {order.map((key) => (
-        <React.Fragment key={key}>{sections[key]}</React.Fragment>
+      {order.map((key, index) => (
+        <Animated.View
+          key={key}
+          entering={FadeInDown.delay(
+            Math.min(index * motion.staggerDelay * 2, motion.staggerMaxDelay)
+          ).duration(motion.staggerDuration)}
+        >
+          {sections[key]}
+        </Animated.View>
       ))}
 
       {showData && !hasAnything && modules.length === 0 && (
@@ -322,66 +334,76 @@ const WorthCard = ({
 }) => {
   const priced = worth.segments.filter((s) => s.value > 0);
   const barTotal = priced.reduce((sum, s) => sum + s.value, 0);
+  const animatedTotal = useCountUp(worth.total);
 
   return (
-    <View style={styles.card}>
-      <Text style={styles.cardLabel}>Total worth</Text>
-      <Text style={styles.worthValue}>{rupees(worth.total)}</Text>
+    <View style={styles.heroCard}>
+      <LinearGradient
+        colors={colors.gradientPrimary}
+        start={gradientAngle.start}
+        end={gradientAngle.end}
+        style={styles.heroTop}
+      >
+        <Text style={styles.heroLabel}>Total worth</Text>
+        <Text style={styles.heroValue}>{rupees(animatedTotal)}</Text>
+      </LinearGradient>
 
-      {barTotal > 0 && (
-        <View style={styles.worthBar}>
-          {priced.map((segment) => (
-            <View
+      <View style={styles.heroBottom}>
+        {barTotal > 0 && (
+          <View style={styles.worthBar}>
+            {priced.map((segment) => (
+              <View
+                key={segment.key}
+                style={{
+                  flex: segment.value / barTotal,
+                  backgroundColor: colors[SEGMENT_ACCENT[segment.key]] as string,
+                }}
+              />
+            ))}
+          </View>
+        )}
+
+        <View style={styles.chipWrap}>
+          {worth.segments.map((segment) => (
+            <Pressable
               key={segment.key}
-              style={{
-                flex: segment.value / barTotal,
-                backgroundColor: colors[SEGMENT_ACCENT[segment.key]] as string,
-              }}
-            />
+              onPress={() => onOpen(segment.href)}
+              accessibilityRole="button"
+              style={({ pressed }) => [styles.chip, pressed && styles.pressed]}
+            >
+              <View
+                style={[
+                  styles.chipDot,
+                  {
+                    backgroundColor: colors[
+                      SEGMENT_ACCENT[segment.key]
+                    ] as string,
+                  },
+                ]}
+              />
+              <Text style={styles.chipLabel}>{segment.label}</Text>
+              <Text style={styles.chipValue}>{rupees(segment.value)}</Text>
+            </Pressable>
           ))}
         </View>
-      )}
 
-      <View style={styles.chipWrap}>
-        {worth.segments.map((segment) => (
+        {worth.needsRates && (
           <Pressable
-            key={segment.key}
-            onPress={() => onOpen(segment.href)}
+            onPress={() => onOpen("/assets/overview")}
             accessibilityRole="button"
-            style={({ pressed }) => [styles.chip, pressed && styles.pressed]}
+            style={({ pressed }) => [styles.nudge, pressed && styles.pressed]}
           >
-            <View
-              style={[
-                styles.chipDot,
-                {
-                  backgroundColor: colors[
-                    SEGMENT_ACCENT[segment.key]
-                  ] as string,
-                },
-              ]}
-            />
-            <Text style={styles.chipLabel}>{segment.label}</Text>
-            <Text style={styles.chipValue}>{rupees(segment.value)}</Text>
+            <Ionicons name="pricetag-outline" size={15} color={colors.primary} />
+            <Text style={styles.nudgeText}>
+              {worth.unpricedGrams > 0
+                ? `Set metal rates to value ${Math.round(
+                    worth.unpricedGrams
+                  )} g of gold`
+                : "Set metal rates to value your gold"}
+            </Text>
           </Pressable>
-        ))}
+        )}
       </View>
-
-      {worth.needsRates && (
-        <Pressable
-          onPress={() => onOpen("/assets/overview")}
-          accessibilityRole="button"
-          style={({ pressed }) => [styles.nudge, pressed && styles.pressed]}
-        >
-          <Ionicons name="pricetag-outline" size={15} color={colors.primary} />
-          <Text style={styles.nudgeText}>
-            {worth.unpricedGrams > 0
-              ? `Set metal rates to value ${Math.round(
-                  worth.unpricedGrams
-                )} g of gold`
-              : "Set metal rates to value your gold"}
-          </Text>
-        </Pressable>
-      )}
     </View>
   );
 };
@@ -630,6 +652,7 @@ const MonthCard = ({
   // Second from the end of the series — the last completed month.
   const previousLabel =
     hero.series[hero.series.length - 2]?.label ?? "last month";
+  const animatedTotal = useCountUp(hero.total);
 
   return (
     <View style={styles.card}>
@@ -642,7 +665,7 @@ const MonthCard = ({
         )}
       </View>
 
-      <Text style={styles.worthValue}>{rupees(hero.total)}</Text>
+      <Text style={styles.worthValue}>{rupees(animatedTotal)}</Text>
       <Text style={styles.monthCaption}>{isEarnings ? "earned" : "spent"}</Text>
 
       <DeltaRow
@@ -725,6 +748,45 @@ const createStyles = (colors: ThemeColors) =>
       borderColor: colors.border,
       padding: 18,
       marginTop: 16,
+    },
+    // The one true hero moment on Home: a gradient banner for the headline
+    // figure, sitting atop a flat zone that keeps the accent-coloured
+    // composition bar/chips legible (an accent hue would wash out on a
+    // same-family gradient). See DESIGN.md "Gradient hero moments".
+    heroCard: {
+      borderRadius: 18,
+      overflow: "hidden",
+      backgroundColor: colors.card,
+      marginTop: 16,
+      shadowColor: colors.shadow,
+      shadowOffset: { width: 0, height: 4 },
+      shadowOpacity: 0.16,
+      shadowRadius: 14,
+      elevation: 4,
+    },
+    heroTop: {
+      paddingHorizontal: 18,
+      paddingTop: 18,
+      paddingBottom: 20,
+    },
+    heroLabel: {
+      fontSize: 12,
+      fontWeight: "600",
+      textTransform: "uppercase",
+      letterSpacing: 0.6,
+      color: colors.onPrimary,
+      opacity: 0.75,
+    },
+    heroValue: {
+      fontSize: 34,
+      fontWeight: "800",
+      color: colors.onPrimary,
+      marginTop: 8,
+      fontVariant: ["tabular-nums"],
+    },
+    heroBottom: {
+      paddingHorizontal: 18,
+      paddingBottom: 18,
     },
     cardLabel: {
       fontSize: 12,
