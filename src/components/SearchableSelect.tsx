@@ -15,6 +15,7 @@ import {
 } from "react-native";
 import { useTheme } from "../context/ThemeContext";
 import { ThemeColors, tint } from "../utils/Color";
+import { radius } from "../utils/tokens";
 
 export type Option = { id: string; name: string };
 
@@ -264,7 +265,7 @@ const createStyles = (colors: ThemeColors) =>
       justifyContent: "space-between",
       borderWidth: 1,
       borderColor: colors.border,
-      borderRadius: 10,
+      borderRadius: radius.control,
       backgroundColor: colors.inputBackground,
       paddingHorizontal: 12,
       height: 50,
@@ -287,7 +288,7 @@ const createStyles = (colors: ThemeColors) =>
     },
     sheet: {
       backgroundColor: colors.card,
-      borderRadius: 16,
+      borderRadius: radius.sheet,
       padding: 12,
       paddingBottom: 16,
     },
@@ -297,7 +298,7 @@ const createStyles = (colors: ThemeColors) =>
       gap: 8,
       borderWidth: 1,
       borderColor: colors.border,
-      borderRadius: 10,
+      borderRadius: radius.control,
       backgroundColor: colors.inputBackground,
       paddingHorizontal: 12,
       height: 46,
@@ -351,7 +352,7 @@ const createStyles = (colors: ThemeColors) =>
       gap: 6,
       marginTop: 8,
       paddingVertical: 14,
-      borderRadius: 10,
+      borderRadius: radius.control,
       backgroundColor: tint(colors.primary),
     },
     addText: {
@@ -366,8 +367,8 @@ const createStyles = (colors: ThemeColors) =>
     },
     formCard: {
       backgroundColor: colors.background,
-      borderTopLeftRadius: 18,
-      borderTopRightRadius: 18,
+      borderTopLeftRadius: radius.sheet,
+      borderTopRightRadius: radius.sheet,
       maxHeight: "92%",
     },
     formHeader: {

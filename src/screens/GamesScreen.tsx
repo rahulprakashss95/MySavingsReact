@@ -5,6 +5,7 @@ import { useRouter } from "expo-router";
 import { useAuth } from "../context/AuthContext";
 import { useTheme } from "../context/ThemeContext";
 import { ThemeColors, tint } from "../utils/Color";
+import { radius } from "../utils/tokens";
 import { useCollectionState } from "../query/hooks";
 import { GAMES, GameScoreModel } from "../models/GameModel";
 
@@ -84,7 +85,7 @@ const createStyles = (colors: ThemeColors) =>
       backgroundColor: colors.card,
       borderWidth: 1,
       borderColor: colors.border,
-      borderRadius: 14,
+      borderRadius: radius.card,
       overflow: "hidden",
     },
     cardMain: {

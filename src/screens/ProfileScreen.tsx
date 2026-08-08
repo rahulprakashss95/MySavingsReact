@@ -30,6 +30,7 @@ import { useTheme } from "../context/ThemeContext";
 import { formatFileSize, UPLOAD_MAX_BYTES } from "../models/common";
 import { displayNameOf, isAdminRole } from "../models/LoginUserModel";
 import { ThemeColors, tint } from "../utils/Color";
+import { radius } from "../utils/tokens";
 import { MIN_PASSWORD_LENGTH, validatePassword } from "../utils/passwordStrength";
 import { showToast } from "../utils/Utils";
 
@@ -572,7 +573,7 @@ const createStyles = (colors: ThemeColors) =>
     roleBadge: {
       paddingHorizontal: 8,
       paddingVertical: 2,
-      borderRadius: 6,
+      borderRadius: radius.chip,
       backgroundColor: tint(colors.primary),
     },
     roleText: {
@@ -667,7 +668,7 @@ const createStyles = (colors: ThemeColors) =>
       borderWidth: 1,
       borderColor: colors.border,
       backgroundColor: colors.inputBackground,
-      borderRadius: 10,
+      borderRadius: radius.control,
       paddingHorizontal: 12,
       paddingVertical: 14,
       fontSize: 16,

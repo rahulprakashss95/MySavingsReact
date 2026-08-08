@@ -6,6 +6,7 @@ import { useAuth } from "../context/AuthContext";
 import { usePasscode } from "../context/PasscodeContext";
 import { useTheme } from "../context/ThemeContext";
 import { ThemeColors, tint } from "../utils/Color";
+import { radius } from "../utils/tokens";
 import PasscodePad from "./PasscodePad";
 
 /**
@@ -96,7 +97,7 @@ const createStyles = (colors: ThemeColors) =>
     logo: {
       width: 64,
       height: 64,
-      borderRadius: 20,
+      borderRadius: radius.card,
       alignItems: "center",
       justifyContent: "center",
       backgroundColor: tint(colors.primary),

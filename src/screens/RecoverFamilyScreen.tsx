@@ -19,6 +19,7 @@ import type { LoginUserModel } from "../models/LoginUserModel";
 import { rememberFamily, signInWithCredentials } from "../utils/auth";
 import { useRouter } from "expo-router";
 import { ThemeColors, tint } from "../utils/Color";
+import { radius } from "../utils/tokens";
 import { showToast } from "../utils/Utils";
 
 type Match = { family: FamilyModel; user: LoginUserModel };
@@ -217,7 +218,7 @@ const createStyles = (colors: ThemeColors) =>
     logo: {
       width: 64,
       height: 64,
-      borderRadius: 20,
+      borderRadius: radius.card,
       alignItems: "center",
       justifyContent: "center",
       backgroundColor: tint(colors.primary),
@@ -233,7 +234,7 @@ const createStyles = (colors: ThemeColors) =>
     },
     card: {
       backgroundColor: colors.card,
-      borderRadius: 16,
+      borderRadius: radius.card,
       borderWidth: StyleSheet.hairlineWidth,
       borderColor: colors.border,
       padding: 20,
@@ -249,7 +250,7 @@ const createStyles = (colors: ThemeColors) =>
       borderWidth: 1,
       borderColor: colors.border,
       backgroundColor: colors.inputBackground,
-      borderRadius: 10,
+      borderRadius: radius.control,
       paddingHorizontal: 12,
       paddingVertical: 13,
       fontSize: 15,
@@ -261,7 +262,7 @@ const createStyles = (colors: ThemeColors) =>
       borderWidth: 1,
       borderColor: colors.border,
       backgroundColor: colors.inputBackground,
-      borderRadius: 10,
+      borderRadius: radius.control,
       paddingHorizontal: 12,
     },
     passwordInput: {
@@ -273,7 +274,7 @@ const createStyles = (colors: ThemeColors) =>
     findButton: { width: "100%", marginTop: 22 },
     resultCard: {
       backgroundColor: colors.card,
-      borderRadius: 16,
+      borderRadius: radius.card,
       borderWidth: StyleSheet.hairlineWidth,
       borderColor: colors.border,
       padding: 18,
@@ -289,7 +290,7 @@ const createStyles = (colors: ThemeColors) =>
       flexDirection: "row",
       alignItems: "center",
       backgroundColor: tint(colors.primary),
-      borderRadius: 10,
+      borderRadius: radius.control,
       paddingHorizontal: 12,
       paddingVertical: 10,
       marginTop: 12,

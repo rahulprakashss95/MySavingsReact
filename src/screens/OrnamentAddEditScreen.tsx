@@ -1,12 +1,5 @@
-﻿import React, { useMemo, useState } from "react";
-import {
-  Pressable,
-  ScrollView,
-  StyleSheet,
-  Text,
-  TextInput,
-  View,
-} from "react-native";
+import React, { useMemo, useState } from "react";
+import { ScrollView, StyleSheet, Text } from "react-native";
 import {
   addOrnament,
   deleteOrnament,
@@ -14,10 +7,12 @@ import {
 } from "../../database/query";
 import Button from "../components/Button";
 import DualUnitInput from "../components/DualUnitInput";
+import FormSection from "../components/FormSection";
 import Loader from "../components/Loader";
 import ReadOnlyBanner from "../components/ReadOnlyBanner";
 import ReadOnlyGuard from "../components/ReadOnlyGuard";
 import SearchableSelect from "../components/SearchableSelect";
+import TextField from "../components/TextField";
 import VisibilityToggle from "../components/VisibilityToggle";
 import { useAuth } from "../context/AuthContext";
 import { useTheme } from "../context/ThemeContext";
@@ -138,13 +133,11 @@ const OrnamentAddEditScreen = ({ initial }: Props) => {
       <ReadOnlyBanner show={readOnly} />
 
       <ReadOnlyGuard active={readOnly}>
-      <View style={styles.card}>
+      <FormSection>
         <VisibilityToggle value={visibility} onChange={setVisibility} />
-      </View>
+      </FormSection>
 
-      <View style={styles.card}>
-        <Text style={styles.sectionTitle}>Ornament</Text>
-
+      <FormSection title="Ornament">
         <SearchableSelect
           label="Metal"
           placeholder="Select a metal"
@@ -165,23 +158,19 @@ const OrnamentAddEditScreen = ({ initial }: Props) => {
           />
         )}
 
-        <Text style={styles.label}>Name</Text>
-        <TextInput
-          style={[styles.input, styles.inputSpacing]}
+        <TextField
+          label="Name"
           onChangeText={setName}
           value={name}
           placeholder="e.g. Necklace"
-          placeholderTextColor={colors.placeholder}
           autoCapitalize="words"
         />
 
-        <Text style={styles.label}>Number of pieces</Text>
-        <TextInput
-          style={[styles.input, styles.inputSpacing]}
+        <TextField
+          label="Number of pieces"
           onChangeText={setCount}
           value={count}
           placeholder="1"
-          placeholderTextColor={colors.placeholder}
           keyboardType="number-pad"
         />
 
@@ -194,23 +183,18 @@ const OrnamentAddEditScreen = ({ initial }: Props) => {
           perDerivedUnit={GRAMS_PER_PAWN}
         />
         <Text style={styles.hint}>{GRAMS_PER_PAWN_LABEL}</Text>
-      </View>
+      </FormSection>
 
-      <View style={styles.card}>
-        <Text style={styles.sectionTitle}>Notes</Text>
-
-        <Text style={styles.label}>Description</Text>
-        <TextInput
-          style={[styles.input, styles.multiline]}
+      <FormSection title="Notes">
+        <TextField
+          label="Description"
           onChangeText={setDescription}
           value={description}
           placeholder="Purity, where it's kept, who gifted it…"
-          placeholderTextColor={colors.placeholder}
           multiline
           numberOfLines={4}
-          textAlignVertical="top"
         />
-      </View>
+      </FormSection>
 
       </ReadOnlyGuard>
 
@@ -223,16 +207,12 @@ const OrnamentAddEditScreen = ({ initial }: Props) => {
       )}
 
       {pageMode !== "Add" && !readOnly && (
-        <Pressable
+        <Button
+          title="Delete Ornament"
+          variant="plain"
+          tone="destructive"
           onPress={handleDelete}
-          accessibilityRole="button"
-          style={({ pressed }) => [
-            styles.deleteButton,
-            pressed && styles.pressed,
-          ]}
-        >
-          <Text style={styles.deleteText}>Delete Ornament</Text>
-        </Pressable>
+        />
       )}
     </ScrollView>
   );
@@ -248,84 +228,14 @@ const createStyles = (colors: ThemeColors) =>
       padding: 20,
       paddingBottom: 40,
     },
-    card: {
-      backgroundColor: colors.card,
-      borderRadius: 16,
-      borderWidth: StyleSheet.hairlineWidth,
-      borderColor: colors.border,
-      padding: 16,
-      marginBottom: 14,
-    },
-    sectionTitle: {
-      fontSize: 13,
-      fontWeight: "600",
-      textTransform: "uppercase",
-      letterSpacing: 0.6,
-      color: colors.textMuted,
-      marginBottom: 16,
-    },
-    label: {
-      fontSize: 13,
-      fontWeight: "600",
-      color: colors.text,
-      marginBottom: 8,
-    },
     hint: {
       fontSize: 12,
       color: colors.textMuted,
       marginTop: -8,
     },
-    pickerContainer: {
-      borderWidth: 1,
-      borderColor: colors.border,
-      borderRadius: 10,
-      backgroundColor: colors.inputBackground,
-      marginBottom: 18,
-      overflow: "hidden",
-    },
-    picker: {
-      height: 50,
-      borderWidth: 0,
-      backgroundColor: colors.inputBackground,
-      color: colors.text,
-      paddingHorizontal: 8,
-    },
-    pickerItem: {
-      backgroundColor: colors.inputBackground,
-      color: colors.text,
-    },
-    input: {
-      borderWidth: 1,
-      borderColor: colors.border,
-      backgroundColor: colors.inputBackground,
-      borderRadius: 10,
-      paddingHorizontal: 12,
-      paddingVertical: 14,
-      fontSize: 16,
-      color: colors.text,
-    },
-    inputSpacing: {
-      marginBottom: 18,
-    },
-    multiline: {
-      minHeight: 96,
-    },
     primaryButton: {
-      width: "100%",
       marginTop: 6,
-    },
-    deleteButton: {
-      alignItems: "center",
-      paddingVertical: 16,
-      marginTop: 6,
-    },
-    deleteText: {
-      color: colors.negative,
-      fontSize: 15,
-      fontWeight: "600",
-    },
-    pressed: {
-      opacity: 0.6,
+      marginBottom: 10,
     },
   });
 

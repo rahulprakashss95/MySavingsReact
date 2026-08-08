@@ -1,21 +1,21 @@
-﻿import React, { useMemo, useState } from "react";
-import { Pressable, StyleSheet, Text, TextInput, View } from "react-native";
+import React, { useState } from "react";
+import { StyleSheet } from "react-native";
 import {
   addEarningType,
   deleteEarningType,
   updateEarningType,
 } from "../../../database/query";
 import { useAuth } from "../../context/AuthContext";
-import { useTheme } from "../../context/ThemeContext";
 import { canEdit, Visibility } from "../../models/common";
 import { EarningTypeModel } from "../../models/LedgerModel";
 import { commitDelete, commitSave, useAppDispatch } from "../../query/hooks";
-import { ThemeColors } from "../../utils/Color";
 import { showConfirmationAlert, showToast } from "../../utils/Utils";
 import Button from "../Button";
+import FormSection from "../FormSection";
 import Loader from "../Loader";
 import ReadOnlyBanner from "../ReadOnlyBanner";
 import ReadOnlyGuard from "../ReadOnlyGuard";
+import TextField from "../TextField";
 import VisibilityToggle from "../VisibilityToggle";
 
 type Props = {
@@ -42,10 +42,8 @@ const EarningTypeForm = ({ initial, onSaved, onDeleted }: Props) => {
   );
   const [isLoading, setIsLoading] = useState(false);
 
-  const { colors } = useTheme();
   const { user } = useAuth();
   const dispatch = useAppDispatch();
-  const styles = useMemo(() => createStyles(colors), [colors]);
 
   // Public records are viewable family-wide but editable only by their owner.
   const readOnly = isEdit && !canEdit(type!, user?.id);
@@ -95,23 +93,19 @@ const EarningTypeForm = ({ initial, onSaved, onDeleted }: Props) => {
       <ReadOnlyBanner show={readOnly} />
 
       <ReadOnlyGuard active={readOnly}>
-        <View style={styles.card}>
+        <FormSection>
           <VisibilityToggle value={visibility} onChange={setVisibility} />
-        </View>
+        </FormSection>
 
-        <View style={styles.card}>
-          <Text style={styles.sectionTitle}>Earning type</Text>
-
-          <Text style={styles.label}>Name</Text>
-          <TextInput
-            style={styles.input}
+        <FormSection title="Earning type">
+          <TextField
+            label="Name"
             onChangeText={setName}
             value={name}
             placeholder="e.g. Freelance"
-            placeholderTextColor={colors.placeholder}
             autoCapitalize="words"
           />
-        </View>
+        </FormSection>
       </ReadOnlyGuard>
 
       {!readOnly && (
@@ -123,69 +117,22 @@ const EarningTypeForm = ({ initial, onSaved, onDeleted }: Props) => {
       )}
 
       {isEdit && !readOnly && onDeleted && (
-        <Pressable
+        <Button
+          title="Delete Type"
+          variant="plain"
+          tone="destructive"
           onPress={handleDelete}
-          accessibilityRole="button"
-          style={({ pressed }) => [styles.deleteButton, pressed && styles.pressed]}
-        >
-          <Text style={styles.deleteText}>Delete Type</Text>
-        </Pressable>
+        />
       )}
     </>
   );
 };
 
-const createStyles = (colors: ThemeColors) =>
-  StyleSheet.create({
-    card: {
-      backgroundColor: colors.card,
-      borderRadius: 16,
-      borderWidth: StyleSheet.hairlineWidth,
-      borderColor: colors.border,
-      padding: 16,
-      marginBottom: 14,
-    },
-    sectionTitle: {
-      fontSize: 13,
-      fontWeight: "600",
-      textTransform: "uppercase",
-      letterSpacing: 0.6,
-      color: colors.textMuted,
-      marginBottom: 16,
-    },
-    label: {
-      fontSize: 13,
-      fontWeight: "600",
-      color: colors.text,
-      marginBottom: 8,
-    },
-    input: {
-      borderWidth: 1,
-      borderColor: colors.border,
-      backgroundColor: colors.inputBackground,
-      borderRadius: 10,
-      paddingHorizontal: 12,
-      paddingVertical: 14,
-      fontSize: 16,
-      color: colors.text,
-    },
-    primaryButton: {
-      width: "100%",
-      marginTop: 6,
-    },
-    deleteButton: {
-      alignItems: "center",
-      paddingVertical: 16,
-      marginTop: 6,
-    },
-    deleteText: {
-      color: colors.negative,
-      fontSize: 15,
-      fontWeight: "600",
-    },
-    pressed: {
-      opacity: 0.6,
-    },
-  });
+const styles = StyleSheet.create({
+  primaryButton: {
+    marginTop: 6,
+    marginBottom: 10,
+  },
+});
 
 export default EarningTypeForm;

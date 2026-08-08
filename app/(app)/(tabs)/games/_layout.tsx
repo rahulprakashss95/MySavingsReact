@@ -10,13 +10,18 @@ export default function GamesStack() {
       screenOptions={{
         headerStyle: { backgroundColor: colors.card },
         headerTintColor: colors.text,
+        headerShadowVisible: false,
         contentStyle: { backgroundColor: colors.background },
         headerRight: () => <ProfileButton />,
       }}
     >
       <Stack.Screen
         name="index"
-        options={{ title: "Games", headerLeft: () => <MenuButton /> }}
+        options={{
+          title: "Games",
+          headerLeft: () => <MenuButton />,
+          headerLargeTitle: true,
+        }}
       />
       <Stack.Screen name="2048" options={{ title: "2048" }} />
       <Stack.Screen name="leaderboard" options={{ title: "Leaderboard" }} />

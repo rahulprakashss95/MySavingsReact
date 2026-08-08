@@ -19,13 +19,18 @@ export default function SettingsStack() {
       screenOptions={{
         headerStyle: { backgroundColor: colors.card },
         headerTintColor: colors.text,
+        headerShadowVisible: false,
         contentStyle: { backgroundColor: colors.background },
         headerRight: () => <ProfileButton />,
       }}
     >
       <Stack.Screen
         name="index"
-        options={{ title: "Settings", headerLeft: () => <MenuButton /> }}
+        options={{
+          title: "Settings",
+          headerLeft: () => <MenuButton />,
+          headerLargeTitle: true,
+        }}
       />
       <Stack.Screen name="passcode" options={{ title: "App Passcode" }} />
       <Stack.Screen name="dashboard" options={{ title: "Dashboard" }} />

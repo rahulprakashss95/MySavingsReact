@@ -1,12 +1,5 @@
-﻿import React, { useMemo, useState } from "react";
-import {
-  Pressable,
-  ScrollView,
-  StyleSheet,
-  Text,
-  TextInput,
-  View,
-} from "react-native";
+import React, { useMemo, useState } from "react";
+import { ScrollView, StyleSheet } from "react-native";
 import {
   addVehicle,
   deleteVehicle,
@@ -15,10 +8,12 @@ import {
 import AttachmentField, { useAttachments } from "../components/AttachmentField";
 import Button from "../components/Button";
 import DatePicker from "../components/DatePicker";
+import FormSection from "../components/FormSection";
 import Loader from "../components/Loader";
 import ReadOnlyBanner from "../components/ReadOnlyBanner";
 import ReadOnlyGuard from "../components/ReadOnlyGuard";
 import SearchableSelect from "../components/SearchableSelect";
+import TextField from "../components/TextField";
 import VisibilityToggle from "../components/VisibilityToggle";
 import { useAuth } from "../context/AuthContext";
 import { useTheme } from "../context/ThemeContext";
@@ -142,13 +137,11 @@ const VehicleAddEditScreen = ({ initial }: Props) => {
       <ReadOnlyBanner show={readOnly} />
 
       <ReadOnlyGuard active={readOnly}>
-      <View style={styles.card}>
+      <FormSection>
         <VisibilityToggle value={visibility} onChange={setVisibility} />
-      </View>
+      </FormSection>
 
-      <View style={styles.card}>
-        <Text style={styles.sectionTitle}>Vehicle</Text>
-
+      <FormSection title="Vehicle">
         <SearchableSelect
           label="Type"
           placeholder="Select a vehicle type"
@@ -158,48 +151,38 @@ const VehicleAddEditScreen = ({ initial }: Props) => {
           onSelect={(id) => setVehicleType(id)}
         />
 
-        <Text style={styles.label}>Name</Text>
-        <TextInput
-          style={[styles.input, styles.inputSpacing]}
+        <TextField
+          label="Name"
           onChangeText={setName}
           value={name}
           placeholder="e.g. Honda City"
-          placeholderTextColor={colors.placeholder}
           autoCapitalize="words"
         />
 
-        <Text style={styles.label}>Registration number</Text>
-        <TextInput
-          style={styles.input}
+        <TextField
+          label="Registration number"
           onChangeText={setNumber}
           value={number}
           placeholder="e.g. TN 01 AB 1234"
-          placeholderTextColor={colors.placeholder}
           autoCapitalize="characters"
           autoCorrect={false}
         />
-      </View>
+      </FormSection>
 
-      <View style={styles.card}>
-        <Text style={styles.sectionTitle}>Insurance</Text>
-
-        <Text style={styles.label}>Insurer</Text>
-        <TextInput
-          style={[styles.input, styles.inputSpacing]}
+      <FormSection title="Insurance">
+        <TextField
+          label="Insurer"
           onChangeText={setInsurer}
           value={insurer}
           placeholder="e.g. ICICI Lombard"
-          placeholderTextColor={colors.placeholder}
           autoCapitalize="words"
         />
 
-        <Text style={styles.label}>Policy number</Text>
-        <TextInput
-          style={[styles.input, styles.inputSpacing]}
+        <TextField
+          label="Policy number"
           onChangeText={setPolicyNumber}
           value={policyNumber}
           placeholder="Policy number"
-          placeholderTextColor={colors.placeholder}
           autoCapitalize="characters"
           autoCorrect={false}
         />
@@ -209,32 +192,27 @@ const VehicleAddEditScreen = ({ initial }: Props) => {
           dateValue={insuranceExpiry}
           onDateChange={setInsuranceExpiry}
         />
-      </View>
+      </FormSection>
 
-      <View style={styles.card}>
+      <FormSection>
         <AttachmentField
           drafts={attachments.drafts}
           onChange={attachments.setDrafts}
           readOnly={readOnly}
           module="vehicles"
         />
-      </View>
+      </FormSection>
 
-      <View style={styles.card}>
-        <Text style={styles.sectionTitle}>Notes</Text>
-
-        <Text style={styles.label}>Description</Text>
-        <TextInput
-          style={[styles.input, styles.multiline]}
+      <FormSection title="Notes">
+        <TextField
+          label="Description"
           onChangeText={setDescription}
           value={description}
           placeholder="Model year, colour, where the RC is kept…"
-          placeholderTextColor={colors.placeholder}
           multiline
           numberOfLines={4}
-          textAlignVertical="top"
         />
-      </View>
+      </FormSection>
 
       </ReadOnlyGuard>
 
@@ -247,16 +225,12 @@ const VehicleAddEditScreen = ({ initial }: Props) => {
       )}
 
       {pageMode !== "Add" && !readOnly && (
-        <Pressable
+        <Button
+          title="Delete Vehicle"
+          variant="plain"
+          tone="destructive"
           onPress={handleDelete}
-          accessibilityRole="button"
-          style={({ pressed }) => [
-            styles.deleteButton,
-            pressed && styles.pressed,
-          ]}
-        >
-          <Text style={styles.deleteText}>Delete Vehicle</Text>
-        </Pressable>
+        />
       )}
     </ScrollView>
   );
@@ -272,60 +246,9 @@ const createStyles = (colors: ThemeColors) =>
       padding: 20,
       paddingBottom: 40,
     },
-    card: {
-      backgroundColor: colors.card,
-      borderRadius: 16,
-      borderWidth: StyleSheet.hairlineWidth,
-      borderColor: colors.border,
-      padding: 16,
-      marginBottom: 14,
-    },
-    sectionTitle: {
-      fontSize: 13,
-      fontWeight: "600",
-      textTransform: "uppercase",
-      letterSpacing: 0.6,
-      color: colors.textMuted,
-      marginBottom: 16,
-    },
-    label: {
-      fontSize: 13,
-      fontWeight: "600",
-      color: colors.text,
-      marginBottom: 8,
-    },
-    input: {
-      borderWidth: 1,
-      borderColor: colors.border,
-      backgroundColor: colors.inputBackground,
-      borderRadius: 10,
-      paddingHorizontal: 12,
-      paddingVertical: 14,
-      fontSize: 16,
-      color: colors.text,
-    },
-    inputSpacing: {
-      marginBottom: 18,
-    },
-    multiline: {
-      minHeight: 96,
-    },
     primaryButton: {
-      width: "100%",
       marginTop: 6,
-    },
-    deleteButton: {
-      alignItems: "center",
-      paddingVertical: 16,
-      marginTop: 6,
-    },
-    deleteText: {
-      color: colors.negative,
-      fontSize: 15,
-      fontWeight: "600",
-    },
-    pressed: {
-      opacity: 0.6,
+      marginBottom: 10,
     },
   });
 

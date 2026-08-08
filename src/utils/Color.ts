@@ -45,19 +45,24 @@ export type ThemeColors = {
  */
 export const tint = (accent: string) => `${accent}22`;
 
+// Grouped-canvas system: `background` is the neutral screen canvas (iOS
+// systemGroupedBackground-style), `card` is the surface that sits on top of
+// it, and `inputBackground` is a third, slightly-recessed fill so a field
+// reads as a hole in a card rather than another card. See DESIGN.md "The
+// Grouped Canvas Rule".
 export const LightColors: ThemeColors = {
   primary: "#26619c",
   onPrimary: "#ffffff",
-  background: "#ffffff",
+  background: "#F2F2F7",
   card: "#ffffff",
-  text: "#1a1a1a",
-  textMuted: "#777777",
-  border: "#dddddd",
-  inputBackground: "#f7f7f7",
-  placeholder: "#9a9a9a",
+  text: "#1C1C1E",
+  textMuted: "#6C6C70",
+  border: "#E3E3E8",
+  inputBackground: "#F0F1F4",
+  placeholder: "#9A9AA0",
   positive: "#1b8a3f",
   negative: "#d32f2f",
-  shadow: "grey",
+  shadow: "#000000",
   overlay: "rgba(255, 255, 255, 0.8)",
   accentBlue: "#26619c",
   accentAmber: "#b26a00",
@@ -72,13 +77,13 @@ export const LightColors: ThemeColors = {
 export const DarkColors: ThemeColors = {
   primary: "#5b9bd5",
   onPrimary: "#0b1622",
-  background: "#121212",
-  card: "#1e1e1e",
-  text: "#ececec",
-  textMuted: "#9ba1a6",
-  border: "#2f2f31",
-  inputBackground: "#262628",
-  placeholder: "#6f757a",
+  background: "#000000",
+  card: "#1C1C1E",
+  text: "#F2F2F7",
+  textMuted: "#98989D",
+  border: "#38383A",
+  inputBackground: "#2C2C2E",
+  placeholder: "#6C6C70",
   positive: "#4caf50",
   negative: "#ef5350",
   shadow: "#000000",

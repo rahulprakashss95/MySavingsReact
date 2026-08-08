@@ -1,12 +1,5 @@
-﻿import React, { useMemo, useState } from "react";
-import {
-  Pressable,
-  ScrollView,
-  StyleSheet,
-  Text,
-  TextInput,
-  View,
-} from "react-native";
+import React, { useMemo, useState } from "react";
+import { ScrollView, StyleSheet } from "react-native";
 import {
   addGovernmentDocument,
   deleteGovernmentDocument,
@@ -14,10 +7,12 @@ import {
 } from "../../database/query";
 import AttachmentField, { useAttachments } from "../components/AttachmentField";
 import Button from "../components/Button";
+import FormSection from "../components/FormSection";
 import Loader from "../components/Loader";
 import SearchableSelect from "../components/SearchableSelect";
 import ReadOnlyBanner from "../components/ReadOnlyBanner";
 import ReadOnlyGuard from "../components/ReadOnlyGuard";
+import TextField from "../components/TextField";
 import VisibilityToggle from "../components/VisibilityToggle";
 import { useAuth } from "../context/AuthContext";
 import { useTheme } from "../context/ThemeContext";
@@ -137,13 +132,11 @@ const GovernmentDocumentAddEditScreen = ({ initial }: Props) => {
       <ReadOnlyBanner show={readOnly} />
 
       <ReadOnlyGuard active={readOnly}>
-      <View style={styles.card}>
+      <FormSection>
         <VisibilityToggle value={visibility} onChange={setVisibility} />
-      </View>
+      </FormSection>
 
-      <View style={styles.card}>
-        <Text style={styles.sectionTitle}>Document</Text>
-
+      <FormSection title="Document">
         <SearchableSelect
           label="Type"
           placeholder="Select a document type"
@@ -156,42 +149,35 @@ const GovernmentDocumentAddEditScreen = ({ initial }: Props) => {
           onSelect={(id) => setDocumentType(id)}
         />
 
-        <Text style={styles.label}>Number</Text>
-        <TextInput
-          style={styles.input}
+        <TextField
+          label="Number"
           onChangeText={setDocumentNumber}
           value={documentNumber}
           placeholder="Document number"
-          placeholderTextColor={colors.placeholder}
           autoCapitalize="characters"
           autoCorrect={false}
         />
-      </View>
+      </FormSection>
 
-      <View style={styles.card}>
+      <FormSection>
         <AttachmentField
           drafts={attachments.drafts}
           onChange={attachments.setDrafts}
           readOnly={readOnly}
           module="governmentDocuments"
         />
-      </View>
+      </FormSection>
 
-      <View style={styles.card}>
-        <Text style={styles.sectionTitle}>Notes</Text>
-
-        <Text style={styles.label}>Description</Text>
-        <TextInput
-          style={[styles.input, styles.multiline]}
+      <FormSection title="Notes">
+        <TextField
+          label="Description"
           onChangeText={setDescription}
           value={description}
           placeholder="Anything worth remembering — issue date, where it's kept…"
-          placeholderTextColor={colors.placeholder}
           multiline
           numberOfLines={4}
-          textAlignVertical="top"
         />
-      </View>
+      </FormSection>
 
       </ReadOnlyGuard>
 
@@ -204,16 +190,12 @@ const GovernmentDocumentAddEditScreen = ({ initial }: Props) => {
       )}
 
       {pageMode !== "Add" && !readOnly && (
-        <Pressable
+        <Button
+          title="Delete Document"
+          variant="plain"
+          tone="destructive"
           onPress={handleDelete}
-          accessibilityRole="button"
-          style={({ pressed }) => [
-            styles.deleteButton,
-            pressed && styles.pressed,
-          ]}
-        >
-          <Text style={styles.deleteText}>Delete Document</Text>
-        </Pressable>
+        />
       )}
     </ScrollView>
   );
@@ -229,76 +211,9 @@ const createStyles = (colors: ThemeColors) =>
       padding: 20,
       paddingBottom: 40,
     },
-    card: {
-      backgroundColor: colors.card,
-      borderRadius: 16,
-      borderWidth: StyleSheet.hairlineWidth,
-      borderColor: colors.border,
-      padding: 16,
-      marginBottom: 14,
-    },
-    sectionTitle: {
-      fontSize: 13,
-      fontWeight: "600",
-      textTransform: "uppercase",
-      letterSpacing: 0.6,
-      color: colors.textMuted,
-      marginBottom: 16,
-    },
-    label: {
-      fontSize: 13,
-      fontWeight: "600",
-      color: colors.text,
-      marginBottom: 8,
-    },
-    pickerContainer: {
-      borderWidth: 1,
-      borderColor: colors.border,
-      borderRadius: 10,
-      backgroundColor: colors.inputBackground,
-      marginBottom: 18,
-      overflow: "hidden",
-    },
-    picker: {
-      height: 50,
-      borderWidth: 0,
-      backgroundColor: colors.inputBackground,
-      color: colors.text,
-      paddingHorizontal: 8,
-    },
-    pickerItem: {
-      backgroundColor: colors.inputBackground,
-      color: colors.text,
-    },
-    input: {
-      borderWidth: 1,
-      borderColor: colors.border,
-      backgroundColor: colors.inputBackground,
-      borderRadius: 10,
-      paddingHorizontal: 12,
-      paddingVertical: 14,
-      fontSize: 16,
-      color: colors.text,
-    },
-    multiline: {
-      minHeight: 96,
-    },
     primaryButton: {
-      width: "100%",
       marginTop: 6,
-    },
-    deleteButton: {
-      alignItems: "center",
-      paddingVertical: 16,
-      marginTop: 6,
-    },
-    deleteText: {
-      color: colors.negative,
-      fontSize: 15,
-      fontWeight: "600",
-    },
-    pressed: {
-      opacity: 0.6,
+      marginBottom: 10,
     },
   });
 

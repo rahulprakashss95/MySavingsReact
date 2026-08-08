@@ -203,7 +203,7 @@ const createStyles = (colors: ThemeColors) =>
     },
     heroCard: {
       backgroundColor: colors.card,
-      borderRadius: 16,
+      borderRadius: 18,
       borderWidth: StyleSheet.hairlineWidth,
       borderColor: colors.border,
       padding: 20,
@@ -251,7 +251,7 @@ const createStyles = (colors: ThemeColors) =>
     },
     card: {
       backgroundColor: colors.card,
-      borderRadius: 16,
+      borderRadius: 18,
       borderWidth: StyleSheet.hairlineWidth,
       borderColor: colors.border,
       padding: 16,

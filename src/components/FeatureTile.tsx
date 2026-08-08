@@ -1,8 +1,11 @@
 import React, { useMemo } from "react";
 import { Pressable, StyleSheet, Text, View } from "react-native";
+import Animated from "react-native-reanimated";
 import { Ionicons } from "@expo/vector-icons";
 import { useTheme } from "../context/ThemeContext";
+import { usePressAnimation } from "../hooks/usePressAnimation";
 import { ThemeColors, tint } from "../utils/Color";
+import { radius } from "../utils/tokens";
 
 type IFeatureTile = {
   title: string;
@@ -22,6 +25,7 @@ const FeatureTile = (props: IFeatureTile) => {
   const { title, subtitle, accent, renderIcon, onPress, wide, badge } = props;
   const { colors } = useTheme();
   const styles = useMemo(() => createStyles(colors), [colors]);
+  const { onPressIn, onPressOut, animatedStyle } = usePressAnimation();
 
   const disabled = !onPress;
 
@@ -44,7 +48,9 @@ const FeatureTile = (props: IFeatureTile) => {
         </View>
       ) : (
         <>
-          <Text style={styles.title}>{title}</Text>
+          <Text style={styles.title} numberOfLines={2}>
+            {title}
+          </Text>
           <Text style={styles.subtitle} numberOfLines={2}>
             {subtitle}
           </Text>
@@ -68,58 +74,67 @@ const FeatureTile = (props: IFeatureTile) => {
     return (
       <View
         accessibilityLabel={badge ? `${title}, ${badge}` : title}
-        style={[styles.tile, wide && styles.wideTile, styles.tileDisabled]}
+        style={[styles.tileBox, wide && styles.wideTileBox]}
       >
-        {content}
+        <View
+          style={[styles.tile, wide && styles.wideTile, styles.tileDisabled]}
+        >
+          {content}
+        </View>
       </View>
     );
   }
 
   return (
+    // Sizing (the `48%` grid width) lives on this outer `Pressable`: it's a
+    // row-flow sibling, which — unlike a column-flow child — doesn't stretch
+    // to fill by default, so a percentage width on the *inner* animated view
+    // would resolve against an undefined parent size and collapse to
+    // content-size. The inner view only carries the visual box + `flex: 1`
+    // to fill whatever size the Pressable establishes.
     <Pressable
       onPress={onPress}
+      onPressIn={onPressIn}
+      onPressOut={onPressOut}
       accessibilityRole="button"
       accessibilityLabel={title}
-      style={({ pressed }) => [
-        styles.tile,
-        wide && styles.wideTile,
-        pressed && styles.tilePressed,
-      ]}
+      style={[styles.tileBox, wide && styles.wideTileBox]}
     >
-      {content}
+      <Animated.View
+        style={[styles.tile, wide && styles.wideTile, animatedStyle]}
+      >
+        {content}
+      </Animated.View>
     </Pressable>
   );
 };
 
 const createStyles = (colors: ThemeColors) =>
   StyleSheet.create({
-    tile: {
-      // Explicit width + the parent's space-between rather than `gap`, which
-      // react-native-web 0.18 silently drops.
+    // Explicit width + the parent's space-between rather than `gap`, which
+    // react-native-web 0.18 silently drops.
+    tileBox: {
       width: "48%",
+    },
+    wideTileBox: {
+      width: "100%",
+    },
+    tile: {
+      flex: 1,
       minHeight: 158,
       backgroundColor: colors.card,
-      borderRadius: 16,
+      borderRadius: radius.card,
       borderWidth: StyleSheet.hairlineWidth,
       borderColor: colors.border,
       padding: 16,
-      shadowColor: colors.shadow,
-      shadowOffset: { width: 0, height: 2 },
-      shadowOpacity: 0.18,
-      shadowRadius: 8,
-      elevation: 2,
     },
     wideTile: {
-      width: "100%",
       minHeight: 0,
       flexDirection: "row",
       alignItems: "center",
     },
     wideText: {
       flex: 1,
-    },
-    tilePressed: {
-      opacity: 0.65,
     },
     tileDisabled: {
       opacity: 0.55,

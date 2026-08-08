@@ -1,16 +1,18 @@
-import {
-  TouchableHighlight,
-  View,
-  Text,
-  StyleSheet,
-  ActivityIndicator,
-} from "react-native";
+import { ActivityIndicator, Pressable, StyleSheet, Text } from "react-native";
+import Animated from "react-native-reanimated";
 import { useMemo } from "react";
 import { useTheme } from "../context/ThemeContext";
-import { ThemeColors } from "../utils/Color";
+import { usePressAnimation } from "../hooks/usePressAnimation";
+import { ThemeColors, tint } from "../utils/Color";
+import { radius } from "../utils/tokens";
+
+type Variant = "filled" | "tonal" | "plain";
+type Tone = "primary" | "destructive";
 
 type IButton = {
   title: string;
+  variant?: Variant;
+  tone?: Tone;
   buttonStyle?: any;
   titleStyle?: any;
   /** Swaps the label for a spinner and blocks further presses. */
@@ -20,63 +22,73 @@ type IButton = {
 };
 
 const Button = (props: IButton) => {
+  const { variant = "filled", tone = "primary" } = props;
   const { colors } = useTheme();
   const styles = useMemo(() => createStyles(colors), [colors]);
+  const { onPressIn, onPressOut, animatedStyle } = usePressAnimation();
 
   const isInteractive = !props.loading && !props.disabled;
+  const toneColor = tone === "destructive" ? colors.negative : colors.primary;
+
+  const variantStyle =
+    variant === "filled"
+      ? { backgroundColor: toneColor }
+      : variant === "tonal"
+      ? { backgroundColor: tint(toneColor) }
+      : { backgroundColor: "transparent" };
+
+  const labelColor = variant === "filled" ? colors.onPrimary : toneColor;
 
   return (
-    <TouchableHighlight
+    <Pressable
       onPress={isInteractive ? props.onPress : undefined}
+      onPressIn={onPressIn}
+      onPressOut={onPressOut}
       disabled={!isInteractive}
-      underlayColor={colors.background}
       accessibilityRole="button"
       accessibilityLabel={props.title}
       accessibilityState={{ busy: !!props.loading, disabled: !isInteractive }}
     >
-      <View
+      <Animated.View
         style={[
           styles.button,
+          variantStyle,
+          animatedStyle,
           props.buttonStyle,
           !isInteractive && styles.buttonInactive,
         ]}
       >
         {props.loading ? (
           // Rendered at the label's height so the button doesn't resize.
-          <View style={styles.loadingRow}>
-            <ActivityIndicator size="small" color={colors.onPrimary} />
-          </View>
+          <ActivityIndicator size="small" color={labelColor} />
         ) : (
-          <Text style={[styles.buttonText, props.titleStyle]}>
+          <Text
+            style={[styles.buttonText, { color: labelColor }, props.titleStyle]}
+          >
             {props.title}
           </Text>
         )}
-      </View>
-    </TouchableHighlight>
+      </Animated.View>
+    </Pressable>
   );
 };
 
 const createStyles = (colors: ThemeColors) =>
   StyleSheet.create({
     button: {
-      width: 200,
+      minHeight: 50,
       alignItems: "center",
-      borderRadius: 8,
-      backgroundColor: colors.primary,
+      justifyContent: "center",
+      borderRadius: radius.control,
+      paddingHorizontal: 20,
     },
     buttonInactive: {
-      opacity: 0.7,
+      opacity: 0.4,
     },
     buttonText: {
+      fontSize: 17,
+      fontWeight: "600",
       textAlign: "center",
-      padding: 16,
-      color: colors.onPrimary,
-    },
-    loadingRow: {
-      // Matches buttonText's box (16px padding top/bottom + ~19px line height)
-      // so swapping the label for a spinner doesn't change the button height.
-      height: 51,
-      justifyContent: "center",
     },
   });
 

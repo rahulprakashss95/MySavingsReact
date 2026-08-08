@@ -23,6 +23,7 @@ import {
 } from "../utils/auth";
 import { useRouter } from "expo-router";
 import { ThemeColors } from "../utils/Color";
+import { elevation, radius } from "../utils/tokens";
 import { showToast } from "../utils/Utils";
 
 type FocusField = "family" | "username" | "password" | null;
@@ -421,15 +422,12 @@ const createStyles = (colors: ThemeColors) =>
     },
     card: {
       backgroundColor: colors.card,
-      borderRadius: 16,
+      borderRadius: radius.card,
       borderWidth: StyleSheet.hairlineWidth,
       borderColor: colors.border,
       padding: 20,
+      ...elevation.ambient,
       shadowColor: colors.shadow,
-      shadowOffset: { width: 0, height: 2 },
-      shadowOpacity: 0.18,
-      shadowRadius: 8,
-      elevation: 2,
     },
     label: {
       fontSize: 13,
@@ -446,7 +444,7 @@ const createStyles = (colors: ThemeColors) =>
       borderWidth: 1,
       borderColor: colors.border,
       backgroundColor: colors.inputBackground,
-      borderRadius: 10,
+      borderRadius: radius.control,
       paddingHorizontal: 12,
     },
     inputRowFocused: {
@@ -475,7 +473,7 @@ const createStyles = (colors: ThemeColors) =>
       borderWidth: 1,
       borderColor: colors.border,
       backgroundColor: colors.inputBackground,
-      borderRadius: 10,
+      borderRadius: radius.control,
       paddingHorizontal: 12,
       paddingVertical: 12,
     },

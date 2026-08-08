@@ -11,6 +11,7 @@ import {
 import { Ionicons } from "@expo/vector-icons";
 import { useTheme } from "../context/ThemeContext";
 import { ThemeColors, tint } from "../utils/Color";
+import { radius } from "../utils/tokens";
 import {
   commitSave,
   useAppDispatch,
@@ -261,7 +262,7 @@ const createStyles = (colors: ThemeColors) =>
       borderWidth: 1,
       borderColor: colors.border,
       backgroundColor: colors.card,
-      borderRadius: 10,
+      borderRadius: radius.pill,
       paddingVertical: 8,
       paddingHorizontal: 14,
       height: 36,

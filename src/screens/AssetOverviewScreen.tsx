@@ -37,6 +37,7 @@ import {
   propertyPortfolio,
 } from "../utils/assets";
 import { ThemeColors } from "../utils/Color";
+import { radius } from "../utils/tokens";
 import { amountFormat, showToast } from "../utils/Utils";
 import { useAuth } from "../context/AuthContext";
 import { hasFeature } from "../models/common";
@@ -792,7 +793,7 @@ const createStyles = (colors: ThemeColors) =>
     // Headline
     heroCard: {
       backgroundColor: colors.card,
-      borderRadius: 16,
+      borderRadius: 18,
       borderWidth: StyleSheet.hairlineWidth,
       borderColor: colors.border,
       padding: 20,
@@ -883,7 +884,7 @@ const createStyles = (colors: ThemeColors) =>
       flexGrow: 1,
       flexBasis: "46%",
       backgroundColor: colors.card,
-      borderRadius: 14,
+      borderRadius: radius.card,
       borderWidth: StyleSheet.hairlineWidth,
       borderColor: colors.border,
       padding: 14,
@@ -908,7 +909,7 @@ const createStyles = (colors: ThemeColors) =>
     // Sections
     card: {
       backgroundColor: colors.card,
-      borderRadius: 16,
+      borderRadius: radius.card,
       borderWidth: StyleSheet.hairlineWidth,
       borderColor: colors.border,
       padding: 16,

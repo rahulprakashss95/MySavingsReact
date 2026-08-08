@@ -1,25 +1,22 @@
-﻿import { Ionicons } from "@expo/vector-icons";
+import { Ionicons } from "@expo/vector-icons";
 import moment from "moment";
 import React, { useMemo, useState } from "react";
-import {
-  Pressable,
-  ScrollView,
-  StyleSheet,
-  Text,
-  TextInput,
-  View,
-} from "react-native";
+import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 import { updateProperty } from "../../database/query";
 import { commitSave, useAppDispatch } from "../query/hooks";
 import Button from "../components/Button";
+import Card from "../components/Card";
 import DatePicker from "../components/DatePicker";
+import FormSection from "../components/FormSection";
 import Loader from "../components/Loader";
 import ProgressBar from "../components/ProgressBar";
+import TextField from "../components/TextField";
 import { useTheme } from "../context/ThemeContext";
 import { PaymentEntry, PropertyModel } from "../models/AssetModel";
 import { newEntryId, paymentTotals, sortEntries } from "../utils/assets";
 import { isValidAmount } from "../utils/amount";
 import { ThemeColors } from "../utils/Color";
+import { radius } from "../utils/tokens";
 import { DATE_FORMAT } from "../utils/deposits";
 import {
   amountFormat,
@@ -182,7 +179,7 @@ const PropertyPaymentsScreen = ({ property }: Props) => {
     >
       <Loader loading={isLoading} />
 
-      <View style={styles.card}>
+      <Card elevated>
         <Text style={styles.propertyName}>{property.name}</Text>
         {isLoan && !!property.lender && (
           <Text style={styles.lender}>
@@ -210,13 +207,9 @@ const PropertyPaymentsScreen = ({ property }: Props) => {
             </Text>
           )}
         </View>
-      </View>
+      </Card>
 
-      <View style={styles.card}>
-        <Text style={styles.sectionTitle}>
-          {isLoan ? "Payments made" : "Installments"}
-        </Text>
-
+      <FormSection title={isLoan ? "Payments made" : "Installments"}>
         {sorted.length === 0 ? (
           <Text style={styles.emptyText}>
             {isLoan
@@ -226,25 +219,17 @@ const PropertyPaymentsScreen = ({ property }: Props) => {
         ) : (
           sorted.map(renderEntry)
         )}
-      </View>
+      </FormSection>
 
-      <View style={styles.card}>
-        <Text style={styles.sectionTitle}>
-          {isLoan ? "Record a payment" : "Add an installment"}
-        </Text>
-
-        <Text style={styles.label}>Amount</Text>
-        <View style={[styles.affixRow, styles.inputSpacing]}>
-          <Text style={styles.affix}>₹</Text>
-          <TextInput
-            style={styles.affixInput}
-            onChangeText={setAmount}
-            value={amount}
-            placeholder="0"
-            placeholderTextColor={colors.placeholder}
-            keyboardType="numeric"
-          />
-        </View>
+      <FormSection title={isLoan ? "Record a payment" : "Add an installment"}>
+        <TextField
+          label="Amount"
+          prefix="₹"
+          onChangeText={setAmount}
+          value={amount}
+          placeholder="0"
+          keyboardType="numeric"
+        />
 
         <DatePicker
           label={isLoan ? "Payment date" : "Due date"}
@@ -252,21 +237,18 @@ const PropertyPaymentsScreen = ({ property }: Props) => {
           onDateChange={(next: any) => setDate(next || "")}
         />
 
-        <Text style={styles.label}>Label (optional)</Text>
-        <TextInput
-          style={[styles.input, styles.inputSpacing]}
+        <TextField
+          label="Label (optional)"
           onChangeText={setLabel}
           value={label}
           placeholder={isLoan ? "e.g. EMI 4" : "e.g. Registration"}
-          placeholderTextColor={colors.placeholder}
         />
 
         <Button
           title={isLoan ? "Record Payment" : "Add Installment"}
           onPress={handleAdd}
-          buttonStyle={styles.primaryButton}
         />
-      </View>
+      </FormSection>
     </ScrollView>
   );
 };
@@ -280,14 +262,6 @@ const createStyles = (colors: ThemeColors) =>
     content: {
       padding: 20,
       paddingBottom: 40,
-    },
-    card: {
-      backgroundColor: colors.card,
-      borderRadius: 16,
-      borderWidth: StyleSheet.hairlineWidth,
-      borderColor: colors.border,
-      padding: 16,
-      marginBottom: 14,
     },
     propertyName: {
       fontSize: 17,
@@ -329,14 +303,6 @@ const createStyles = (colors: ThemeColors) =>
       fontSize: 13,
       color: colors.textMuted,
     },
-    sectionTitle: {
-      fontSize: 13,
-      fontWeight: "600",
-      textTransform: "uppercase",
-      letterSpacing: 0.6,
-      color: colors.textMuted,
-      marginBottom: 16,
-    },
     emptyText: {
       fontSize: 14,
       color: colors.textMuted,
@@ -350,7 +316,7 @@ const createStyles = (colors: ThemeColors) =>
     checkbox: {
       width: 24,
       height: 24,
-      borderRadius: 7,
+      borderRadius: radius.chip,
       borderWidth: 1.5,
       borderColor: colors.border,
       alignItems: "center",
@@ -381,49 +347,6 @@ const createStyles = (colors: ThemeColors) =>
     },
     trash: {
       padding: 6,
-    },
-    label: {
-      fontSize: 13,
-      fontWeight: "600",
-      color: colors.text,
-      marginBottom: 8,
-    },
-    input: {
-      borderWidth: 1,
-      borderColor: colors.border,
-      backgroundColor: colors.inputBackground,
-      borderRadius: 10,
-      paddingHorizontal: 12,
-      paddingVertical: 14,
-      fontSize: 16,
-      color: colors.text,
-    },
-    inputSpacing: {
-      marginBottom: 18,
-    },
-    affixRow: {
-      flexDirection: "row",
-      alignItems: "center",
-      borderWidth: 1,
-      borderColor: colors.border,
-      backgroundColor: colors.inputBackground,
-      borderRadius: 10,
-      paddingHorizontal: 12,
-    },
-    affix: {
-      fontSize: 15,
-      color: colors.textMuted,
-    },
-    affixInput: {
-      flex: 1,
-      paddingVertical: 14,
-      paddingHorizontal: 8,
-      fontSize: 16,
-      color: colors.text,
-    },
-    primaryButton: {
-      width: "100%",
-      marginTop: 6,
     },
     pressed: {
       opacity: 0.6,

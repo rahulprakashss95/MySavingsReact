@@ -13,13 +13,18 @@ export default function LedgerStack() {
       screenOptions={{
         headerStyle: { backgroundColor: colors.card },
         headerTintColor: colors.text,
+        headerShadowVisible: false,
         contentStyle: { backgroundColor: colors.background },
         headerRight: () => <ProfileButton />,
       }}
     >
       <Stack.Screen
         name="index"
-        options={{ title: "Ledger", headerLeft: () => <MenuButton /> }}
+        options={{
+          title: "Ledger",
+          headerLeft: () => <MenuButton />,
+          headerLargeTitle: true,
+        }}
       />
       <Stack.Screen name="earnings/index" options={{ title: "Earnings" }} />
       <Stack.Screen name="earnings/[id]" options={{ title: "Earning" }} />

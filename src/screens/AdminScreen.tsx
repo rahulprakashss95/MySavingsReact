@@ -32,6 +32,7 @@ import { ALL_FEATURE_KEYS, FeatureKey } from "../models/common";
 import { normalizeFamilyCode } from "../models/FamilyModel";
 import { displayNameOf, LoginUserModel, UserRole } from "../models/LoginUserModel";
 import { ThemeColors, tint } from "../utils/Color";
+import { radius } from "../utils/tokens";
 import { MIN_PASSWORD_LENGTH, validatePassword } from "../utils/passwordStrength";
 import { showConfirmationAlert, showToast } from "../utils/Utils";
 
@@ -510,7 +511,7 @@ const createStyles = (colors: ThemeColors) =>
     },
     card: {
       backgroundColor: colors.card,
-      borderRadius: 14,
+      borderRadius: radius.card,
       borderWidth: StyleSheet.hairlineWidth,
       borderColor: colors.border,
       padding: 16,
@@ -527,7 +528,7 @@ const createStyles = (colors: ThemeColors) =>
       borderWidth: 1,
       borderColor: colors.border,
       backgroundColor: colors.inputBackground,
-      borderRadius: 10,
+      borderRadius: radius.control,
       paddingHorizontal: 12,
       paddingVertical: 12,
       fontSize: 15,
@@ -543,7 +544,7 @@ const createStyles = (colors: ThemeColors) =>
       flexDirection: "row",
       alignItems: "center",
       backgroundColor: colors.primary,
-      borderRadius: 20,
+      borderRadius: radius.pill,
       paddingVertical: 7,
       paddingHorizontal: 12,
       marginBottom: 12,
@@ -558,7 +559,7 @@ const createStyles = (colors: ThemeColors) =>
       flexDirection: "row",
       alignItems: "center",
       backgroundColor: colors.card,
-      borderRadius: 12,
+      borderRadius: radius.row,
       borderWidth: StyleSheet.hairlineWidth,
       borderColor: colors.border,
       padding: 12,
@@ -577,7 +578,7 @@ const createStyles = (colors: ThemeColors) =>
     },
     roleBadge: {
       backgroundColor: tint(colors.primary),
-      borderRadius: 6,
+      borderRadius: radius.chip,
       paddingHorizontal: 6,
       paddingVertical: 2,
       marginLeft: 8,
@@ -603,7 +604,7 @@ const createStyles = (colors: ThemeColors) =>
     },
     modalCard: {
       backgroundColor: colors.card,
-      borderRadius: 16,
+      borderRadius: radius.sheet,
       padding: 20,
       maxHeight: "88%",
     },
@@ -624,7 +625,7 @@ const createStyles = (colors: ThemeColors) =>
       flex: 1,
       alignItems: "center",
       paddingVertical: 11,
-      borderRadius: 10,
+      borderRadius: radius.control,
       borderWidth: 1,
       borderColor: colors.border,
       backgroundColor: colors.inputBackground,

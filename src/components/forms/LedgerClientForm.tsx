@@ -1,23 +1,24 @@
-﻿import React, { useMemo, useState } from "react";
-import { Pressable, StyleSheet, Text, TextInput, View } from "react-native";
+import React, { useState } from "react";
+import { StyleSheet, View } from "react-native";
 import {
   addLedgerClient,
   deleteLedgerClient,
   updateLedgerClient,
 } from "../../../database/query";
 import { useAuth } from "../../context/AuthContext";
-import { useTheme } from "../../context/ThemeContext";
 import { canEdit, Visibility } from "../../models/common";
 import { LedgerClientModel } from "../../models/LedgerModel";
 import { commitDelete, commitSave, useAppDispatch } from "../../query/hooks";
-import { ThemeColors } from "../../utils/Color";
 import { DEFAULT_DIAL_CODE } from "../../utils/countryCodes";
 import { showConfirmationAlert, showToast } from "../../utils/Utils";
+import { spacing } from "../../utils/tokens";
 import Button from "../Button";
+import FormSection from "../FormSection";
 import Loader from "../Loader";
 import PhoneInput from "../PhoneInput";
 import ReadOnlyBanner from "../ReadOnlyBanner";
 import ReadOnlyGuard from "../ReadOnlyGuard";
+import TextField from "../TextField";
 import VisibilityToggle from "../VisibilityToggle";
 
 type Props = {
@@ -52,10 +53,8 @@ const LedgerClientForm = ({ initial, onSaved, onDeleted }: Props) => {
   );
   const [isLoading, setIsLoading] = useState(false);
 
-  const { colors } = useTheme();
   const { user } = useAuth();
   const dispatch = useAppDispatch();
-  const styles = useMemo(() => createStyles(colors), [colors]);
 
   // Public records are viewable family-wide but editable only by their owner.
   const readOnly = isEdit && !canEdit(client!, user?.id);
@@ -114,24 +113,20 @@ const LedgerClientForm = ({ initial, onSaved, onDeleted }: Props) => {
       <ReadOnlyBanner show={readOnly} />
 
       <ReadOnlyGuard active={readOnly}>
-        <View style={styles.card}>
+        <FormSection>
           <VisibilityToggle value={visibility} onChange={setVisibility} />
-        </View>
+        </FormSection>
 
-        <View style={styles.card}>
-          <Text style={styles.sectionTitle}>Contact</Text>
-
-          <Text style={styles.label}>Name</Text>
-          <TextInput
-            style={[styles.input, styles.inputSpacing]}
+        <FormSection title="Contact">
+          <TextField
+            label="Name"
             onChangeText={setName}
             value={name}
             placeholder="e.g. Acme Corp, HDFC Bank, Ravi"
-            placeholderTextColor={colors.placeholder}
             autoCapitalize="words"
           />
 
-          <View style={styles.inputSpacing}>
+          <View style={styles.fieldSpacing}>
             <PhoneInput
               dialCode={dialCode}
               onChangeDialCode={setDialCode}
@@ -140,46 +135,36 @@ const LedgerClientForm = ({ initial, onSaved, onDeleted }: Props) => {
             />
           </View>
 
-          <Text style={styles.label}>Email</Text>
-          <TextInput
-            style={[styles.input, styles.inputSpacing]}
+          <TextField
+            label="Email"
             onChangeText={setEmail}
             value={email}
             placeholder="name@example.com"
-            placeholderTextColor={colors.placeholder}
             keyboardType="email-address"
             autoCapitalize="none"
             autoCorrect={false}
           />
 
-          <Text style={styles.label}>Address</Text>
-          <TextInput
-            style={[styles.input, styles.address]}
+          <TextField
+            label="Address"
             onChangeText={setAddress}
             value={address}
             placeholder="Street, city, PIN…"
-            placeholderTextColor={colors.placeholder}
             multiline
             numberOfLines={3}
-            textAlignVertical="top"
           />
-        </View>
+        </FormSection>
 
-        <View style={styles.card}>
-          <Text style={styles.sectionTitle}>Notes</Text>
-
-          <Text style={styles.label}>Description</Text>
-          <TextInput
-            style={[styles.input, styles.multiline]}
+        <FormSection title="Notes">
+          <TextField
+            label="Description"
             onChangeText={setDescription}
             value={description}
             placeholder="Anything worth remembering about them…"
-            placeholderTextColor={colors.placeholder}
             multiline
             numberOfLines={4}
-            textAlignVertical="top"
           />
-        </View>
+        </FormSection>
       </ReadOnlyGuard>
 
       {!readOnly && (
@@ -191,79 +176,25 @@ const LedgerClientForm = ({ initial, onSaved, onDeleted }: Props) => {
       )}
 
       {isEdit && !readOnly && onDeleted && (
-        <Pressable
+        <Button
+          title="Delete Contact"
+          variant="plain"
+          tone="destructive"
           onPress={handleDelete}
-          accessibilityRole="button"
-          style={({ pressed }) => [styles.deleteButton, pressed && styles.pressed]}
-        >
-          <Text style={styles.deleteText}>Delete Contact</Text>
-        </Pressable>
+        />
       )}
     </>
   );
 };
 
-const createStyles = (colors: ThemeColors) =>
-  StyleSheet.create({
-    card: {
-      backgroundColor: colors.card,
-      borderRadius: 16,
-      borderWidth: StyleSheet.hairlineWidth,
-      borderColor: colors.border,
-      padding: 16,
-      marginBottom: 14,
-    },
-    sectionTitle: {
-      fontSize: 13,
-      fontWeight: "600",
-      textTransform: "uppercase",
-      letterSpacing: 0.6,
-      color: colors.textMuted,
-      marginBottom: 16,
-    },
-    label: {
-      fontSize: 13,
-      fontWeight: "600",
-      color: colors.text,
-      marginBottom: 8,
-    },
-    input: {
-      borderWidth: 1,
-      borderColor: colors.border,
-      backgroundColor: colors.inputBackground,
-      borderRadius: 10,
-      paddingHorizontal: 12,
-      paddingVertical: 14,
-      fontSize: 16,
-      color: colors.text,
-    },
-    inputSpacing: {
-      marginBottom: 18,
-    },
-    multiline: {
-      minHeight: 96,
-    },
-    // Shorter than a description box: an address is a few lines, not a note.
-    address: {
-      minHeight: 72,
-    },
-    primaryButton: {
-      width: "100%",
-      marginTop: 6,
-    },
-    deleteButton: {
-      alignItems: "center",
-      paddingVertical: 16,
-      marginTop: 6,
-    },
-    deleteText: {
-      color: colors.negative,
-      fontSize: 15,
-      fontWeight: "600",
-    },
-    pressed: {
-      opacity: 0.6,
-    },
-  });
+const styles = StyleSheet.create({
+  fieldSpacing: {
+    marginBottom: spacing.lg,
+  },
+  primaryButton: {
+    marginTop: 6,
+    marginBottom: 10,
+  },
+});
 
 export default LedgerClientForm;

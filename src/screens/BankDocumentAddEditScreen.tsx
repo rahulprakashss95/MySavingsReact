@@ -1,21 +1,16 @@
-﻿import React, { useMemo, useState } from "react";
-import {
-  Pressable,
-  ScrollView,
-  StyleSheet,
-  Text,
-  TextInput,
-  View,
-} from "react-native";
+import React, { useMemo, useState } from "react";
+import { ScrollView, StyleSheet } from "react-native";
 import {
   addBankDocument,
   deleteBankDocument,
   updateBankDocument,
 } from "../../database/query";
 import Button from "../components/Button";
+import FormSection from "../components/FormSection";
 import Loader from "../components/Loader";
 import ReadOnlyBanner from "../components/ReadOnlyBanner";
 import ReadOnlyGuard from "../components/ReadOnlyGuard";
+import TextField from "../components/TextField";
 import VisibilityToggle from "../components/VisibilityToggle";
 import { useAuth } from "../context/AuthContext";
 import { useTheme } from "../context/ThemeContext";
@@ -125,71 +120,56 @@ const BankDocumentAddEditScreen = ({ initial }: Props) => {
       <ReadOnlyBanner show={readOnly} />
 
       <ReadOnlyGuard active={readOnly}>
-      <View style={styles.card}>
+      <FormSection>
         <VisibilityToggle value={visibility} onChange={setVisibility} />
-      </View>
+      </FormSection>
 
-      <View style={styles.card}>
-        <Text style={styles.sectionTitle}>Account</Text>
-
-        <Text style={styles.label}>Account holder name</Text>
-        <TextInput
-          style={[styles.input, styles.inputSpacing]}
+      <FormSection title="Account">
+        <TextField
+          label="Account holder name"
           onChangeText={setAccountHolderName}
           value={accountHolderName}
           placeholder="Name as the bank has it"
-          placeholderTextColor={colors.placeholder}
           autoCapitalize="words"
           autoCorrect={false}
         />
 
-        <Text style={styles.label}>Bank name</Text>
-        <TextInput
-          style={[styles.input, styles.inputSpacing]}
+        <TextField
+          label="Bank name"
           onChangeText={setBankName}
           value={bankName}
           placeholder="e.g. State Bank of India"
-          placeholderTextColor={colors.placeholder}
           autoCorrect={false}
         />
 
-        <Text style={styles.label}>Account number</Text>
-        <TextInput
-          style={[styles.input, styles.inputSpacing]}
+        <TextField
+          label="Account number"
           onChangeText={setAccountNumber}
           value={accountNumber}
           placeholder="Account number"
-          placeholderTextColor={colors.placeholder}
           keyboardType="numeric"
         />
 
-        <Text style={styles.label}>IFSC</Text>
-        <TextInput
-          style={styles.input}
+        <TextField
+          label="IFSC"
           onChangeText={setIfsc}
           value={ifsc}
           placeholder="e.g. SBIN0001234"
-          placeholderTextColor={colors.placeholder}
           autoCapitalize="characters"
           autoCorrect={false}
         />
-      </View>
+      </FormSection>
 
-      <View style={styles.card}>
-        <Text style={styles.sectionTitle}>Notes</Text>
-
-        <Text style={styles.label}>Description</Text>
-        <TextInput
-          style={[styles.input, styles.multiline]}
+      <FormSection title="Notes">
+        <TextField
+          label="Description"
           onChangeText={setDescription}
           value={description}
           placeholder="Branch, account type, or anything worth remembering…"
-          placeholderTextColor={colors.placeholder}
           multiline
           numberOfLines={4}
-          textAlignVertical="top"
         />
-      </View>
+      </FormSection>
 
       </ReadOnlyGuard>
 
@@ -202,16 +182,12 @@ const BankDocumentAddEditScreen = ({ initial }: Props) => {
       )}
 
       {pageMode !== "Add" && !readOnly && (
-        <Pressable
+        <Button
+          title="Delete Account"
+          variant="plain"
+          tone="destructive"
           onPress={handleDelete}
-          accessibilityRole="button"
-          style={({ pressed }) => [
-            styles.deleteButton,
-            pressed && styles.pressed,
-          ]}
-        >
-          <Text style={styles.deleteText}>Delete Account</Text>
-        </Pressable>
+        />
       )}
     </ScrollView>
   );
@@ -227,60 +203,9 @@ const createStyles = (colors: ThemeColors) =>
       padding: 20,
       paddingBottom: 40,
     },
-    card: {
-      backgroundColor: colors.card,
-      borderRadius: 16,
-      borderWidth: StyleSheet.hairlineWidth,
-      borderColor: colors.border,
-      padding: 16,
-      marginBottom: 14,
-    },
-    sectionTitle: {
-      fontSize: 13,
-      fontWeight: "600",
-      textTransform: "uppercase",
-      letterSpacing: 0.6,
-      color: colors.textMuted,
-      marginBottom: 16,
-    },
-    label: {
-      fontSize: 13,
-      fontWeight: "600",
-      color: colors.text,
-      marginBottom: 8,
-    },
-    input: {
-      borderWidth: 1,
-      borderColor: colors.border,
-      backgroundColor: colors.inputBackground,
-      borderRadius: 10,
-      paddingHorizontal: 12,
-      paddingVertical: 14,
-      fontSize: 16,
-      color: colors.text,
-    },
-    inputSpacing: {
-      marginBottom: 18,
-    },
-    multiline: {
-      minHeight: 96,
-    },
     primaryButton: {
-      width: "100%",
       marginTop: 6,
-    },
-    deleteButton: {
-      alignItems: "center",
-      paddingVertical: 16,
-      marginTop: 6,
-    },
-    deleteText: {
-      color: colors.negative,
-      fontSize: 15,
-      fontWeight: "600",
-    },
-    pressed: {
-      opacity: 0.6,
+      marginBottom: 10,
     },
   });
 

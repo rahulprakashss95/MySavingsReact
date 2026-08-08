@@ -1,13 +1,6 @@
-﻿import { Ionicons } from "@expo/vector-icons";
+import { Ionicons } from "@expo/vector-icons";
 import React, { useMemo, useState } from "react";
-import {
-  Pressable,
-  ScrollView,
-  StyleSheet,
-  Text,
-  TextInput,
-  View,
-} from "react-native";
+import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 import {
   addProperty,
   deleteProperty,
@@ -15,11 +8,13 @@ import {
 } from "../../database/query";
 import Button from "../components/Button";
 import DualUnitInput from "../components/DualUnitInput";
+import FormSection from "../components/FormSection";
 import Loader from "../components/Loader";
 import SearchableSelect from "../components/SearchableSelect";
 import ProgressBar from "../components/ProgressBar";
 import ReadOnlyBanner from "../components/ReadOnlyBanner";
 import ReadOnlyGuard from "../components/ReadOnlyGuard";
+import TextField from "../components/TextField";
 import VisibilityToggle from "../components/VisibilityToggle";
 import { useAuth } from "../context/AuthContext";
 import { useTheme } from "../context/ThemeContext";
@@ -33,7 +28,8 @@ import {
 } from "../models/AssetModel";
 import { CENTS_PER_ACRE, hasArea, paymentTotals } from "../utils/assets";
 import { isValidAmount } from "../utils/amount";
-import { ThemeColors } from "../utils/Color";
+import { ThemeColors, tint } from "../utils/Color";
+import { radius } from "../utils/tokens";
 import { amountFormat, showConfirmationAlert, showToast } from "../utils/Utils";
 import { useRouter } from "expo-router";
 
@@ -189,13 +185,11 @@ const PropertyAddEditScreen = ({ initial }: Props) => {
       <ReadOnlyBanner show={readOnly} />
 
       <ReadOnlyGuard active={readOnly}>
-      <View style={styles.card}>
+      <FormSection>
         <VisibilityToggle value={visibility} onChange={setVisibility} />
-      </View>
+      </FormSection>
 
-      <View style={styles.card}>
-        <Text style={styles.sectionTitle}>Property</Text>
-
+      <FormSection title="Property">
         <SearchableSelect
           label="Type"
           placeholder="Select a property type"
@@ -205,13 +199,11 @@ const PropertyAddEditScreen = ({ initial }: Props) => {
           onSelect={(id) => setPropertyType(id)}
         />
 
-        <Text style={styles.label}>Name</Text>
-        <TextInput
-          style={[styles.input, styles.inputSpacing]}
+        <TextField
+          label="Name"
           onChangeText={setName}
           value={name}
           placeholder="e.g. Chennai flat"
-          placeholderTextColor={colors.placeholder}
           autoCapitalize="words"
         />
 
@@ -228,11 +220,9 @@ const PropertyAddEditScreen = ({ initial }: Props) => {
             <Text style={styles.hint}>{CENTS_PER_ACRE_LABEL}</Text>
           </>
         )}
-      </View>
+      </FormSection>
 
-      <View style={styles.card}>
-        <Text style={styles.sectionTitle}>Payment</Text>
-
+      <FormSection title="Payment">
         <SearchableSelect
           label="How was it paid?"
           placeholder="Select a payment mode"
@@ -247,45 +237,33 @@ const PropertyAddEditScreen = ({ initial }: Props) => {
           onSelect={(id) => setPaymentMode(id as PaymentMode)}
         />
 
-        <Text style={styles.label}>
-          {paymentMode === "loan" ? "Loan amount" : "Total amount"}
-        </Text>
-        <View style={[styles.affixRow, styles.inputSpacing]}>
-          <Text style={styles.affix}>₹</Text>
-          <TextInput
-            style={styles.affixInput}
-            onChangeText={setTotalAmount}
-            value={totalAmount}
-            placeholder="0"
-            placeholderTextColor={colors.placeholder}
-            keyboardType="numeric"
-          />
-        </View>
+        <TextField
+          label={paymentMode === "loan" ? "Loan amount" : "Total amount"}
+          prefix="₹"
+          onChangeText={setTotalAmount}
+          value={totalAmount}
+          placeholder="0"
+          keyboardType="numeric"
+        />
 
         {paymentMode === "loan" && (
           <>
-            <Text style={styles.label}>Lender</Text>
-            <TextInput
-              style={[styles.input, styles.inputSpacing]}
+            <TextField
+              label="Lender"
               onChangeText={setLender}
               value={lender}
               placeholder="e.g. HDFC Bank"
-              placeholderTextColor={colors.placeholder}
               autoCapitalize="words"
             />
 
-            <Text style={styles.label}>Interest rate</Text>
-            <View style={[styles.affixRow, styles.inputSpacing]}>
-              <TextInput
-                style={styles.affixInput}
-                onChangeText={setInterestRate}
-                value={interestRate}
-                placeholder="0.0"
-                placeholderTextColor={colors.placeholder}
-                keyboardType="decimal-pad"
-              />
-              <Text style={styles.affix}>% p.a.</Text>
-            </View>
+            <TextField
+              label="Interest rate"
+              suffix="% p.a."
+              onChangeText={setInterestRate}
+              value={interestRate}
+              placeholder="0.0"
+              keyboardType="decimal-pad"
+            />
           </>
         )}
 
@@ -331,23 +309,18 @@ const PropertyAddEditScreen = ({ initial }: Props) => {
             )}
           </>
         )}
-      </View>
+      </FormSection>
 
-      <View style={styles.card}>
-        <Text style={styles.sectionTitle}>Notes</Text>
-
-        <Text style={styles.label}>Description</Text>
-        <TextInput
-          style={[styles.input, styles.multiline]}
+      <FormSection title="Notes">
+        <TextField
+          label="Description"
           onChangeText={setDescription}
           value={description}
           placeholder="Survey number, registration details, anything worth noting…"
-          placeholderTextColor={colors.placeholder}
           multiline
           numberOfLines={4}
-          textAlignVertical="top"
         />
-      </View>
+      </FormSection>
 
       </ReadOnlyGuard>
 
@@ -360,16 +333,12 @@ const PropertyAddEditScreen = ({ initial }: Props) => {
       )}
 
       {pageMode !== "Add" && !readOnly && (
-        <Pressable
+        <Button
+          title="Delete Property"
+          variant="plain"
+          tone="destructive"
           onPress={handleDelete}
-          accessibilityRole="button"
-          style={({ pressed }) => [
-            styles.deleteButton,
-            pressed && styles.pressed,
-          ]}
-        >
-          <Text style={styles.deleteText}>Delete Property</Text>
-        </Pressable>
+        />
       )}
     </ScrollView>
   );
@@ -385,87 +354,10 @@ const createStyles = (colors: ThemeColors) =>
       padding: 20,
       paddingBottom: 40,
     },
-    card: {
-      backgroundColor: colors.card,
-      borderRadius: 16,
-      borderWidth: StyleSheet.hairlineWidth,
-      borderColor: colors.border,
-      padding: 16,
-      marginBottom: 14,
-    },
-    sectionTitle: {
-      fontSize: 13,
-      fontWeight: "600",
-      textTransform: "uppercase",
-      letterSpacing: 0.6,
-      color: colors.textMuted,
-      marginBottom: 16,
-    },
-    label: {
-      fontSize: 13,
-      fontWeight: "600",
-      color: colors.text,
-      marginBottom: 8,
-    },
     hint: {
       fontSize: 12,
       color: colors.textMuted,
       marginTop: -8,
-    },
-    pickerContainer: {
-      borderWidth: 1,
-      borderColor: colors.border,
-      borderRadius: 10,
-      backgroundColor: colors.inputBackground,
-      marginBottom: 18,
-      overflow: "hidden",
-    },
-    picker: {
-      height: 50,
-      borderWidth: 0,
-      backgroundColor: colors.inputBackground,
-      color: colors.text,
-      paddingHorizontal: 8,
-    },
-    pickerItem: {
-      backgroundColor: colors.inputBackground,
-      color: colors.text,
-    },
-    input: {
-      borderWidth: 1,
-      borderColor: colors.border,
-      backgroundColor: colors.inputBackground,
-      borderRadius: 10,
-      paddingHorizontal: 12,
-      paddingVertical: 14,
-      fontSize: 16,
-      color: colors.text,
-    },
-    inputSpacing: {
-      marginBottom: 18,
-    },
-    multiline: {
-      minHeight: 96,
-    },
-    affixRow: {
-      flexDirection: "row",
-      alignItems: "center",
-      borderWidth: 1,
-      borderColor: colors.border,
-      backgroundColor: colors.inputBackground,
-      borderRadius: 10,
-      paddingHorizontal: 12,
-    },
-    affix: {
-      fontSize: 15,
-      color: colors.textMuted,
-    },
-    affixInput: {
-      flex: 1,
-      paddingVertical: 14,
-      paddingHorizontal: 8,
-      fontSize: 16,
-      color: colors.text,
     },
     totalsRow: {
       flexDirection: "row",
@@ -487,9 +379,8 @@ const createStyles = (colors: ThemeColors) =>
       flexDirection: "row",
       alignItems: "center",
       justifyContent: "center",
-      borderWidth: 1,
-      borderColor: colors.primary,
-      borderRadius: 10,
+      backgroundColor: tint(colors.primary),
+      borderRadius: radius.control,
       paddingVertical: 14,
       marginTop: 16,
     },
@@ -500,18 +391,8 @@ const createStyles = (colors: ThemeColors) =>
       marginRight: 6,
     },
     primaryButton: {
-      width: "100%",
       marginTop: 6,
-    },
-    deleteButton: {
-      alignItems: "center",
-      paddingVertical: 16,
-      marginTop: 6,
-    },
-    deleteText: {
-      color: colors.negative,
-      fontSize: 15,
-      fontWeight: "600",
+      marginBottom: 10,
     },
     pressed: {
       opacity: 0.6,

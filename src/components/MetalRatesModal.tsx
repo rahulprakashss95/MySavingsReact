@@ -13,6 +13,7 @@ import {
 import { MetalRates } from "../models/AssetModel";
 import { useTheme } from "../context/ThemeContext";
 import { ThemeColors } from "../utils/Color";
+import { radius } from "../utils/tokens";
 import { fetchLiveMetalRates } from "../utils/metalRates";
 import { showToast } from "../utils/Utils";
 
@@ -208,13 +209,13 @@ const createStyles = (colors: ThemeColors) =>
     },
     sheet: {
       backgroundColor: colors.card,
-      borderRadius: 16,
+      borderRadius: radius.sheet,
       borderWidth: StyleSheet.hairlineWidth,
       borderColor: colors.border,
       padding: 20,
       shadowColor: colors.shadow,
-      shadowOffset: { width: 0, height: 4 },
-      shadowOpacity: 0.24,
+      shadowOffset: { width: 0, height: -2 },
+      shadowOpacity: 0.15,
       shadowRadius: 16,
       elevation: 8,
       // Never wider than a phone card, even on a desktop browser.
@@ -248,7 +249,7 @@ const createStyles = (colors: ThemeColors) =>
       borderWidth: 1,
       borderColor: colors.border,
       backgroundColor: colors.inputBackground,
-      borderRadius: 10,
+      borderRadius: radius.control,
       paddingHorizontal: 12,
     },
     affix: {
@@ -274,7 +275,7 @@ const createStyles = (colors: ThemeColors) =>
       justifyContent: "center",
       borderWidth: 1,
       borderColor: colors.primary,
-      borderRadius: 10,
+      borderRadius: radius.control,
       paddingVertical: 13,
     },
     buttonIcon: {
@@ -302,7 +303,7 @@ const createStyles = (colors: ThemeColors) =>
     },
     saveButton: {
       backgroundColor: colors.primary,
-      borderRadius: 10,
+      borderRadius: radius.control,
       paddingVertical: 13,
       paddingHorizontal: 28,
       marginLeft: 8,

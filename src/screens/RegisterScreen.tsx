@@ -23,6 +23,7 @@ import { signInWithCredentials } from "../utils/auth";
 import { MIN_PASSWORD_LENGTH, validatePassword } from "../utils/passwordStrength";
 import { useRouter } from "expo-router";
 import { ThemeColors, tint } from "../utils/Color";
+import { elevation, radius } from "../utils/tokens";
 import { showToast } from "../utils/Utils";
 
 const RegisterScreen = () => {
@@ -359,7 +360,7 @@ const createStyles = (colors: ThemeColors) =>
     logo: {
       width: 64,
       height: 64,
-      borderRadius: 20,
+      borderRadius: radius.card,
       alignItems: "center",
       justifyContent: "center",
       backgroundColor: tint(colors.primary),
@@ -379,15 +380,12 @@ const createStyles = (colors: ThemeColors) =>
     },
     card: {
       backgroundColor: colors.card,
-      borderRadius: 16,
+      borderRadius: radius.card,
       borderWidth: StyleSheet.hairlineWidth,
       borderColor: colors.border,
       padding: 20,
+      ...elevation.ambient,
       shadowColor: colors.shadow,
-      shadowOffset: { width: 0, height: 2 },
-      shadowOpacity: 0.18,
-      shadowRadius: 8,
-      elevation: 2,
     },
     sectionLabel: {
       fontSize: 12,
@@ -415,7 +413,7 @@ const createStyles = (colors: ThemeColors) =>
       borderWidth: 1,
       borderColor: colors.border,
       backgroundColor: colors.inputBackground,
-      borderRadius: 10,
+      borderRadius: radius.control,
       paddingHorizontal: 12,
     },
     inputRowFocused: {

@@ -1,12 +1,5 @@
-﻿import React, { useEffect, useMemo, useState } from "react";
-import {
-  View,
-  Text,
-  TextInput,
-  StyleSheet,
-  ScrollView,
-  Pressable,
-} from "react-native";
+import React, { useEffect, useMemo, useState } from "react";
+import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 import { useRouter } from "expo-router";
 import DatePicker from "../components/DatePicker";
 import { amountFormat, showConfirmationAlert, showToast } from "../utils/Utils";
@@ -32,8 +25,11 @@ import SearchableSelect from "../components/SearchableSelect";
 import LedgerClientForm from "../components/forms/LedgerClientForm";
 import { isValidAmount } from "../utils/amount";
 import { ThemeColors, tint } from "../utils/Color";
+import { radius } from "../utils/tokens";
 import { useTheme } from "../context/ThemeContext";
 import Button from "../components/Button";
+import FormSection from "../components/FormSection";
+import TextField from "../components/TextField";
 import { addAccount, deleteAccount, updateAccount } from "../../database/query";
 import Loader from "../components/Loader";
 import ReadOnlyBanner from "../components/ReadOnlyBanner";
@@ -307,13 +303,11 @@ const AccountAddEditScreen = ({ initial, presetType }: Props) => {
       <ReadOnlyBanner show={readOnly} />
 
       <ReadOnlyGuard active={readOnly}>
-        <View style={styles.card}>
+        <FormSection>
           <VisibilityToggle value={visibility} onChange={setVisibility} />
-        </View>
+        </FormSection>
 
-        <View style={styles.card}>
-          <Text style={styles.sectionTitle}>Holding</Text>
-
+        <FormSection title="Holding">
           {/* Six types is past what a chip row can hold without pushing the
               rest of the form off the screen. */}
           <SearchableSelect
@@ -326,16 +320,12 @@ const AccountAddEditScreen = ({ initial, presetType }: Props) => {
           />
 
           {isCash && (
-            <>
-              <Text style={styles.label}>Name</Text>
-              <TextInput
-                style={styles.input}
-                onChangeText={setName}
-                value={name}
-                placeholder="e.g. Home cash"
-                placeholderTextColor={colors.placeholder}
-              />
-            </>
+            <TextField
+              label="Name"
+              onChangeText={setName}
+              value={name}
+              placeholder="e.g. Home cash"
+            />
           )}
 
           {/* One directory for every type. A bank, a financier and the cousin
@@ -362,27 +352,18 @@ const AccountAddEditScreen = ({ initial, presetType }: Props) => {
               )}
             />
           )}
-        </View>
+        </FormSection>
 
         {!isDeposit && (
-          <View style={styles.card}>
-            <Text style={styles.sectionTitle}>
-              {isLoan ? "Outstanding" : "Balance"}
-            </Text>
-            <Text style={styles.label}>
-              {isLoan ? loanAmountLabel : "Current balance"}
-            </Text>
-            <View style={styles.affixRow}>
-              <Text style={styles.affix}>₹</Text>
-              <TextInput
-                style={styles.affixInput}
-                onChangeText={setBalance}
-                value={balance}
-                placeholder="0"
-                placeholderTextColor={colors.placeholder}
-                keyboardType="numeric"
-              />
-            </View>
+          <FormSection title={isLoan ? "Outstanding" : "Balance"}>
+            <TextField
+              label={isLoan ? loanAmountLabel : "Current balance"}
+              prefix="₹"
+              onChangeText={setBalance}
+              value={balance}
+              placeholder="0"
+              keyboardType="numeric"
+            />
             <DatePicker
               label={isLoan ? "Correct as of" : "Balance as of"}
               dateValue={balanceAsOf}
@@ -395,83 +376,65 @@ const AccountAddEditScreen = ({ initial, presetType }: Props) => {
                 current.
               </Text>
             )}
-          </View>
+          </FormSection>
         )}
 
         {isFD && (
           <>
-            <View style={styles.card}>
-              <Text style={styles.sectionTitle}>Deposit</Text>
+            <FormSection title="Deposit">
+              <TextField
+                label="Principal"
+                prefix="₹"
+                onChangeText={setPrincipal}
+                value={principal}
+                placeholder="0"
+                keyboardType="numeric"
+              />
 
-              <Text style={styles.label}>Principal</Text>
-              <View style={styles.affixRow}>
-                <Text style={styles.affix}>₹</Text>
-                <TextInput
-                  style={styles.affixInput}
-                  onChangeText={setPrincipal}
-                  value={principal}
-                  placeholder="0"
-                  placeholderTextColor={colors.placeholder}
-                  keyboardType="numeric"
-                />
+              <TextField
+                label="Rate"
+                suffix="% p.a."
+                onChangeText={setInterestPercentage}
+                value={interestPercentage}
+                placeholder="0.0"
+                keyboardType="decimal-pad"
+              />
+
+              <Text style={styles.label}>Interest payout</Text>
+              <View style={styles.chipRow}>
+                {INTEREST_FREQUENCIES.map((freq: InterestFrequency) => {
+                  const active = freq === interestFrequency;
+                  return (
+                    <Pressable
+                      key={freq}
+                      onPress={() => setInterestFrequency(freq)}
+                      accessibilityRole="radio"
+                      accessibilityState={{ selected: active }}
+                      style={[styles.chip, active && styles.chipActive]}
+                    >
+                      <Text
+                        style={[
+                          styles.chipText,
+                          active && styles.chipTextActive,
+                        ]}
+                      >
+                        {freq}
+                      </Text>
+                    </Pressable>
+                  );
+                })}
               </View>
-
-              <Text style={styles.label}>Rate</Text>
-              <View style={styles.affixRow}>
-                <TextInput
-                  style={styles.affixInput}
-                  onChangeText={setInterestPercentage}
-                  value={interestPercentage}
-                  placeholder="0.0"
-                  placeholderTextColor={colors.placeholder}
-                  keyboardType="decimal-pad"
-                />
-                <Text style={styles.affix}>% p.a.</Text>
-              </View>
-
-              {isFD && (
-                <>
-                  <Text style={styles.label}>Interest payout</Text>
-                  <View style={styles.chipRow}>
-                    {INTEREST_FREQUENCIES.map((freq: InterestFrequency) => {
-                      const active = freq === interestFrequency;
-                      return (
-                        <Pressable
-                          key={freq}
-                          onPress={() => setInterestFrequency(freq)}
-                          accessibilityRole="radio"
-                          accessibilityState={{ selected: active }}
-                          style={[styles.chip, active && styles.chipActive]}
-                        >
-                          <Text
-                            style={[
-                              styles.chipText,
-                              active && styles.chipTextActive,
-                            ]}
-                          >
-                            {freq}
-                          </Text>
-                        </Pressable>
-                      );
-                    })}
-                  </View>
-                </>
-              )}
 
               {isOnMaturity ? (
                 <>
-                  <Text style={styles.label}>Maturity amount</Text>
-                  <View style={styles.affixRow}>
-                    <Text style={styles.affix}>₹</Text>
-                    <TextInput
-                      style={styles.affixInput}
-                      onChangeText={setMaturityAmount}
-                      value={maturityAmount}
-                      placeholder="0"
-                      placeholderTextColor={colors.placeholder}
-                      keyboardType="numeric"
-                    />
-                  </View>
+                  <TextField
+                    label="Maturity amount"
+                    prefix="₹"
+                    onChangeText={setMaturityAmount}
+                    value={maturityAmount}
+                    placeholder="0"
+                    keyboardType="numeric"
+                  />
                   <Text style={styles.hint}>
                     Interest is paid in full at maturity, so no periodic payout is
                     recorded.
@@ -481,27 +444,20 @@ const AccountAddEditScreen = ({ initial, presetType }: Props) => {
                 <>
                   <Text style={styles.label}>{periodicInterestLabel}</Text>
                   <View style={styles.calculateRow}>
-                    <View style={[styles.affixRow, styles.calculateInput]}>
-                      <Text style={styles.affix}>₹</Text>
-                      <TextInput
-                        style={styles.affixInput}
-                        onChangeText={setInterestAmount}
-                        value={interestAmount}
-                        placeholder="0"
-                        placeholderTextColor={colors.placeholder}
-                        keyboardType="numeric"
-                      />
-                    </View>
-                    <Pressable
+                    <TextField
+                      prefix="₹"
+                      containerStyle={styles.calculateInput}
+                      onChangeText={setInterestAmount}
+                      value={interestAmount}
+                      placeholder="0"
+                      keyboardType="numeric"
+                    />
+                    <Button
+                      title="Calculate"
+                      variant="tonal"
                       onPress={calculateInterestAmount}
-                      accessibilityRole="button"
-                      style={({ pressed }) => [
-                        styles.calculateButton,
-                        pressed && styles.pressed,
-                      ]}
-                    >
-                      <Text style={styles.calculateText}>Calculate</Text>
-                    </Pressable>
+                      buttonStyle={styles.calculateButton}
+                    />
                   </View>
                   {enteredPerYear > 0 && (
                     <Text style={styles.hint}>
@@ -512,10 +468,9 @@ const AccountAddEditScreen = ({ initial, presetType }: Props) => {
                   )}
                 </>
               )}
-            </View>
+            </FormSection>
 
-            <View style={styles.card}>
-              <Text style={styles.sectionTitle}>Dates</Text>
+            <FormSection title="Dates">
               <DatePicker
                 label="Deposited date"
                 dateValue={depositedDate}
@@ -530,39 +485,29 @@ const AccountAddEditScreen = ({ initial, presetType }: Props) => {
                   setMaturityDate(date || maturityDate)
                 }
               />
-            </View>
+            </FormSection>
           </>
         )}
 
         {isRD && (
-          <View style={styles.card}>
-            <Text style={styles.sectionTitle}>Recurring deposit</Text>
+          <FormSection title="Recurring deposit">
+            <TextField
+              label="Amount per month"
+              prefix="₹"
+              onChangeText={setPrincipal}
+              value={principal}
+              placeholder="0"
+              keyboardType="numeric"
+            />
 
-            <Text style={styles.label}>Amount per month</Text>
-            <View style={styles.affixRow}>
-              <Text style={styles.affix}>₹</Text>
-              <TextInput
-                style={styles.affixInput}
-                onChangeText={setPrincipal}
-                value={principal}
-                placeholder="0"
-                placeholderTextColor={colors.placeholder}
-                keyboardType="numeric"
-              />
-            </View>
-
-            <Text style={styles.label}>Number of months</Text>
-            <View style={styles.affixRow}>
-              <TextInput
-                style={styles.affixInput}
-                onChangeText={setMonths}
-                value={months}
-                placeholder="e.g. 12"
-                placeholderTextColor={colors.placeholder}
-                keyboardType="number-pad"
-              />
-              <Text style={styles.affix}>months</Text>
-            </View>
+            <TextField
+              label="Number of months"
+              suffix="months"
+              onChangeText={setMonths}
+              value={months}
+              placeholder="e.g. 12"
+              keyboardType="number-pad"
+            />
 
             <DatePicker
               label="Start date"
@@ -572,28 +517,20 @@ const AccountAddEditScreen = ({ initial, presetType }: Props) => {
             <Text style={styles.hint}>
               After saving, mark each month paid from the list.
             </Text>
-          </View>
+          </FormSection>
         )}
 
         {isLoan && (
-          <View style={styles.card}>
-            <Text style={styles.sectionTitle}>Terms</Text>
-
-            <Text style={styles.label}>Rate</Text>
-            <View style={styles.affixRow}>
-              <TextInput
-                style={styles.affixInput}
-                onChangeText={setInterestPercentage}
-                value={interestPercentage}
-                placeholder="0.0"
-                placeholderTextColor={colors.placeholder}
-                keyboardType="decimal-pad"
-              />
-              <Text style={styles.affix}>% p.a.</Text>
-            </View>
-            <Text style={styles.hint}>
-              Leave blank for an interest-free loan.
-            </Text>
+          <FormSection title="Terms">
+            <TextField
+              label="Rate"
+              suffix="% p.a."
+              onChangeText={setInterestPercentage}
+              value={interestPercentage}
+              placeholder="0.0"
+              keyboardType="decimal-pad"
+              helperText="Leave blank for an interest-free loan."
+            />
 
             <DatePicker
               label={loanDateLabel}
@@ -607,22 +544,18 @@ const AccountAddEditScreen = ({ initial, presetType }: Props) => {
               dateValue={maturityDate}
               onDateChange={(date: string) => setMaturityDate(date || maturityDate)}
             />
-          </View>
+          </FormSection>
         )}
 
-        <View style={styles.card}>
-          <Text style={styles.sectionTitle}>Notes</Text>
-          <TextInput
-            style={[styles.input, styles.multiline]}
+        <FormSection title="Notes">
+          <TextField
             onChangeText={setNotes}
             value={notes}
             placeholder="Account number, where the passbook is kept, what it's for…"
-            placeholderTextColor={colors.placeholder}
             multiline
             numberOfLines={4}
-            textAlignVertical="top"
           />
-        </View>
+        </FormSection>
       </ReadOnlyGuard>
 
       {!readOnly && (
@@ -634,13 +567,12 @@ const AccountAddEditScreen = ({ initial, presetType }: Props) => {
       )}
 
       {pageMode !== "Add" && !readOnly && (
-        <Pressable
+        <Button
+          title="Delete Holding"
+          variant="plain"
+          tone="destructive"
           onPress={handleDelete}
-          accessibilityRole="button"
-          style={({ pressed }) => [styles.deleteButton, pressed && styles.pressed]}
-        >
-          <Text style={styles.deleteText}>Delete Holding</Text>
-        </Pressable>
+        />
       )}
     </ScrollView>
   );
@@ -656,42 +588,11 @@ const createStyles = (colors: ThemeColors) =>
       padding: 20,
       paddingBottom: 40,
     },
-    card: {
-      backgroundColor: colors.card,
-      borderRadius: 16,
-      borderWidth: StyleSheet.hairlineWidth,
-      borderColor: colors.border,
-      padding: 16,
-      marginBottom: 14,
-    },
-    sectionTitle: {
-      fontSize: 13,
-      fontWeight: "600",
-      textTransform: "uppercase",
-      letterSpacing: 0.6,
-      color: colors.textMuted,
-      marginBottom: 16,
-    },
     label: {
       fontSize: 13,
       fontWeight: "600",
       color: colors.text,
       marginBottom: 8,
-    },
-    input: {
-      borderWidth: 1,
-      borderColor: colors.border,
-      backgroundColor: colors.inputBackground,
-      borderRadius: 10,
-      paddingVertical: 14,
-      paddingHorizontal: 12,
-      fontSize: 16,
-      color: colors.text,
-      marginBottom: 18,
-    },
-    multiline: {
-      minHeight: 96,
-      marginBottom: 0,
     },
     chipRow: {
       flexDirection: "row",
@@ -703,7 +604,7 @@ const createStyles = (colors: ThemeColors) =>
       borderWidth: 1,
       borderColor: colors.border,
       backgroundColor: colors.inputBackground,
-      borderRadius: 20,
+      borderRadius: radius.pill,
       paddingVertical: 8,
       paddingHorizontal: 12,
     },
@@ -719,27 +620,6 @@ const createStyles = (colors: ThemeColors) =>
       color: colors.primary,
       fontWeight: "600",
     },
-    affixRow: {
-      flexDirection: "row",
-      alignItems: "center",
-      borderWidth: 1,
-      borderColor: colors.border,
-      backgroundColor: colors.inputBackground,
-      borderRadius: 10,
-      paddingHorizontal: 12,
-      marginBottom: 18,
-    },
-    affix: {
-      fontSize: 15,
-      color: colors.textMuted,
-    },
-    affixInput: {
-      flex: 1,
-      paddingVertical: 14,
-      paddingHorizontal: 8,
-      fontSize: 16,
-      color: colors.text,
-    },
     calculateRow: {
       flexDirection: "row",
       alignItems: "flex-start",
@@ -749,16 +629,7 @@ const createStyles = (colors: ThemeColors) =>
       marginRight: 10,
     },
     calculateButton: {
-      borderWidth: 1,
-      borderColor: colors.primary,
-      borderRadius: 10,
-      paddingHorizontal: 14,
-      paddingVertical: 15,
-    },
-    calculateText: {
-      color: colors.primary,
-      fontWeight: "600",
-      fontSize: 14,
+      marginBottom: 20,
     },
     hint: {
       fontSize: 12,
@@ -768,21 +639,8 @@ const createStyles = (colors: ThemeColors) =>
       lineHeight: 17,
     },
     primaryButton: {
-      width: "100%",
       marginTop: 6,
-    },
-    deleteButton: {
-      alignItems: "center",
-      paddingVertical: 16,
-      marginTop: 6,
-    },
-    deleteText: {
-      color: colors.negative,
-      fontSize: 15,
-      fontWeight: "600",
-    },
-    pressed: {
-      opacity: 0.6,
+      marginBottom: 10,
     },
   });
 

@@ -720,7 +720,7 @@ const createStyles = (colors: ThemeColors) =>
 
     card: {
       backgroundColor: colors.card,
-      borderRadius: 16,
+      borderRadius: 18,
       borderWidth: StyleSheet.hairlineWidth,
       borderColor: colors.border,
       padding: 18,
@@ -958,7 +958,7 @@ const createStyles = (colors: ThemeColors) =>
     emptyCard: {
       alignItems: "center",
       backgroundColor: colors.card,
-      borderRadius: 14,
+      borderRadius: 18,
       borderWidth: StyleSheet.hairlineWidth,
       borderColor: colors.border,
       padding: 24,

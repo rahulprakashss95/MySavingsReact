@@ -3,6 +3,7 @@ import React, { useMemo } from "react";
 import { Pressable, StyleSheet, Text, View } from "react-native";
 import { useTheme } from "../context/ThemeContext";
 import { ThemeColors, tint } from "../utils/Color";
+import { radius, spacing } from "../utils/tokens";
 import CopyButton from "./CopyButton";
 
 type IconName = React.ComponentProps<typeof Ionicons>["name"];
@@ -129,21 +130,21 @@ const createStyles = (colors: ThemeColors) =>
   StyleSheet.create({
     row: {
       backgroundColor: colors.card,
-      marginHorizontal: 16,
+      marginHorizontal: spacing.base,
       borderLeftWidth: StyleSheet.hairlineWidth,
       borderRightWidth: StyleSheet.hairlineWidth,
       borderColor: colors.border,
     },
     rowFirst: {
       borderTopWidth: StyleSheet.hairlineWidth,
-      borderTopLeftRadius: 14,
-      borderTopRightRadius: 14,
+      borderTopLeftRadius: radius.row,
+      borderTopRightRadius: radius.row,
     },
     rowLast: {
       borderBottomWidth: StyleSheet.hairlineWidth,
-      borderBottomLeftRadius: 14,
-      borderBottomRightRadius: 14,
-      marginBottom: 26,
+      borderBottomLeftRadius: radius.row,
+      borderBottomRightRadius: radius.row,
+      marginBottom: spacing.xl + spacing.xs,
     },
     rowPressed: {
       backgroundColor: colors.inputBackground,

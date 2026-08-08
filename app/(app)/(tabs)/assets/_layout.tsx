@@ -38,13 +38,18 @@ export default function AssetsStack() {
       screenOptions={{
         headerStyle: { backgroundColor: colors.card },
         headerTintColor: colors.text,
+        headerShadowVisible: false,
         contentStyle: { backgroundColor: colors.background },
         headerRight: () => <ProfileButton />,
       }}
     >
       <Stack.Screen
         name="index"
-        options={{ title: "Assets", headerLeft: () => <MenuButton /> }}
+        options={{
+          title: "Assets",
+          headerLeft: () => <MenuButton />,
+          headerLargeTitle: true,
+        }}
       />
       <Stack.Screen name="ornaments/index" options={{ title: "Ornaments" }} />
       <Stack.Screen name="ornaments/[id]" options={{ title: "Ornament" }} />

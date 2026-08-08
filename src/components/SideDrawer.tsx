@@ -18,6 +18,7 @@ import { useDrawer } from "../context/DrawerContext";
 import { useTheme } from "../context/ThemeContext";
 import { canSeeModule, ModuleKey } from "../models/common";
 import { ThemeColors, tint } from "../utils/Color";
+import { radius } from "../utils/tokens";
 import Avatar from "./Avatar";
 import { confirmSignOut } from "./HeaderActions";
 
@@ -359,7 +360,7 @@ const createStyles = (colors: ThemeColors) =>
       paddingTop: Platform.select({ ios: 54, android: 32, default: 24 }),
       shadowColor: colors.shadow,
       shadowOffset: { width: 2, height: 0 },
-      shadowOpacity: 0.2,
+      shadowOpacity: 0.12,
       shadowRadius: 12,
       elevation: 16,
     },
@@ -408,7 +409,7 @@ const createStyles = (colors: ThemeColors) =>
       alignItems: "center",
       paddingVertical: 12,
       paddingHorizontal: 12,
-      borderRadius: 10,
+      borderRadius: radius.control,
     },
     rowNested: {
       paddingLeft: 30,

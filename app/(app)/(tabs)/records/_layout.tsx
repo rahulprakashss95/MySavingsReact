@@ -13,13 +13,18 @@ export default function RecordsStack() {
       screenOptions={{
         headerStyle: { backgroundColor: colors.card },
         headerTintColor: colors.text,
+        headerShadowVisible: false,
         contentStyle: { backgroundColor: colors.background },
         headerRight: () => <ProfileButton />,
       }}
     >
       <Stack.Screen
         name="index"
-        options={{ title: "Records", headerLeft: () => <MenuButton /> }}
+        options={{
+          title: "Records",
+          headerLeft: () => <MenuButton />,
+          headerLargeTitle: true,
+        }}
       />
       <Stack.Screen name="government/index" options={{ title: "Government" }} />
       <Stack.Screen name="government/[id]" options={{ title: "Record" }} />

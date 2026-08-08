@@ -1,7 +1,7 @@
 {
   "expo": {
     "name": "AssetDiary",
-    "slug": "assetdiary",
+    "slug": "asset-diary",
     "scheme": "assetdiary",
     "version": "1.2.32",
     "orientation": "portrait",
@@ -21,7 +21,8 @@
     "android": {
       "permissions": [
         "android.permission.USE_FINGERPRINT",
-        "android.permission.USE_BIOMETRIC"
+        "android.permission.USE_BIOMETRIC",
+        "android.permission.RECORD_AUDIO"
       ],
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
@@ -36,8 +37,9 @@
     },
     "extra": {
       "eas": {
-        "projectId": "c2ce8ba5-10dd-444d-ab87-52b0a7a580c3"
-      }
+        "projectId": "bd2636a2-b6bf-448b-9557-6d8ae99617cb"
+      },
+      "router": {}
     },
     "plugins": [
       [

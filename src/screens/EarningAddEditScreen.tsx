@@ -1,13 +1,6 @@
-﻿import moment from "moment";
+import moment from "moment";
 import React, { useMemo, useState } from "react";
-import {
-  Pressable,
-  ScrollView,
-  StyleSheet,
-  Text,
-  TextInput,
-  View,
-} from "react-native";
+import { ScrollView, StyleSheet } from "react-native";
 import {
   addEarning,
   deleteEarning,
@@ -17,9 +10,11 @@ import Button from "../components/Button";
 import DatePicker from "../components/DatePicker";
 import LedgerClientPicker from "../components/LedgerClientPicker";
 import EarningTypePicker from "../components/EarningTypePicker";
+import FormSection from "../components/FormSection";
 import Loader from "../components/Loader";
 import ReadOnlyBanner from "../components/ReadOnlyBanner";
 import ReadOnlyGuard from "../components/ReadOnlyGuard";
+import TextField from "../components/TextField";
 import VisibilityToggle from "../components/VisibilityToggle";
 import { useAuth } from "../context/AuthContext";
 import { commitDelete, commitSave, useAppDispatch } from "../query/hooks";
@@ -139,13 +134,11 @@ const EarningAddEditScreen = ({ initial }: Props) => {
       <ReadOnlyBanner show={readOnly} />
 
       <ReadOnlyGuard active={readOnly}>
-      <View style={styles.card}>
+      <FormSection>
         <VisibilityToggle value={visibility} onChange={setVisibility} />
-      </View>
+      </FormSection>
 
-      <View style={styles.card}>
-        <Text style={styles.sectionTitle}>Earning</Text>
-
+      <FormSection title="Earning">
         <LedgerClientPicker
           selectedId={clientId}
           selectedName={clientName}
@@ -154,41 +147,32 @@ const EarningAddEditScreen = ({ initial }: Props) => {
 
         <EarningTypePicker selectedName={type} onSelect={setType} />
 
-        <Text style={styles.label}>Amount</Text>
-        <View style={[styles.affixRow, styles.inputSpacing]}>
-          <Text style={styles.affix}>₹</Text>
-          <TextInput
-            style={styles.affixInput}
-            onChangeText={setAmount}
-            value={amount}
-            placeholder="0"
-            placeholderTextColor={colors.placeholder}
-            keyboardType="numeric"
-          />
-        </View>
+        <TextField
+          label="Amount"
+          prefix="₹"
+          onChangeText={setAmount}
+          value={amount}
+          placeholder="0"
+          keyboardType="numeric"
+        />
 
         <DatePicker
           label="Date"
           dateValue={date}
           onDateChange={(next: any) => setDate(next || "")}
         />
-      </View>
+      </FormSection>
 
-      <View style={styles.card}>
-        <Text style={styles.sectionTitle}>Notes</Text>
-
-        <Text style={styles.label}>Comments</Text>
-        <TextInput
-          style={[styles.input, styles.multiline]}
+      <FormSection title="Notes">
+        <TextField
+          label="Comments"
           onChangeText={setComments}
           value={comments}
           placeholder="Anything worth remembering about this payment…"
-          placeholderTextColor={colors.placeholder}
           multiline
           numberOfLines={4}
-          textAlignVertical="top"
         />
-      </View>
+      </FormSection>
 
       </ReadOnlyGuard>
 
@@ -201,16 +185,12 @@ const EarningAddEditScreen = ({ initial }: Props) => {
       )}
 
       {pageMode !== "Add" && !readOnly && (
-        <Pressable
+        <Button
+          title="Delete Earning"
+          variant="plain"
+          tone="destructive"
           onPress={handleDelete}
-          accessibilityRole="button"
-          style={({ pressed }) => [
-            styles.deleteButton,
-            pressed && styles.pressed,
-          ]}
-        >
-          <Text style={styles.deleteText}>Delete Earning</Text>
-        </Pressable>
+        />
       )}
     </ScrollView>
   );
@@ -226,99 +206,9 @@ const createStyles = (colors: ThemeColors) =>
       padding: 20,
       paddingBottom: 40,
     },
-    card: {
-      backgroundColor: colors.card,
-      borderRadius: 16,
-      borderWidth: StyleSheet.hairlineWidth,
-      borderColor: colors.border,
-      padding: 16,
-      marginBottom: 14,
-    },
-    sectionTitle: {
-      fontSize: 13,
-      fontWeight: "600",
-      textTransform: "uppercase",
-      letterSpacing: 0.6,
-      color: colors.textMuted,
-      marginBottom: 16,
-    },
-    label: {
-      fontSize: 13,
-      fontWeight: "600",
-      color: colors.text,
-      marginBottom: 8,
-    },
-    pickerContainer: {
-      borderWidth: 1,
-      borderColor: colors.border,
-      borderRadius: 10,
-      backgroundColor: colors.inputBackground,
-      marginBottom: 18,
-      overflow: "hidden",
-    },
-    picker: {
-      height: 50,
-      borderWidth: 0,
-      backgroundColor: colors.inputBackground,
-      color: colors.text,
-      paddingHorizontal: 8,
-    },
-    pickerItem: {
-      backgroundColor: colors.inputBackground,
-      color: colors.text,
-    },
-    input: {
-      borderWidth: 1,
-      borderColor: colors.border,
-      backgroundColor: colors.inputBackground,
-      borderRadius: 10,
-      paddingHorizontal: 12,
-      paddingVertical: 14,
-      fontSize: 16,
-      color: colors.text,
-    },
-    inputSpacing: {
-      marginBottom: 18,
-    },
-    multiline: {
-      minHeight: 96,
-    },
-    affixRow: {
-      flexDirection: "row",
-      alignItems: "center",
-      borderWidth: 1,
-      borderColor: colors.border,
-      backgroundColor: colors.inputBackground,
-      borderRadius: 10,
-      paddingHorizontal: 12,
-    },
-    affix: {
-      fontSize: 15,
-      color: colors.textMuted,
-    },
-    affixInput: {
-      flex: 1,
-      paddingVertical: 14,
-      paddingHorizontal: 8,
-      fontSize: 16,
-      color: colors.text,
-    },
     primaryButton: {
-      width: "100%",
       marginTop: 6,
-    },
-    deleteButton: {
-      alignItems: "center",
-      paddingVertical: 16,
-      marginTop: 6,
-    },
-    deleteText: {
-      color: colors.negative,
-      fontSize: 15,
-      fontWeight: "600",
-    },
-    pressed: {
-      opacity: 0.6,
+      marginBottom: 10,
     },
   });
 

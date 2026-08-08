@@ -10,13 +10,18 @@ export default function HomeStack() {
       screenOptions={{
         headerStyle: { backgroundColor: colors.card },
         headerTintColor: colors.text,
+        headerShadowVisible: false,
         contentStyle: { backgroundColor: colors.background },
         headerRight: () => <ProfileButton />,
       }}
     >
       <Stack.Screen
         name="index"
-        options={{ title: "Home", headerLeft: () => <MenuButton /> }}
+        options={{
+          title: "Home",
+          headerLeft: () => <MenuButton />,
+          headerLargeTitle: true,
+        }}
       />
     </Stack>
   );
