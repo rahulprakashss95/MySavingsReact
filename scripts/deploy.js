@@ -4,11 +4,11 @@
  * the next one, writes it to package.json and app.json, and regenerates
  * src/appVersion.ts so the drawer shows what is actually deployed.
  *
- * It deliberately does not build or publish. The app is deployed by Vercel from
- * git: pushing to main builds `npm run build-web` and promotes the result to
- * app.assetdiary.in (see vercel.json). So this script ends by printing the
- * commit/push to run — the deploy is the push, and keeping that step manual
- * means nothing ships without an explicit git command.
+ * It deliberately does not build or publish. Both Vercel projects
+ * (assetdiary-app at the repo root, assetdiary-site in site/) have no Git
+ * integration connected — pushing to GitHub deploys nothing. Shipping is a
+ * manual `npx vercel deploy --prod` from the right directory, which this
+ * script prints but never runs, so nothing ships without an explicit command.
  */
 const path = require("path");
 const fs = require("fs");
@@ -96,11 +96,10 @@ Version bumped to ${next}. Nothing has been deployed yet.
   git commit -m "Release ${next}"
   git push
 
-Then ship it:
+Then ship it (no Git integration — pushing above does not deploy):
 
-  - If the Vercel project is connected to the GitHub repo, the push above is
-    the deploy — Vercel builds and promotes automatically.
-  - If not, deploy the build yourself:  npx vercel deploy --prod
+  - App (app.assetdiary.in):    npx vercel deploy --prod
+  - Site (assetdiary.in):       cd site && npx vercel deploy --prod
 `);
 }
 

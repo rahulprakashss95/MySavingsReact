@@ -28,6 +28,8 @@ export const DEFAULT_DASHBOARD_ORDER: DashboardSection[] = [
 // so renaming them would reset everyone's saved dashboard arrangement.
 const STORAGE_KEY = "@homevault/dashboard-order";
 const QUICK_STORAGE_KEY = "@homevault/dashboard-quick";
+const GREETING_STORAGE_KEY = "@homevault/dashboard-greeting";
+const QUOTE_STORAGE_KEY = "@homevault/dashboard-quote";
 
 const isSection = (value: unknown): value is DashboardSection =>
   DASHBOARD_SECTIONS.includes(value as DashboardSection);
@@ -71,6 +73,12 @@ const persistQuick = (quick: string[] | null) => {
   });
 };
 
+const persistToggle = (key: string, value: boolean) => {
+  AsyncStorage.setItem(key, JSON.stringify(value)).catch((error) => {
+    console.log(`Unable to persist ${key}`, error);
+  });
+};
+
 type DashboardLayoutStore = {
   order: DashboardSection[];
   /**
@@ -100,6 +108,12 @@ type DashboardLayoutStore = {
   setQuick: (ids: string[]) => void;
   /** Back to the default shortcuts. */
   resetQuick: () => void;
+  /** The greeting/name header above the sections. Defaults on. */
+  showGreeting: boolean;
+  setShowGreeting: (value: boolean) => void;
+  /** The daily quote card below the header. Defaults on. */
+  showQuote: boolean;
+  setShowQuote: (value: boolean) => void;
   /** Rehydrate the persisted layout once at cold start. */
   restore: () => Promise<void>;
 };
@@ -140,22 +154,39 @@ export const useDashboardLayoutStore = create<DashboardLayoutStore>(
       set({ quick: null });
       persistQuick(null);
     },
+    showGreeting: true,
+    setShowGreeting: (value) => {
+      set({ showGreeting: value });
+      persistToggle(GREETING_STORAGE_KEY, value);
+    },
+    showQuote: true,
+    setShowQuote: (value) => {
+      set({ showQuote: value });
+      persistToggle(QUOTE_STORAGE_KEY, value);
+    },
     restore: async () => {
       try {
         // The splash waits on this, so a wedged storage read must not blank the
         // screen forever — fall back to the defaults after 3s.
-        const [stored, storedQuick] = await Promise.race([
-          Promise.all([
-            AsyncStorage.getItem(STORAGE_KEY),
-            AsyncStorage.getItem(QUICK_STORAGE_KEY),
-          ]),
-          new Promise<[null, null]>((resolve) =>
-            setTimeout(() => resolve([null, null]), 3000)
-          ),
-        ]);
+        const [stored, storedQuick, storedGreeting, storedQuote] =
+          await Promise.race([
+            Promise.all([
+              AsyncStorage.getItem(STORAGE_KEY),
+              AsyncStorage.getItem(QUICK_STORAGE_KEY),
+              AsyncStorage.getItem(GREETING_STORAGE_KEY),
+              AsyncStorage.getItem(QUOTE_STORAGE_KEY),
+            ]),
+            new Promise<[null, null, null, null]>((resolve) =>
+              setTimeout(() => resolve([null, null, null, null]), 3000)
+            ),
+          ]);
         if (stored) set({ order: normalizeOrder(JSON.parse(stored)) });
         if (storedQuick)
           set({ quick: normalizeQuickAccess(JSON.parse(storedQuick)) });
+        // Absent means never touched — stays on the `true` default.
+        if (storedGreeting !== null)
+          set({ showGreeting: JSON.parse(storedGreeting) });
+        if (storedQuote !== null) set({ showQuote: JSON.parse(storedQuote) });
       } catch (error) {
         console.log("Unable to restore dashboard layout", error);
       } finally {

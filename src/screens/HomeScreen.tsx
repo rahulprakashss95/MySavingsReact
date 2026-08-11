@@ -78,13 +78,23 @@ const SEGMENT_ACCENT: Record<WorthSegment["key"], keyof ThemeColors> = {
   property: "accentViolet",
 };
 
-/** "matured" / "today" / "in 5d" / "3 Aug" — short, glanceable. */
+/**
+ * "overdue · 3 Aug" / "Today · 10 Aug" / "in 5d · 15 Aug" / "3 Aug" — the
+ * relative distance reads fastest, but the record itself only ever shows the
+ * absolute date, so the row carries both rather than making the date a
+ * lookup the member has to do themselves.
+ */
 const whenLabel = (date: string, daysUntil: number, pastWord: string) => {
-  if (daysUntil < 0) return pastWord;
-  if (daysUntil === 0) return "Today";
-  if (daysUntil <= 21) return `in ${daysUntil}d`;
   const parsed = moment(date, DATE_FORMAT, true);
-  return parsed.isValid() ? parsed.format("D MMM") : `in ${daysUntil}d`;
+  const dateStr = parsed.isValid() ? parsed.format("D MMM") : "";
+  if (daysUntil < 0) {
+    if (!pastWord) return dateStr;
+    return dateStr ? `${pastWord} · ${dateStr}` : pastWord;
+  }
+  if (daysUntil === 0) return dateStr ? `Today · ${dateStr}` : "Today";
+  if (daysUntil <= 21)
+    return dateStr ? `in ${daysUntil}d · ${dateStr}` : `in ${daysUntil}d`;
+  return dateStr || `in ${daysUntil}d`;
 };
 
 const HomeScreen = () => {
@@ -97,6 +107,8 @@ const HomeScreen = () => {
 
   const order = useDashboardLayoutStore((state) => state.order);
   const quick = useDashboardLayoutStore((state) => state.quick);
+  const showGreeting = useDashboardLayoutStore((state) => state.showGreeting);
+  const showQuote = useDashboardLayoutStore((state) => state.showQuote);
   const quickItems = useMemo(
     () => resolveQuickAccess(quick, user),
     [quick, user]
@@ -144,6 +156,7 @@ const HomeScreen = () => {
           attention={dashboard.attention}
           colors={colors}
           styles={styles}
+          onOpen={open}
         />
       ) : null,
     month:
@@ -178,24 +191,26 @@ const HomeScreen = () => {
       contentContainerStyle={styles.content}
       showsVerticalScrollIndicator={false}
     >
-      <View style={styles.header}>
-        <View style={styles.greetingRow}>
-          <Text style={styles.greeting}>{greeting.text}</Text>
-          <MaterialCommunityIcons
-            name={greeting.icon}
-            size={20}
-            color={greeting.color}
-            style={styles.greetingIcon}
-          />
+      {showGreeting && (
+        <View style={styles.header}>
+          <View style={styles.greetingRow}>
+            <Text style={styles.greeting}>{greeting.text}</Text>
+            <MaterialCommunityIcons
+              name={greeting.icon}
+              size={20}
+              color={greeting.color}
+              style={styles.greetingIcon}
+            />
+          </View>
+          {!!(user?.name || user?.username) && (
+            <Text style={styles.name} numberOfLines={1}>
+              {user?.name || user?.username}
+            </Text>
+          )}
         </View>
-        {!!(user?.name || user?.username) && (
-          <Text style={styles.name} numberOfLines={1}>
-            {user?.name || user?.username}
-          </Text>
-        )}
-      </View>
+      )}
 
-      <QuoteCard />
+      {showQuote && <QuoteCard />}
 
       {!dashboard.ready && (
         <DashboardSkeleton
@@ -412,7 +427,11 @@ const AttentionCard = ({
   attention,
   colors,
   styles,
-}: SectionProps & { attention: NonNullable<DashboardData["attention"]> }) => {
+  onOpen,
+}: SectionProps & {
+  attention: NonNullable<DashboardData["attention"]>;
+  onOpen: (href: string) => void;
+}) => {
   const { maturities, paymentsDue } = attention;
   const empty = maturities.length === 0 && paymentsDue.length === 0;
 
@@ -444,7 +463,14 @@ const AttentionCard = ({
             if (isLoan) verb = item.daysUntil < 0 ? "Was due" : "Due";
 
             return (
-              <View key={`m-${item.id}`} style={styles.attnRow}>
+              <Pressable
+                key={`m-${item.id}`}
+                style={({ pressed }) => [
+                  styles.attnRow,
+                  pressed && styles.attnRowPressed,
+                ]}
+                onPress={() => onOpen(item.href)}
+              >
                 <View
                   style={[styles.attnIcon, { backgroundColor: tint(accent) }]}
                 >
@@ -459,16 +485,28 @@ const AttentionCard = ({
                     {title}
                   </Text>
                   <Text style={styles.attnMeta}>
-                    {verb} {whenLabel(item.date, item.daysUntil, "· overdue")}
+                    {verb} {whenLabel(item.date, item.daysUntil, "overdue")}
                   </Text>
                 </View>
                 <Text style={styles.attnAmount}>{rupees(item.amount)}</Text>
-              </View>
+                <Ionicons
+                  name="chevron-forward"
+                  size={16}
+                  color={colors.textMuted}
+                />
+              </Pressable>
             );
           })}
 
           {paymentsDue.slice(0, 4).map((item: PaymentDueItem, index) => (
-            <View key={`p-${item.propertyId}-${index}`} style={styles.attnRow}>
+            <Pressable
+              key={`p-${item.propertyId}-${index}`}
+              style={({ pressed }) => [
+                styles.attnRow,
+                pressed && styles.attnRowPressed,
+              ]}
+              onPress={() => onOpen(item.href)}
+            >
               <View
                 style={[
                   styles.attnIcon,
@@ -493,13 +531,16 @@ const AttentionCard = ({
                   style={[styles.attnMeta, item.overdue && styles.attnOverdue]}
                 >
                   {item.overdue ? "Overdue" : "Due"}{" "}
-                  {moment(item.date, DATE_FORMAT, true).isValid()
-                    ? moment(item.date, DATE_FORMAT).format("D MMM")
-                    : ""}
+                  {whenLabel(item.date, item.daysUntil, "")}
                 </Text>
               </View>
               <Text style={styles.attnAmount}>{rupees(item.amount)}</Text>
-            </View>
+              <Ionicons
+                name="chevron-forward"
+                size={16}
+                color={colors.textMuted}
+              />
+            </Pressable>
           ))}
         </>
       )}
@@ -852,6 +893,7 @@ const createStyles = (colors: ThemeColors) =>
       gap: 12,
       paddingVertical: 8,
     },
+    attnRowPressed: { opacity: 0.6 },
     attnIcon: {
       width: 34,
       height: 34,

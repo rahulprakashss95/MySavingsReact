@@ -17,10 +17,11 @@ import ReadOnlyBanner from "../components/ReadOnlyBanner";
 import ReadOnlyGuard from "../components/ReadOnlyGuard";
 import TextField from "../components/TextField";
 import VisibilityToggle from "../components/VisibilityToggle";
+import PortfolioToggle from "../components/PortfolioToggle";
 import { useAuth } from "../context/AuthContext";
 import { useTheme } from "../context/ThemeContext";
 import { commitDelete, commitSave, useAppDispatch } from "../query/hooks";
-import { canEdit, Visibility } from "../models/common";
+import { canEdit, includedInPortfolio, Visibility } from "../models/common";
 import {
   CENTS_PER_ACRE_LABEL,
   PaymentMode,
@@ -62,6 +63,9 @@ const PropertyAddEditScreen = ({ initial }: Props) => {
   const [interestRate, setInterestRate] = useState(property?.interestRate ?? "");
   const [visibility, setVisibility] = useState<Visibility>(
     property?.visibility ?? "private"
+  );
+  const [includeInPortfolio, setIncludeInPortfolio] = useState(
+    property ? includedInPortfolio(property) : true
   );
   const [isLoading, setIsLoading] = useState(false);
 
@@ -105,6 +109,7 @@ const PropertyAddEditScreen = ({ initial }: Props) => {
     interestRate: paymentMode === "loan" ? interestRate.trim() : "",
     entries,
     visibility,
+    includeInPortfolio,
   });
 
   const handleSave = () => {
@@ -188,6 +193,10 @@ const PropertyAddEditScreen = ({ initial }: Props) => {
       <ReadOnlyGuard active={readOnly}>
       <FormSection>
         <VisibilityToggle value={visibility} onChange={setVisibility} />
+        <PortfolioToggle
+          value={includeInPortfolio}
+          onChange={setIncludeInPortfolio}
+        />
       </FormSection>
 
       <FormSection title="Property">

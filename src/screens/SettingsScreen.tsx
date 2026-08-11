@@ -1,6 +1,7 @@
 import React, { useMemo } from "react";
 import { Pressable, ScrollView, StyleSheet, Switch, View } from "react-native";
 import Animated, { FadeInDown } from "react-native-reanimated";
+import * as Haptics from "expo-haptics";
 import Text from "../components/Text";
 import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
@@ -8,6 +9,7 @@ import Card from "../components/Card";
 import { usePasscode } from "../context/PasscodeContext";
 import { ThemeMode, useTheme } from "../context/ThemeContext";
 import { ThemeColors } from "../utils/Color";
+import { ACCENT_PRESETS } from "../utils/AccentColors";
 import { motion } from "../utils/tokens";
 
 const sectionDelay = (index: number) => index * motion.staggerDelay * 2;
@@ -39,7 +41,7 @@ const THEME_OPTIONS: {
 ];
 
 const SettingsScreen = () => {
-  const { mode, setMode, colors } = useTheme();
+  const { mode, setMode, accent, setAccent, colors } = useTheme();
   const { isEnabled: passcodeEnabled } = usePasscode();
   const router = useRouter();
   const styles = useMemo(() => createStyles(colors), [colors]);
@@ -142,6 +144,44 @@ const SettingsScreen = () => {
               </Pressable>
             );
           })}
+          <View style={[styles.row, styles.rowDivider, styles.accentRow]}>
+            <View style={styles.rowText}>
+              <Text style={styles.rowLabel}>Theme Color</Text>
+              <Text style={styles.rowDescription}>
+                Pick the accent used for buttons, links and highlights
+              </Text>
+              <View style={styles.swatchRow}>
+                {ACCENT_PRESETS.map((preset) => {
+                  const isSelected = preset.key === accent;
+                  return (
+                    <Pressable
+                      key={preset.key}
+                      onPress={() => {
+                        Haptics.selectionAsync().catch(() => {});
+                        setAccent(preset.key);
+                      }}
+                      accessibilityRole="radio"
+                      accessibilityLabel={preset.label}
+                      accessibilityState={{ selected: isSelected }}
+                      style={styles.swatchWrap}
+                    >
+                      <View
+                        style={[
+                          styles.swatch,
+                          { backgroundColor: preset.swatch },
+                          isSelected && styles.swatchSelected,
+                        ]}
+                      >
+                        {isSelected && (
+                          <Ionicons name="checkmark" size={18} color="#ffffff" />
+                        )}
+                      </View>
+                    </Pressable>
+                  );
+                })}
+              </View>
+            </View>
+          </View>
         </Card>
       </Animated.View>
     </ScrollView>
@@ -196,6 +236,28 @@ const createStyles = (colors: ThemeColors) =>
       fontSize: 13,
       color: colors.textMuted,
       marginTop: 2,
+    },
+    accentRow: {
+      alignItems: "flex-start",
+    },
+    swatchRow: {
+      flexDirection: "row",
+      gap: 14,
+      marginTop: 12,
+    },
+    swatchWrap: {
+      padding: 2,
+    },
+    swatch: {
+      width: 34,
+      height: 34,
+      borderRadius: 17,
+      alignItems: "center",
+      justifyContent: "center",
+    },
+    swatchSelected: {
+      borderWidth: 2,
+      borderColor: colors.text,
     },
   });
 

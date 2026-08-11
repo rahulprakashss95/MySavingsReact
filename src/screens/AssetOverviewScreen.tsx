@@ -37,7 +37,7 @@ import { ThemeColors } from "../utils/Color";
 import { gradientAngle, motion, radius } from "../utils/tokens";
 import { amountFormat, showToast } from "../utils/Utils";
 import { useAuth } from "../context/AuthContext";
-import { hasFeature } from "../models/common";
+import { hasFeature, includedInPortfolio } from "../models/common";
 import { AccountModel } from "../models/AccountModel";
 import { buildAccountTotals } from "../utils/deposits";
 
@@ -197,12 +197,28 @@ const AssetOverviewScreen = () => {
   const properties = propertyState.items;
   const rates = ratesState.value ?? EMPTY_METAL_RATES;
 
+  // A record switched off `includeInPortfolio` still exists — it's just left
+  // out of every total this screen shows. Kept separate from the raw arrays
+  // above, which the empty-state check still needs unfiltered.
+  const worthOrnaments = useMemo(
+    () => ornaments.filter((o) => includedInPortfolio(o)),
+    [ornaments]
+  );
+  const worthProperties = useMemo(
+    () => properties.filter((p) => includedInPortfolio(p)),
+    [properties]
+  );
+  const worthAccounts = useMemo(
+    () => accountState.items.filter((a) => includedInPortfolio(a)),
+    [accountState.items]
+  );
+
   // Deposits/balances count toward net worth only for members who hold the
   // Accounts tile — the overview reflects the tiles you can see.
   const showAccounts = hasFeature(user, "accounts");
   const accountTotals = useMemo(
-    () => buildAccountTotals(accountState.items),
-    [accountState.items]
+    () => buildAccountTotals(worthAccounts),
+    [worthAccounts]
   );
 
   const hasLoaded =
@@ -223,15 +239,18 @@ const AssetOverviewScreen = () => {
   };
 
   const ornamentSummary = useMemo(
-    () => ornamentTotals(ornaments, rates),
-    [ornaments, rates]
+    () => ornamentTotals(worthOrnaments, rates),
+    [worthOrnaments, rates]
   );
   const nameOf = useOwnerName();
   const holders = useMemo(
-    () => ornamentsByHolder(ornaments, rates, nameOf),
-    [ornaments, rates, nameOf]
+    () => ornamentsByHolder(worthOrnaments, rates, nameOf),
+    [worthOrnaments, rates, nameOf]
   );
-  const portfolio = useMemo(() => propertyPortfolio(properties), [properties]);
+  const portfolio = useMemo(
+    () => propertyPortfolio(worthProperties),
+    [worthProperties]
+  );
 
   // The composition bar stacks what is *held*, so every segment is a positive
   // magnitude; borrowing is netted off the headline underneath rather than drawn
@@ -287,7 +306,7 @@ const AssetOverviewScreen = () => {
   // stacked as loose amber sentences under the number.
   const notes = useMemo(() => {
     const list: string[] = [];
-    if (ornaments.length > 0 && !hasRates) {
+    if (worthOrnaments.length > 0 && !hasRates) {
       list.push(
         "No metal rates are set, so ornaments count as nothing here. Set them in the Ornaments section below."
       );
@@ -309,7 +328,7 @@ const AssetOverviewScreen = () => {
     }
     return list;
   }, [
-    ornaments.length,
+    worthOrnaments.length,
     hasRates,
     ornamentSummary.hasUnvalued,
     ornamentSummary.hasAssumedKarat,
@@ -382,7 +401,7 @@ const AssetOverviewScreen = () => {
   const isEmpty =
     ornaments.length === 0 &&
     properties.length === 0 &&
-    accountTotals.accountCount === 0;
+    accountState.items.length === 0;
 
   const largestHolder = holders.length ? holders[0].value : 0;
   const largestSection = accountTotals.balanceBySection.reduce(

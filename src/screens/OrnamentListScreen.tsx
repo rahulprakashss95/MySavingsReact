@@ -31,9 +31,15 @@ const pieceCount = (count: string) => {
   return `${parsed} pieces`;
 };
 
-/** "22K · 3 pieces", or whichever half of that actually applies. */
+/** "22K · 3 pieces · Not in portfolio", or whichever parts actually apply. */
 const rowMeta = (ornament: OrnamentModel) =>
-  [karatOf(ornament), pieceCount(ornament.count)].filter(Boolean).join(" · ");
+  [
+    karatOf(ornament),
+    pieceCount(ornament.count),
+    ornament.includeInPortfolio === false ? "Not in portfolio" : "",
+  ]
+    .filter(Boolean)
+    .join(" · ");
 
 const OrnamentListScreen = () => {
   const router = useRouter();

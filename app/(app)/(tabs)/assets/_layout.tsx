@@ -36,7 +36,7 @@ export default function AssetsStack() {
   return (
     <Stack
       screenOptions={{
-        headerStyle: { backgroundColor: colors.card },
+        headerStyle: { backgroundColor: colors.background },
         headerTintColor: colors.text,
         headerShadowVisible: false,
         contentStyle: { backgroundColor: colors.background },

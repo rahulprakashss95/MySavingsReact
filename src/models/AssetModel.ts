@@ -1,4 +1,4 @@
-import type { Attachable, Creatable, Owned } from "./common";
+import type { Attachable, Creatable, Owned, Portfolioed } from "./common";
 
 /** Precious metals, in the order the list groups them. */
 export const ORNAMENT_TYPES = ["Gold", "Silver", "Diamond", "Platinum"] as const;
@@ -43,7 +43,7 @@ export const LAND_PROPERTY_TYPES: readonly string[] = ["Home", "Land", "Farm Lan
 export type OrnamentType = (typeof ORNAMENT_TYPES)[number];
 export type PropertyType = (typeof PROPERTY_TYPES)[number];
 
-export type OrnamentModel = Owned & {
+export type OrnamentModel = Owned & Portfolioed & {
   id: string;
   /** One of ORNAMENT_TYPES. Typed loosely so older rows still read. */
   ornamentType: string;
@@ -76,7 +76,7 @@ export type PaymentEntry = {
   paid: boolean;
 };
 
-export type PropertyModel = Owned & {
+export type PropertyModel = Owned & Portfolioed & {
   id: string;
   /** One of PROPERTY_TYPES. */
   propertyType: string;

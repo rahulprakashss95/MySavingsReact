@@ -24,7 +24,13 @@ const ICONS: Record<string, IconName> = {
 };
 
 /** Area for land, nothing for vehicles — a car has no cents. */
-const metaFor = (property: PropertyModel) => areaSummary(property.cents ?? "");
+const metaFor = (property: PropertyModel) =>
+  [
+    areaSummary(property.cents ?? ""),
+    property.includeInPortfolio === false ? "Not in portfolio" : "",
+  ]
+    .filter(Boolean)
+    .join(" · ");
 
 const PropertyListScreen = () => {
   const router = useRouter();

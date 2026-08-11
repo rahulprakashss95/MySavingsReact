@@ -1,12 +1,13 @@
 ﻿import React, { useMemo } from "react";
 import { Pressable, ScrollView, StyleSheet, View } from "react-native";
+import Animated, { FadeInDown } from "react-native-reanimated";
 import Text from "../components/Text";
 import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 import { useAuth } from "../context/AuthContext";
 import { useTheme } from "../context/ThemeContext";
 import { ThemeColors, tint } from "../utils/Color";
-import { radius } from "../utils/tokens";
+import { motion, radius } from "../utils/tokens";
 import { useCollectionState } from "../query/hooks";
 import { GAMES, GameScoreModel } from "../models/GameModel";
 
@@ -34,8 +35,14 @@ const GamesScreen = () => {
       contentContainerStyle={styles.content}
       showsVerticalScrollIndicator={false}
     >
-      {GAMES.map((game) => (
-        <View key={game.key} style={styles.card}>
+      {GAMES.map((game, index) => (
+        <Animated.View
+          key={game.key}
+          entering={FadeInDown.delay(
+            Math.min(index * motion.staggerDelay, motion.staggerMaxDelay)
+          ).duration(motion.staggerDuration)}
+          style={styles.card}
+        >
           <Pressable
             style={styles.cardMain}
             onPress={() => router.push(`/games/${game.key}`)}
@@ -63,7 +70,7 @@ const GamesScreen = () => {
             <Ionicons name="trophy-outline" size={15} color={colors.primary} />
             <Text style={styles.leaderboardText}>Family Leaderboard</Text>
           </Pressable>
-        </View>
+        </Animated.View>
       ))}
     </ScrollView>
   );

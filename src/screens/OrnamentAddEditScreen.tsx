@@ -15,10 +15,11 @@ import ReadOnlyGuard from "../components/ReadOnlyGuard";
 import SearchableSelect from "../components/SearchableSelect";
 import TextField from "../components/TextField";
 import VisibilityToggle from "../components/VisibilityToggle";
+import PortfolioToggle from "../components/PortfolioToggle";
 import { useAuth } from "../context/AuthContext";
 import { useTheme } from "../context/ThemeContext";
 import { commitDelete, commitSave, useAppDispatch } from "../query/hooks";
-import { canEdit, Visibility } from "../models/common";
+import { canEdit, includedInPortfolio, Visibility } from "../models/common";
 import {
   DEFAULT_GOLD_KARAT,
   GOLD_KARATS,
@@ -49,6 +50,9 @@ const OrnamentAddEditScreen = ({ initial }: Props) => {
   const [description, setDescription] = useState(ornament?.description ?? "");
   const [visibility, setVisibility] = useState<Visibility>(
     ornament?.visibility ?? "private"
+  );
+  const [includeInPortfolio, setIncludeInPortfolio] = useState(
+    ornament ? includedInPortfolio(ornament) : true
   );
   const [isLoading, setIsLoading] = useState(false);
 
@@ -89,6 +93,7 @@ const OrnamentAddEditScreen = ({ initial }: Props) => {
       grams: grams.trim(),
       description: description.trim(),
       visibility,
+      includeInPortfolio,
     };
 
     const save =
@@ -136,6 +141,10 @@ const OrnamentAddEditScreen = ({ initial }: Props) => {
       <ReadOnlyGuard active={readOnly}>
       <FormSection>
         <VisibilityToggle value={visibility} onChange={setVisibility} />
+        <PortfolioToggle
+          value={includeInPortfolio}
+          onChange={setIncludeInPortfolio}
+        />
       </FormSection>
 
       <FormSection title="Ornament">

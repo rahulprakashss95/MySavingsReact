@@ -1,4 +1,4 @@
-import type { Creatable, Owned } from "./common";
+import type { Creatable, Owned, Portfolioed } from "./common";
 
 /**
  * One record type for every place money sits — the balance layer of net worth.
@@ -141,7 +141,7 @@ export const normalizeAccountType = (accountType: string): AccountType => {
   return accountType === "Cash" ? "Cash" : "Account Balance";
 };
 
-export type AccountModel = Owned & {
+export type AccountModel = Owned & Portfolioed & {
   id: string;
   /** One of ACCOUNT_TYPES; typed loosely so older rows still read. */
   accountType: string;

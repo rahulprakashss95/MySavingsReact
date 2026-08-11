@@ -302,3 +302,20 @@ export const canEdit = (
   record: Partial<Owned>,
   userId: string | undefined
 ): boolean => !!userId && record.ownerId === userId;
+
+/**
+ * Mixed into any record that can be counted toward net worth (accounts,
+ * ornaments, properties). Off keeps the record everywhere else — lists,
+ * "needs attention" — it's only left out of portfolio totals.
+ */
+export type Portfolioed = {
+  includeInPortfolio: boolean;
+};
+
+/**
+ * True unless a record was explicitly switched off: rows written before this
+ * field existed carry no value for it, and that must read as included, since
+ * every existing record's worth is already counted everywhere today.
+ */
+export const includedInPortfolio = (record: Partial<Portfolioed>): boolean =>
+  record.includeInPortfolio !== false;

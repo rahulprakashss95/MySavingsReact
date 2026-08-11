@@ -159,6 +159,7 @@ const AccountCard = ({
       ? `${account.interestPercentage}% p.a.`
       : "",
     isFD && account.interestFrequency ? account.interestFrequency : "",
+    account.includeInPortfolio === false ? "Not in portfolio" : "",
   ].filter(Boolean);
 
   const a11yLabel = showPill ? `${title}, ${pillLabel}` : title;

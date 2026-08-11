@@ -36,6 +36,7 @@ import Loader from "../components/Loader";
 import ReadOnlyBanner from "../components/ReadOnlyBanner";
 import ReadOnlyGuard from "../components/ReadOnlyGuard";
 import VisibilityToggle from "../components/VisibilityToggle";
+import PortfolioToggle from "../components/PortfolioToggle";
 import { useAuth } from "../context/AuthContext";
 import {
   commitDelete,
@@ -43,7 +44,7 @@ import {
   useAppDispatch,
   useCollectionState,
 } from "../query/hooks";
-import { canEdit, Visibility } from "../models/common";
+import { canEdit, includedInPortfolio, Visibility } from "../models/common";
 
 /** The type dropdown's options, in ACCOUNT_TYPES order (not alphabetical). */
 const TYPE_OPTIONS = ACCOUNT_TYPES.map((type: AccountType) => ({
@@ -96,6 +97,9 @@ const AccountAddEditScreen = ({ initial, presetType }: Props) => {
   const [notes, setNotes] = useState(account?.notes ?? "");
   const [visibility, setVisibility] = useState<Visibility>(
     account?.visibility ?? "private"
+  );
+  const [includeInPortfolio, setIncludeInPortfolio] = useState(
+    account ? includedInPortfolio(account) : true
   );
   const [isLoading, setIsLoading] = useState(false);
 
@@ -263,6 +267,7 @@ const AccountAddEditScreen = ({ initial, presetType }: Props) => {
       // Applies to every type, so it is never cleared by the branches above.
       notes: notes.trim(),
       visibility,
+      includeInPortfolio,
     };
 
     const save =
@@ -306,6 +311,10 @@ const AccountAddEditScreen = ({ initial, presetType }: Props) => {
       <ReadOnlyGuard active={readOnly}>
         <FormSection>
           <VisibilityToggle value={visibility} onChange={setVisibility} />
+          <PortfolioToggle
+            value={includeInPortfolio}
+            onChange={setIncludeInPortfolio}
+          />
         </FormSection>
 
         <FormSection title="Holding">

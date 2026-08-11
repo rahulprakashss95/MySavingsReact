@@ -21,15 +21,16 @@ import { DarkColors, LightColors } from "../src/utils/Color";
 import { fontAssets } from "../src/utils/typography";
 import SideDrawer from "../src/components/SideDrawer";
 import PasscodeLockScreen from "../src/components/PasscodeLockScreen";
+import AnimatedSplash from "../src/components/AnimatedSplash";
 import { installWebStyles } from "../src/utils/webStyles";
 
 // Remove the browser's default focus outline from web inputs, app-wide.
 installWebStyles();
 
-// Keep the native splash up until the persisted theme + session are restored,
-// so the app can mount the navigator immediately (Expo Router requires the root
-// layout to always render one) without flashing the wrong theme or a login
-// redirect. `index` returns null while restoring, so nothing paints under it.
+// Keep the native splash up until the JS tree has mounted, then immediately
+// swap to `AnimatedSplash` below — same logo/background, so the swap is
+// invisible, but that layer can animate while `index` returns null and the
+// persisted theme + session restore underneath it.
 SplashScreen.preventAutoHideAsync().catch(() => {});
 
 /**
@@ -105,22 +106,24 @@ function RootNavigator() {
     document.body.style.backgroundColor = background;
   }, [isDark, framed, gutter]);
 
-  // Once the session, theme and passcode state are known, drop the splash. The
-  // navigator below stays mounted throughout — `index` holds on a blank frame
-  // until auth resolves, so no route flickers and there's no unmounted-navigator
-  // crash. Waiting on the passcode too means the lock is decided before the
-  // splash lifts, so signed-in content never flashes behind it.
+  // Once the session, theme and passcode state are known, drop AnimatedSplash.
+  // The navigator below stays mounted throughout — `index` holds on a blank
+  // frame until auth resolves, so no route flickers and there's no
+  // unmounted-navigator crash. Waiting on the passcode too means the lock is
+  // decided before the splash lifts, so signed-in content never flashes behind it.
   const ready =
     !authRestoring && !themeRestoring && !passcodeRestoring && fontsLoaded;
 
   // Gate the whole app at launch, but only for a signed-in user — a logged-out
   // launch falls through to the login screen with no passcode.
   const showLock = !!user && passcodeEnabled && isLocked;
+
+  // Hand off from the native splash to AnimatedSplash as soon as the JS tree
+  // has painted its first frame — the two share the same logo/background, so
+  // the swap reads as one continuous, now-animated splash.
   useEffect(() => {
-    if (ready) {
-      SplashScreen.hideAsync().catch(() => {});
-    }
-  }, [ready]);
+    SplashScreen.hideAsync().catch(() => {});
+  }, []);
 
   return (
     <View
@@ -160,6 +163,7 @@ function RootNavigator() {
         <Toast />
         {/* Launch lock: covers everything above until the passcode is entered. */}
         {showLock && <PasscodeLockScreen />}
+        <AnimatedSplash visible={!ready} />
       </View>
     </View>
   );

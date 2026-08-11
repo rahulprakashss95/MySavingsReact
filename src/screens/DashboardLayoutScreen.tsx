@@ -1,7 +1,7 @@
 import { Ionicons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
 import React, { useMemo } from "react";
-import { Pressable, ScrollView, StyleSheet, View } from "react-native";
+import { Pressable, ScrollView, StyleSheet, Switch, View } from "react-native";
 import Text from "../components/Text";
 
 import Card from "../components/Card";
@@ -72,6 +72,12 @@ const DashboardLayoutScreen = () => {
   const quick = useDashboardLayoutStore((state) => state.quick);
   const setQuick = useDashboardLayoutStore((state) => state.setQuick);
   const resetQuick = useDashboardLayoutStore((state) => state.resetQuick);
+  const showGreeting = useDashboardLayoutStore((state) => state.showGreeting);
+  const setShowGreeting = useDashboardLayoutStore(
+    (state) => state.setShowGreeting
+  );
+  const showQuote = useDashboardLayoutStore((state) => state.showQuote);
+  const setShowQuote = useDashboardLayoutStore((state) => state.setShowQuote);
 
   const isDefault =
     order.length === DEFAULT_DASHBOARD_ORDER.length &&
@@ -114,6 +120,48 @@ const DashboardLayoutScreen = () => {
       style={styles.container}
       contentContainerStyle={styles.contentContainer}
     >
+      <Text style={styles.heading}>Header</Text>
+      <Text style={styles.intro}>
+        What shows above the sections, before you get to your numbers.
+      </Text>
+
+      <Card customStyle={styles.card}>
+        <View style={styles.row}>
+          <Ionicons name="hand-left-outline" size={22} color={colors.textMuted} />
+          <View style={styles.rowText}>
+            <Text style={styles.rowLabel}>Greeting</Text>
+            <Text style={styles.rowDescription}>
+              "Good morning" and your name
+            </Text>
+          </View>
+          <Switch
+            value={showGreeting}
+            onValueChange={setShowGreeting}
+            trackColor={{ false: colors.border, true: colors.primary }}
+            thumbColor={colors.card}
+          />
+        </View>
+        <View style={[styles.row, styles.rowDivider]}>
+          <Ionicons
+            name="chatbubble-ellipses-outline"
+            size={22}
+            color={colors.textMuted}
+          />
+          <View style={styles.rowText}>
+            <Text style={styles.rowLabel}>Daily quote</Text>
+            <Text style={styles.rowDescription}>
+              A short quote card under the greeting
+            </Text>
+          </View>
+          <Switch
+            value={showQuote}
+            onValueChange={setShowQuote}
+            trackColor={{ false: colors.border, true: colors.primary }}
+            thumbColor={colors.card}
+          />
+        </View>
+      </Card>
+
       <Text style={styles.heading}>Sections</Text>
       <Text style={styles.intro}>
         Move the sections into the order you want to read them on Home.

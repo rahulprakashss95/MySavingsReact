@@ -8,7 +8,7 @@ import {
   PaymentEntry,
   PropertyModel,
 } from "../models/AssetModel";
-import { FeatureKey, hasFeature } from "../models/common";
+import { FeatureKey, hasFeature, includedInPortfolio } from "../models/common";
 import {
   AccountModel,
   isLiability,
@@ -54,6 +54,8 @@ export type MaturityItem = {
   date: string;
   /** Negative once matured. */
   daysUntil: number;
+  /** Where tapping the row lands — the account that's maturing/due. */
+  href: string;
 };
 
 export type PaymentDueItem = {
@@ -63,6 +65,10 @@ export type PaymentDueItem = {
   amount: number;
   date: string;
   overdue: boolean;
+  /** Negative once overdue. */
+  daysUntil: number;
+  /** Where tapping the row lands — that property's payment schedule. */
+  href: string;
 };
 
 /**
@@ -245,12 +251,22 @@ export const useDashboard = (): DashboardData => {
     // (see `SavingModel.accountId`), so the money it describes is already in
     // `depositsValue`. Adding it back counted the same rupee twice. Ledger's
     // own overview is where the flow belongs.
+    //
+    // A record switched off `includeInPortfolio` is still a real holding —
+    // it stays in its list and in "needs attention" — it just doesn't add to
+    // this total, so it's filtered out here rather than upstream.
+    const worthAccounts = accounts.items.filter((a) => includedInPortfolio(a));
+    const worthOrnaments = ornaments.items.filter((o) => includedInPortfolio(o));
+    const worthProperties = properties.items.filter((p) => includedInPortfolio(p));
+
     const ratesValue = rates.value ?? EMPTY_METAL_RATES;
     const depositsValue = need.deposits
-      ? buildAccountTotals(accounts.items).balance
+      ? buildAccountTotals(worthAccounts).balance
       : 0;
-    const orn = need.assets ? ornamentTotals(ornaments.items, ratesValue) : null;
-    const portfolio = need.assets ? propertyPortfolio(properties.items) : null;
+    const orn = need.assets
+      ? ornamentTotals(worthOrnaments, ratesValue)
+      : null;
+    const portfolio = need.assets ? propertyPortfolio(worthProperties) : null;
     const goldValue = orn?.totalValue ?? 0;
     // Property "equity" — what's actually paid, not the sticker value still owed.
     const propertyEquity = portfolio?.paid ?? 0;
@@ -289,7 +305,7 @@ export const useDashboard = (): DashboardData => {
               need.assets && !hasRates ? orn?.totalGrams ?? 0 : 0,
             needsRates:
               !!need.assets &&
-              ornaments.items.length > 0 &&
+              worthOrnaments.length > 0 &&
               (!hasRates || !!orn?.hasUnvalued),
           }
         : null;
@@ -322,6 +338,7 @@ export const useDashboard = (): DashboardData => {
               amount: Number(account.balance) || 0,
               date: account.maturityDate,
               daysUntil,
+              href: `/assets/accounts/${account.id}`,
             };
           })
           .filter((item): item is MaturityItem => item !== null)
@@ -346,15 +363,12 @@ export const useDashboard = (): DashboardData => {
                   date: entry.date,
                   overdue: daysUntil < 0,
                   daysUntil,
+                  href: `/assets/properties/${property.id}/payments`,
                 };
               })
           )
-          .filter(
-            (item): item is PaymentDueItem & { daysUntil: number } =>
-              item !== null
-          )
+          .filter((item): item is PaymentDueItem => item !== null)
           .sort((a, b) => a.daysUntil - b.daysUntil)
-          .map(({ daysUntil, ...item }) => item)
       : [];
 
     const attention =
