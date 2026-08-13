@@ -23,6 +23,7 @@ import {
   rdPaidCount,
   rdSchedule,
 } from "../utils/deposits";
+import { isLoanSettled } from "../utils/loans";
 
 type Props = {
   account: AccountModel;
@@ -30,6 +31,8 @@ type Props = {
   institution: string;
   /** Owning member's name, resolved by the list from `account.ownerId`. */
   ownerName: string;
+  /** The Property/Vehicle this loan financed, resolved by the list. Blank if none. */
+  linkedAssetName?: string;
   onClickCard: (data: AccountModel) => void;
   /** Whether the viewer may mark RD instalments paid (owner only). */
   editable?: boolean;
@@ -77,6 +80,7 @@ const AccountCard = ({
   account,
   institution,
   ownerName,
+  linkedAssetName,
   onClickCard,
   editable = false,
   onToggleInstalment,
@@ -118,9 +122,20 @@ const AccountCard = ({
     overdue: colors.negative,
     none: colors.textMuted,
   };
+  // Simple and Schedule tracking both keep `balance` as the one source of
+  // truth (see AccountModel), so both read the same way here.
+  const settled = isLoan && isLoanSettled(account);
+  const partiallyPaid =
+    isLoan &&
+    !settled &&
+    (Number(account.balance) || 0) < (Number(account.principal) || 0);
+
   let pillLabel = "";
   let pillTone = colors.accentBlue;
-  if (isFD || isLoan) {
+  if (settled) {
+    pillLabel = "Paid back";
+    pillTone = colors.positive;
+  } else if (isFD || isLoan) {
     pillLabel = status.label;
     pillTone = toneColors[status.tone];
   } else if (isRD) {
@@ -191,12 +206,14 @@ const AccountCard = ({
       <Text style={[styles.amount, owes && styles.amountOwed]}>
         ₹ {amountFormat(account.balance)}
       </Text>
-      {/* Nothing itemises a loan's repayments, so this date is the only record
-          of when the figure above was last true — it belongs next to it. */}
-      {isLoan && (
+      {partiallyPaid && (
         <Text style={styles.rdCaption}>
-          Outstanding as of {account.balanceAsOf || "—"}
+          ₹ {amountFormat(account.balance)} left of ₹{" "}
+          {amountFormat(account.principal)}
         </Text>
+      )}
+      {isLoan && !!linkedAssetName && (
+        <Text style={styles.rdCaption}>Linked to {linkedAssetName}</Text>
       )}
       {isFD && interest.payouts > 0 && interest.perPayout > 0 && (
         <Text style={styles.interest}>

@@ -1,9 +1,9 @@
-﻿import { Stack, useLocalSearchParams } from "expo-router";
+import { Stack, useLocalSearchParams } from "expo-router";
 import { ActivityIndicator, View } from "react-native";
-import { useTheme } from "../../../../../src/context/ThemeContext";
-import { AccountModel } from "../../../../../src/models/AccountModel";
-import { useCollectionState } from "../../../../../src/query/hooks";
-import AccountAddEditScreen from "../../../../../src/screens/AccountAddEditScreen";
+import { useTheme } from "../../../../../../src/context/ThemeContext";
+import { AccountModel } from "../../../../../../src/models/AccountModel";
+import { useCollectionState } from "../../../../../../src/query/hooks";
+import AccountAddEditScreen from "../../../../../../src/screens/AccountAddEditScreen";
 
 /**
  * Resolves the account from the cache before mounting the form — the form seeds

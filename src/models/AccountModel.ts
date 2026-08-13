@@ -14,18 +14,22 @@ import type { Creatable, Owned, Portfolioed } from "./common";
  * sections — Balances, Deposits, Cash in Hand and the two loan sections — via
  * `accountSection`.
  *
- * `balance` is the number net worth sums, maintained as a snapshot the user
- * edits (see the schema note). The deposit-only fields (`principal`, interest,
- * dates) stay blank for a balance or cash and live in jsonb.
+ * `balance` is the number net worth sums. For a balance or cash entry it's a
+ * snapshot the user edits directly; for a loan it's derived on save from the
+ * amount lent/borrowed and how much has come back (see the schema note). The
+ * deposit-only fields (`principal`, interest, dates) stay blank for a balance
+ * or cash and live in jsonb.
  *
  * "Lent" and "Borrowed" are the two directions money can be owed: owed *to* you
  * and owed *by* you. "Borrowed" reads as "Loan" in the UI — a bank loan and a
  * sum borrowed from a relative are the same record here, so one type covers
- * both. They are balances like any other — a hand-maintained outstanding figure
- * rather than a repayment ledger — but "Borrowed" is the one type whose balance
- * counts *against* net worth. See `isLiability`; the stored number is always
- * positive and the sign is derived from the type, so nothing downstream can sum
- * a negative into the wrong place.
+ * both. Rather than a hand-maintained outstanding figure, a loan records the
+ * amount and a coarse repayment status (`paidBackStatus`/`paidBackAmount`),
+ * and `balance` — what net worth actually sums — is derived from those on
+ * save. "Borrowed" is the one type whose balance counts *against* net worth.
+ * See `isLiability`; the stored number is always positive and the sign is
+ * derived from the type, so nothing downstream can sum a negative into the
+ * wrong place.
  */
 
 export const ACCOUNT_TYPES = [
@@ -103,6 +107,38 @@ export const INTEREST_FREQUENCIES = [
 
 export type InterestFrequency = (typeof INTEREST_FREQUENCIES)[number];
 
+/** How much of a loan has come back. "Partial" pairs with `paidBackAmount`. */
+export const PAID_BACK_STATUSES = ["None", "Partial", "Full"] as const;
+
+export type PaidBackStatus = (typeof PAID_BACK_STATUSES)[number];
+
+/**
+ * How a Loan tracks repayment. "Simple" is the coarse `paidBackStatus`
+ * toggle; "Schedule" is a list of dated entries (`entries`), covering a fixed
+ * or variable EMI and milestone-based installments alike — the difference is
+ * only in how the entries get there (generated vs added one at a time).
+ */
+export const LOAN_TRACKING_MODES = ["Simple", "Schedule"] as const;
+
+export type LoanTracking = (typeof LOAN_TRACKING_MODES)[number];
+
+/** One row in a Loan's Schedule-mode `entries` list. */
+export type PaymentEntry = {
+  /** Client-generated: these live inside the loan document, not their own. */
+  id: string;
+  /** Free label, e.g. "EMI 4" or "Floor finish". Optional. */
+  label: string;
+  /** Due date if unpaid, payment date once ticked. DATE_FORMAT. */
+  date: string;
+  amount: string;
+  paid: boolean;
+};
+
+/** What kind of asset a Loan can be linked to. */
+export const LINKED_ASSET_TYPES = ["Property", "Vehicle"] as const;
+
+export type LinkedAssetType = (typeof LINKED_ASSET_TYPES)[number];
+
 /** The groups the list and overview organise accounts into. */
 export const ACCOUNT_SECTIONS = [
   "Balances",
@@ -162,7 +198,11 @@ export type AccountModel = Owned & Portfolioed & {
    * directory. Shown when there is no `contactId`.
    */
   institution: string;
-  /** The current balance — the figure net worth sums. Maintained as a snapshot. */
+  /**
+   * The current balance — the figure net worth sums. Hand-maintained for a
+   * balance or cash entry; for a loan it's derived on save from `principal`
+   * minus `paidBackAmount` (or zero once `paidBackStatus` is "Full").
+   */
   balance: string;
   /** When `balance` was last set. DATE_FORMAT. */
   balanceAsOf: string;
@@ -196,12 +236,31 @@ export type AccountModel = Owned & Portfolioed & {
   /** Paid flag per instalment (index 0 = first month); length tracks `months`. */
   payments?: boolean[];
 
-  // Lent / Borrowed add no fields of their own. The counterparty is
-  // `contactId` like every other type, and the terms reuse the deposit columns
-  // rather than adding new ones: `depositedDate` is when the money changed
-  // hands, `maturityDate` when it is due back (so the existing
+  // Lent / Borrowed reuse the deposit columns rather than adding new ones:
+  // `principal` is the amount lent/borrowed, `depositedDate` is when the money
+  // changed hands, `maturityDate` when it is due back (so the existing
   // `accounts_family_matures_idx` orders loans by due date for free), and
-  // `interestPercentage` the rate where one was agreed.
+  // `interestPercentage` the rate where one was agreed. `balance` is then
+  // derived from `principal` and the fields below rather than hand-edited.
+  /** Loan only: one of PAID_BACK_STATUSES. Blank for other types. Stored in jsonb. */
+  paidBackStatus: string;
+  /** Loan only, when `paidBackStatus` is "Partial": how much has come back so far. */
+  paidBackAmount: string;
+
+  // Loan only. `loanTracking` picks which of the pair above (Simple) or the
+  // pair below (Schedule) is live; the other is left stale rather than
+  // cleared, so switching back and forth doesn't lose data. All in jsonb.
+  /** One of LOAN_TRACKING_MODES. Blank/legacy reads as "Simple". */
+  loanTracking: string;
+  /** Schedule mode only: the dated entries the balance is derived from. */
+  entries?: PaymentEntry[];
+
+  // Loan only, either tracking mode. Points at the Property/Vehicle this loan
+  // financed, if any — the loan is the only side that stores the pointer;
+  // Property/Vehicle screens reverse-look-up loans that link to them.
+  /** One of LINKED_ASSET_TYPES, or blank for no link. */
+  linkedAssetType: string;
+  linkedAssetId: string;
 };
 
 export type AccountInput = Creatable<AccountModel>;

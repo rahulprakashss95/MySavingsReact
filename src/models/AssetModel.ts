@@ -58,24 +58,6 @@ export type OrnamentModel = Owned & Portfolioed & {
   description: string;
 };
 
-/**
- * How a property was paid for. `full` needs no schedule; the other two are the
- * same list of entries, differing only in whether an entry is a plan (an
- * installment you will pay) or a record (a loan payment you did pay).
- */
-export type PaymentMode = "full" | "installments" | "loan";
-
-export type PaymentEntry = {
-  /** Client-generated: these live inside the property document, not their own. */
-  id: string;
-  /** Free label, e.g. "Registration" or "EMI 4". Optional. */
-  label: string;
-  /** Due date for an installment; payment date for a loan entry. DATE_FORMAT. */
-  date: string;
-  amount: string;
-  paid: boolean;
-};
-
 export type PropertyModel = Owned & Portfolioed & {
   id: string;
   /** One of PROPERTY_TYPES. */
@@ -86,13 +68,12 @@ export type PropertyModel = Owned & Portfolioed & {
   cents: string;
   description: string;
 
-  paymentMode: PaymentMode;
-  /** Agreed price, or the loan's principal. */
+  /**
+   * What it's worth, counted in full toward net worth. Any financing is
+   * tracked separately by a Loan account (see AccountModel's `linkedAssetType`
+   * /`linkedAssetId`) that points back at this property, not by this record.
+   */
   totalAmount: string;
-  /** Loan only. */
-  lender: string;
-  interestRate: string;
-  entries: PaymentEntry[];
 };
 
 export type OrnamentInput = Creatable<OrnamentModel>;

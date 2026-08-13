@@ -500,7 +500,7 @@ const AttentionCard = ({
 
           {paymentsDue.slice(0, 4).map((item: PaymentDueItem, index) => (
             <Pressable
-              key={`p-${item.propertyId}-${index}`}
+              key={`p-${item.loanId}-${index}`}
               style={({ pressed }) => [
                 styles.attnRow,
                 pressed && styles.attnRowPressed,
@@ -518,14 +518,14 @@ const AttentionCard = ({
                 ]}
               >
                 <Ionicons
-                  name="home-outline"
+                  name="swap-horizontal-outline"
                   size={16}
                   color={item.overdue ? colors.negative : colors.accentViolet}
                 />
               </View>
               <View style={styles.attnText}>
                 <Text style={styles.attnTitle} numberOfLines={1}>
-                  {item.propertyName} · {item.label}
+                  {item.loanName} · {item.label}
                 </Text>
                 <Text
                   style={[styles.attnMeta, item.overdue && styles.attnOverdue]}

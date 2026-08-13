@@ -1,5 +1,6 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { Pressable, ScrollView, StyleSheet, View } from "react-native";
+import { Ionicons } from "@expo/vector-icons";
 import Text from "../components/Text";
 import { useRouter } from "expo-router";
 import DatePicker from "../components/DatePicker";
@@ -13,17 +14,23 @@ import {
   InterestFrequency,
   isLoanAccount,
   isMaturingAccount,
+  LINKED_ASSET_TYPES,
+  LOAN_TRACKING_MODES,
   normalizeAccountType,
+  PAID_BACK_STATUSES,
 } from "../models/AccountModel";
 import { LedgerClientModel } from "../models/LedgerModel";
+import { PropertyModel, VehicleModel } from "../models/AssetModel";
 import {
   payoutFromRate,
   payoutPeriodWord,
   payoutsPerYear,
   rdMonthCount,
 } from "../utils/deposits";
+import { loanTotals } from "../utils/loans";
 import SearchableSelect from "../components/SearchableSelect";
 import LedgerClientForm from "../components/forms/LedgerClientForm";
+import ProgressBar from "../components/ProgressBar";
 import { isValidAmount } from "../utils/amount";
 import { ThemeColors, tint } from "../utils/Color";
 import { radius } from "../utils/tokens";
@@ -78,7 +85,30 @@ const AccountAddEditScreen = ({ initial, presetType }: Props) => {
   const [institution] = useState(account?.institution ?? "");
   const [balance, setBalance] = useState(account?.balance ?? "");
   const [balanceAsOf, setBalanceAsOf] = useState(account?.balanceAsOf ?? "");
-  const [principal, setPrincipal] = useState(account?.principal ?? "");
+  // Legacy loan rows kept their amount in `balance` (hand-decremented as it
+  // was repaid); a new row, or one saved after this change, keeps it here.
+  const [principal, setPrincipal] = useState(
+    account?.principal || (isLoanAccount(initialType) ? account?.balance ?? "" : "")
+  );
+  const [paidBackStatus, setPaidBackStatus] = useState<string>(
+    account?.paidBackStatus || "None"
+  );
+  const [paidBackAmount, setPaidBackAmount] = useState(
+    account?.paidBackAmount ?? ""
+  );
+  const [loanTracking, setLoanTracking] = useState<string>(
+    account?.loanTracking || "Simple"
+  );
+  const [linkedAssetType, setLinkedAssetType] = useState(
+    account?.linkedAssetType ?? ""
+  );
+  const [linkedAssetId, setLinkedAssetId] = useState(
+    account?.linkedAssetId ?? ""
+  );
+  const [linkedAssetName, setLinkedAssetName] = useState("");
+  // Owned by the payments screen; this form never edits them, it only carries
+  // them through the save so a Terms-section edit doesn't wipe them.
+  const entries = account?.entries ?? [];
   const [interestPercentage, setInterestPercentage] = useState(
     account?.interestPercentage ?? ""
   );
@@ -117,7 +147,22 @@ const AccountAddEditScreen = ({ initial, presetType }: Props) => {
   // "You lent this out" vs "you took this on" — the same three fields, read from
   // opposite ends, so the labels flip rather than the form branching again.
   const loanDateLabel = isBorrowed ? "Taken on" : "Lent on";
-  const loanAmountLabel = isBorrowed ? "Still owed" : "Still outstanding";
+  const loanAmountLabel = isBorrowed ? "Loan amount" : "Amount lent";
+  // Schedule tracking is Loan-only (isBorrowed) — Lent stays Simple-only, so
+  // this is never true for a Lent record regardless of stored `loanTracking`.
+  const isSchedule = isBorrowed && loanTracking === "Schedule";
+  const isPartiallyPaidBack = isLoan && !isSchedule && paidBackStatus === "Partial";
+  const isFullyPaidBack = isLoan && !isSchedule && paidBackStatus === "Full";
+  // Live so the "remaining" line updates as either input changes, matching how
+  // the amount below is actually saved.
+  const remainingLoanAmount = Math.max(
+    0,
+    (Number(principal) || 0) - (Number(paidBackAmount) || 0)
+  );
+  const scheduleTotals = useMemo(
+    () => loanTotals({ principal, entries }),
+    [principal, entries]
+  );
 
   // One picker, three readings of the same relationship. A loan's other party is
   // its lender, bank or person alike.
@@ -152,6 +197,31 @@ const AccountAddEditScreen = ({ initial, presetType }: Props) => {
       if (contact) setContactName(contact.name);
     }
   }, [contactId, contactName, contactState.items]);
+
+  // Loan-only: what a Linked-to pick offers, and the reverse lookup used to
+  // navigate to that record. Both collections load unconditionally since
+  // hooks can't be called from inside a branch.
+  const propertyState = useCollectionState<PropertyModel>("properties");
+  const vehicleState = useCollectionState<VehicleModel>("vehicles");
+  const linkableAssets = useMemo(() => {
+    if (linkedAssetType === "Property") {
+      return propertyState.items.map((p) => ({ id: p.id, name: p.name }));
+    }
+    if (linkedAssetType === "Vehicle") {
+      return vehicleState.items.map((v) => ({ id: v.id, name: v.name }));
+    }
+    return [];
+  }, [linkedAssetType, propertyState.items, vehicleState.items]);
+
+  // As with the contact picker, only the id is stored — the name is resolved
+  // from whichever collection it belongs to once that cache has loaded.
+  useEffect(() => {
+    if (!linkedAssetId || linkedAssetName) return;
+    const source =
+      linkedAssetType === "Property" ? propertyState.items : vehicleState.items;
+    const match = source.find((item) => item.id === linkedAssetId);
+    if (match) setLinkedAssetName(match.name);
+  }, [linkedAssetId, linkedAssetName, linkedAssetType, propertyState.items, vehicleState.items]);
 
   // How many payouts a year this frequency makes — the same helper the totals
   // annualise through, so the form and the overview can never disagree about
@@ -204,10 +274,11 @@ const AccountAddEditScreen = ({ initial, presetType }: Props) => {
         return "Enter the maturity amount.";
       }
     } else if (isLoan) {
-      if (!isValidAmount(balance)) {
-        return isBorrowed
-          ? "Enter the amount you still owe."
-          : "Enter the amount still outstanding.";
+      if (!isValidAmount(principal)) {
+        return isBorrowed ? "Enter the loan amount." : "Enter the amount you lent.";
+      }
+      if (isPartiallyPaidBack && !isValidAmount(paidBackAmount)) {
+        return "Enter how much has been paid back.";
       }
     } else if (!isValidAmount(balance)) {
       return "Enter a balance.";
@@ -215,15 +286,7 @@ const AccountAddEditScreen = ({ initial, presetType }: Props) => {
     return null;
   };
 
-  const handleUpdate = () => {
-    const error = validationError();
-    if (error) {
-      showToast("error", "Incomplete form", error, "bottom");
-      return;
-    }
-
-    setIsLoading(true);
-
+  const buildPayload = () => {
     // RD: keep the existing paid flags, resized to the (possibly changed)
     // tenure, and set the balance to what's been paid so far at the current
     // monthly amount. The schedule is then marked off from the list.
@@ -235,13 +298,21 @@ const AccountAddEditScreen = ({ initial, presetType }: Props) => {
     );
     const rdBalance = rdPayments.filter(Boolean).length * (Number(principal) || 0);
 
-    // The balance net worth counts: RD = paid so far, FD = principal, others =
-    // the entered balance.
+    // The balance net worth counts: RD = paid so far, FD = principal, loan =
+    // amount minus whatever's come back, others = the entered balance.
     let savedBalance = balance;
     if (isRD) savedBalance = String(rdBalance);
     else if (isDeposit) savedBalance = principal;
+    else if (isSchedule) savedBalance = String(scheduleTotals.remaining);
+    else if (isLoan) {
+      savedBalance = isFullyPaidBack
+        ? "0"
+        : isPartiallyPaidBack
+        ? String(remainingLoanAmount)
+        : principal;
+    }
 
-    const payload = {
+    return {
       accountType,
       name: name.trim(),
       contactId: isCash ? "" : contactId,
@@ -249,9 +320,10 @@ const AccountAddEditScreen = ({ initial, presetType }: Props) => {
       // legacy rows so their display label isn't wiped on save.
       institution: isCash || isLoan ? "" : institution.trim(),
       balance: savedBalance,
-      balanceAsOf: isDeposit ? "" : balanceAsOf,
-      // Deposit-only; left as-is (usually blank) for other types.
-      principal: isDeposit ? principal : "",
+      balanceAsOf: isDeposit || isLoan ? "" : balanceAsOf,
+      // Deposit-only, plus the amount lent/borrowed; left as-is (usually
+      // blank) for other types.
+      principal: isDeposit || isLoan ? principal : "",
       interest: isFD && !isOnMaturity ? interestAmount : "",
       // Shared with loans, which carry a rate but none of the payout machinery.
       interestPercentage: isFD || isLoan ? interestPercentage : "",
@@ -260,6 +332,16 @@ const AccountAddEditScreen = ({ initial, presetType }: Props) => {
       // A loan reuses these two: when the money changed hands, and when it's due.
       depositedDate: isFD || isLoan ? depositedDate : "",
       maturityDate: isFD || isLoan ? maturityDate : "",
+      // Loan-only repayment tracking.
+      paidBackStatus: isLoan && !isSchedule ? paidBackStatus : "",
+      paidBackAmount: isPartiallyPaidBack ? paidBackAmount : "",
+      // Loan-only, either tracking mode.
+      linkedAssetType: isBorrowed ? linkedAssetType : "",
+      linkedAssetId: isBorrowed ? linkedAssetId : "",
+      // Loan-only Schedule tracking. `entries` is owned by the payments
+      // screen; carried through unedited so this form never wipes it.
+      loanTracking: isBorrowed ? loanTracking : "",
+      entries: isSchedule ? entries : [],
       // Recurring-deposit-only.
       startDate: isRD ? startDate : "",
       months: isRD ? months : "",
@@ -269,6 +351,17 @@ const AccountAddEditScreen = ({ initial, presetType }: Props) => {
       visibility,
       includeInPortfolio,
     };
+  };
+
+  const handleUpdate = () => {
+    const error = validationError();
+    if (error) {
+      showToast("error", "Incomplete form", error, "bottom");
+      return;
+    }
+
+    setIsLoading(true);
+    const payload = buildPayload();
 
     const save =
       pageMode === "Add"
@@ -277,6 +370,27 @@ const AccountAddEditScreen = ({ initial, presetType }: Props) => {
 
     dispatch(commitSave("accounts", save))
       .then(() => navigateBack())
+      .catch((err) => showToast("error", "Unable to save", String(err), "bottom"))
+      .finally(() => setIsLoading(false));
+  };
+
+  /**
+   * Commits the form before handing off, same reasoning as Property's
+   * equivalent: the payments screen rewrites the whole account document, so
+   * any unsaved edit sitting in this form would otherwise be silently
+   * resurrected — or lost — on the next entry it writes.
+   */
+  const manageSchedule = () => {
+    const error = validationError();
+    if (error) {
+      showToast("error", "Incomplete form", error, "bottom");
+      return;
+    }
+
+    setIsLoading(true);
+    const payload = buildPayload();
+    dispatch(commitSave("accounts", updateAccount(account.id, payload)))
+      .then(() => router.push(`/assets/accounts/${account.id}/payments`))
       .catch((err) => showToast("error", "Unable to save", String(err), "bottom"))
       .finally(() => setIsLoading(false));
   };
@@ -364,10 +478,23 @@ const AccountAddEditScreen = ({ initial, presetType }: Props) => {
           )}
         </FormSection>
 
-        {!isDeposit && (
-          <FormSection title={isLoan ? "Outstanding" : "Balance"}>
+        {isLoan && (
+          <FormSection title="Amount">
             <TextField
-              label={isLoan ? loanAmountLabel : "Current balance"}
+              label={loanAmountLabel}
+              prefix="₹"
+              onChangeText={setPrincipal}
+              value={principal}
+              placeholder="0"
+              keyboardType="numeric"
+            />
+          </FormSection>
+        )}
+
+        {!isDeposit && !isLoan && (
+          <FormSection title="Balance">
+            <TextField
+              label="Current balance"
               prefix="₹"
               onChangeText={setBalance}
               value={balance}
@@ -375,17 +502,10 @@ const AccountAddEditScreen = ({ initial, presetType }: Props) => {
               keyboardType="numeric"
             />
             <DatePicker
-              label={isLoan ? "Correct as of" : "Balance as of"}
+              label="Balance as of"
               dateValue={balanceAsOf}
               onDateChange={(date: string) => setBalanceAsOf(date || balanceAsOf)}
             />
-            {isLoan && (
-              <Text style={styles.hint}>
-                Repayments aren't itemised — lower this figure as it's paid back.
-                The date is the only record of when it was last true, so keep it
-                current.
-              </Text>
-            )}
           </FormSection>
         )}
 
@@ -554,6 +674,137 @@ const AccountAddEditScreen = ({ initial, presetType }: Props) => {
               dateValue={maturityDate}
               onDateChange={(date: string) => setMaturityDate(date || maturityDate)}
             />
+
+            {isBorrowed && (
+              <>
+                <Text style={styles.label}>Linked to</Text>
+                <ChipRow
+                  options={["None", ...LINKED_ASSET_TYPES]}
+                  value={linkedAssetType || "None"}
+                  onChange={(option) => {
+                    setLinkedAssetType(option === "None" ? "" : option);
+                    setLinkedAssetId("");
+                    setLinkedAssetName("");
+                  }}
+                  styles={styles}
+                />
+
+                {!!linkedAssetType && (
+                  <SearchableSelect
+                    label={linkedAssetType}
+                    placeholder={`Select a ${linkedAssetType.toLowerCase()}`}
+                    selectedId={linkedAssetId}
+                    selectedName={linkedAssetName}
+                    options={linkableAssets}
+                    onSelect={(id, selectedName) => {
+                      setLinkedAssetId(id);
+                      setLinkedAssetName(selectedName);
+                    }}
+                  />
+                )}
+
+                {!!linkedAssetId && (
+                  <Pressable
+                    onPress={() =>
+                      router.push(
+                        linkedAssetType === "Property"
+                          ? `/assets/properties/${linkedAssetId}`
+                          : `/assets/vehicles/${linkedAssetId}`
+                      )
+                    }
+                    accessibilityRole="button"
+                    style={({ pressed }) => [
+                      styles.manageButton,
+                      pressed && styles.pressed,
+                    ]}
+                  >
+                    <Text style={styles.manageText}>Open {linkedAssetType}</Text>
+                    <Ionicons
+                      name="chevron-forward"
+                      size={16}
+                      color={colors.primary}
+                    />
+                  </Pressable>
+                )}
+
+                <Text style={styles.label}>Tracking</Text>
+                <ChipRow
+                  options={LOAN_TRACKING_MODES}
+                  value={loanTracking}
+                  onChange={setLoanTracking}
+                  styles={styles}
+                />
+              </>
+            )}
+
+            {!isSchedule && (
+              <>
+                <Text style={styles.label}>Paid back</Text>
+                <ChipRow
+                  options={PAID_BACK_STATUSES}
+                  value={paidBackStatus}
+                  onChange={setPaidBackStatus}
+                  styles={styles}
+                />
+
+                {isPartiallyPaidBack && (
+                  <>
+                    <TextField
+                      label="Amount paid back"
+                      prefix="₹"
+                      onChangeText={setPaidBackAmount}
+                      value={paidBackAmount}
+                      placeholder="0"
+                      keyboardType="numeric"
+                    />
+                    <Text style={styles.hint}>
+                      ₹{amountFormat(remainingLoanAmount)} still{" "}
+                      {isBorrowed ? "owed" : "outstanding"}.
+                    </Text>
+                  </>
+                )}
+                {isFullyPaidBack && (
+                  <Text style={styles.hint}>
+                    Nothing {isBorrowed ? "owed" : "outstanding"} — this won't
+                    count toward net worth.
+                  </Text>
+                )}
+              </>
+            )}
+
+            {isSchedule && pageMode === "Add" && (
+              <Text style={styles.hint}>
+                Save the loan first, then add its schedule.
+              </Text>
+            )}
+            {isSchedule && pageMode === "Edit" && (
+              <>
+                <ProgressBar progress={scheduleTotals.progress} />
+                <View style={styles.totalsRow}>
+                  <Text style={styles.totalsPaid}>
+                    ₹ {amountFormat(scheduleTotals.paid)} paid
+                  </Text>
+                  <Text style={styles.totalsRemaining}>
+                    ₹ {amountFormat(scheduleTotals.remaining)} left
+                  </Text>
+                </View>
+                <Pressable
+                  onPress={manageSchedule}
+                  accessibilityRole="button"
+                  style={({ pressed }) => [
+                    styles.manageButton,
+                    pressed && styles.pressed,
+                  ]}
+                >
+                  <Text style={styles.manageText}>Manage schedule</Text>
+                  <Ionicons
+                    name="chevron-forward"
+                    size={16}
+                    color={colors.primary}
+                  />
+                </Pressable>
+              </>
+            )}
           </FormSection>
         )}
 
@@ -587,6 +838,38 @@ const AccountAddEditScreen = ({ initial, presetType }: Props) => {
     </ScrollView>
   );
 };
+
+/** A single-select row of pill chips — Paid back, Tracking, Linked-to alike. */
+const ChipRow = ({
+  options,
+  value,
+  onChange,
+  styles,
+}: {
+  options: readonly string[];
+  value: string;
+  onChange: (option: string) => void;
+  styles: ReturnType<typeof createStyles>;
+}) => (
+  <View style={styles.chipRow}>
+    {options.map((option) => {
+      const active = option === value;
+      return (
+        <Pressable
+          key={option}
+          onPress={() => onChange(option)}
+          accessibilityRole="radio"
+          accessibilityState={{ selected: active }}
+          style={[styles.chip, active && styles.chipActive]}
+        >
+          <Text style={[styles.chipText, active && styles.chipTextActive]}>
+            {option}
+          </Text>
+        </Pressable>
+      );
+    })}
+  </View>
+);
 
 const createStyles = (colors: ThemeColors) =>
   StyleSheet.create({
@@ -647,6 +930,41 @@ const createStyles = (colors: ThemeColors) =>
       marginTop: -8,
       marginBottom: 4,
       lineHeight: 17,
+    },
+    totalsRow: {
+      flexDirection: "row",
+      justifyContent: "space-between",
+      marginTop: 8,
+    },
+    totalsPaid: {
+      fontSize: 13,
+      color: colors.positive,
+      fontWeight: "600",
+      fontVariant: ["tabular-nums"],
+    },
+    totalsRemaining: {
+      fontSize: 13,
+      color: colors.textMuted,
+      fontVariant: ["tabular-nums"],
+    },
+    manageButton: {
+      flexDirection: "row",
+      alignItems: "center",
+      justifyContent: "center",
+      backgroundColor: tint(colors.primary),
+      borderRadius: radius.control,
+      paddingVertical: 14,
+      marginTop: 16,
+      marginBottom: 18,
+    },
+    manageText: {
+      color: colors.primary,
+      fontWeight: "600",
+      fontSize: 14,
+      marginRight: 6,
+    },
+    pressed: {
+      opacity: 0.6,
     },
     primaryButton: {
       marginTop: 6,

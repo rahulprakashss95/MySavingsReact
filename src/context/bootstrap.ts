@@ -1,3 +1,4 @@
+import { useAccountTabsStore } from "./AccountTabsContext";
 import { useAuthStore } from "./AuthContext";
 import { useDashboardLayoutStore } from "./DashboardLayoutContext";
 import { usePasscodeStore } from "./PasscodeContext";
@@ -16,6 +17,7 @@ export const bootstrapApp = async () => {
     useAuthStore.getState().bootstrap(),
     usePasscodeStore.getState().restore(),
     useDashboardLayoutStore.getState().restore(),
+    useAccountTabsStore.getState().restore(),
   ]);
   usePasscodeStore.getState().arm();
 };

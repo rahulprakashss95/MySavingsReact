@@ -319,20 +319,12 @@ const AssetOverviewScreen = () => {
         "Some gold has no purity set and is valued as 22K. Edit those pieces to correct the total."
       );
     }
-    if (portfolio.remaining > 0) {
-      list.push(
-        `Property is counted at full cost — ${rupees(
-          portfolio.remaining
-        )} of it is still unpaid.`
-      );
-    }
     return list;
   }, [
     worthOrnaments.length,
     hasRates,
     ornamentSummary.hasUnvalued,
     ornamentSummary.hasAssumedKarat,
-    portfolio.remaining,
   ]);
 
   const handleSaveRates = (next: MetalRates) => {
@@ -463,7 +455,7 @@ const AssetOverviewScreen = () => {
         />
 
         {/* ---- The figures worth knowing without opening a section ------- */}
-        {(interest > 0 || portfolio.remaining > 0 || showOwed) && (
+        {(interest > 0 || showOwed) && (
           <Animated.View
             entering={FadeInDown.delay(sectionDelay(1)).duration(motion.staggerDuration)}
             style={styles.statGrid}
@@ -476,17 +468,6 @@ const AssetOverviewScreen = () => {
                 </Text>
                 <Text style={styles.statCaption}>
                   a year · {rupees(interest / 12)} a month
-                </Text>
-              </View>
-            )}
-            {portfolio.remaining > 0 && (
-              <View style={styles.statTile}>
-                <Text style={styles.statLabel}>Property still owed</Text>
-                <Text style={[styles.statValue, styles.owed]}>
-                  {rupees(portfolio.remaining)}
-                </Text>
-                <Text style={styles.statCaption}>
-                  {percent(portfolio.progress)} of cost paid
                 </Text>
               </View>
             )}
@@ -611,45 +592,14 @@ const AssetOverviewScreen = () => {
             value={rupees(portfolio.total)}
             caption={
               portfolio.count > 0
-                ? `${plural(portfolio.count, "property", "properties")} at cost`
+                ? plural(portfolio.count, "property", "properties")
                 : undefined
             }
             onPress={() => open("/assets/properties")}
           />
 
-          {portfolio.count === 0 ? (
+          {portfolio.count === 0 && (
             <Text style={styles.emptyText}>No properties recorded yet.</Text>
-          ) : (
-            <>
-              <View style={styles.splitRow}>
-                <View style={styles.split}>
-                  <Text style={styles.statLabel}>Paid</Text>
-                  <Text style={[styles.splitValue, styles.positive]}>
-                    {rupees(portfolio.paid)}
-                  </Text>
-                </View>
-                <View style={styles.split}>
-                  <Text style={styles.statLabel}>Still owed</Text>
-                  <Text style={[styles.splitValue, styles.owed]}>
-                    {rupees(portfolio.remaining)}
-                  </Text>
-                </View>
-              </View>
-
-              <View style={styles.barWrap}>
-                <ProgressBar
-                  progress={portfolio.progress}
-                  color={colors.accentViolet}
-                />
-              </View>
-
-              <Text style={styles.footnote}>
-                {percent(portfolio.progress)} paid
-                {portfolio.outstandingCount > 0
-                  ? ` · ${portfolio.outstandingCount} still owing`
-                  : " · all settled"}
-              </Text>
-            </>
           )}
         </Animated.View>
 
@@ -1140,20 +1090,6 @@ const createStyles = (colors: ThemeColors) =>
       fontVariant: ["tabular-nums"],
     },
 
-    // Paid / owed pairs
-    splitRow: {
-      flexDirection: "row",
-    },
-    split: {
-      flex: 1,
-    },
-    splitValue: {
-      fontSize: 20,
-      fontWeight: "700",
-      marginTop: 4,
-      fontVariant: ["tabular-nums"],
-    },
-
     // Deposit interest, inset inside the accounts section.
     inset: {
       backgroundColor: colors.inputBackground,
@@ -1203,7 +1139,6 @@ const createStyles = (colors: ThemeColors) =>
 
     // Money owed, wherever it appears — never the same colour as money held.
     liability: { color: colors.negative },
-    owed: { color: colors.accentAmber },
     positive: { color: colors.positive },
   });
 

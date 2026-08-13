@@ -3,7 +3,7 @@
     "name": "AssetDiary",
     "slug": "asset-diary",
     "scheme": "assetdiary",
-    "version": "1.2.34",
+    "version": "1.2.343",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "light",

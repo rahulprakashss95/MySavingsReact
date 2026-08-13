@@ -58,10 +58,6 @@ export default function AssetsStack() {
         name="properties/[id]/index"
         options={{ title: "Property" }}
       />
-      <Stack.Screen
-        name="properties/[id]/payments"
-        options={{ title: "Payments" }}
-      />
       <Stack.Screen name="vehicles/index" options={{ title: "Vehicles" }} />
       <Stack.Screen name="vehicles/[id]" options={{ title: "Vehicle" }} />
       <Stack.Screen
@@ -74,7 +70,11 @@ export default function AssetsStack() {
         }}
       />
       {/* Title is set per-mode (Add/Edit Holding) inside the route. */}
-      <Stack.Screen name="accounts/[id]" />
+      <Stack.Screen name="accounts/[id]/index" />
+      <Stack.Screen
+        name="accounts/[id]/payments"
+        options={{ title: "Loan Schedule" }}
+      />
       <Stack.Screen
         name="accounts/institutions/index"
         options={{ title: "Contacts" }}

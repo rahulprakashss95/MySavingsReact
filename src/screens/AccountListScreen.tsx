@@ -22,6 +22,7 @@ import {
 } from "../models/AccountModel";
 import { canEdit } from "../models/common";
 import { LedgerClientModel } from "../models/LedgerModel";
+import { PropertyModel, VehicleModel } from "../models/AssetModel";
 import { amountFormat, showToast } from "../utils/Utils";
 import {
   accountInstitution,
@@ -31,24 +32,13 @@ import {
 } from "../utils/deposits";
 import { updateAccount } from "../../database/query";
 import { useAuth } from "../context/AuthContext";
+import { useAccountTabsStore } from "../context/AccountTabsContext";
 import { DepositListSkeleton } from "../components/Skeleton";
 import AccountCard from "../components/AccountCard";
+import AccountTabsOrderSheet from "../components/AccountTabsOrderSheet";
 import FloatingButton from "../components/FAB";
 import { useRouter } from "expo-router";
 import { useCountUp } from "../hooks/useCountUp";
-
-/** The list tabs, in the order they appear. `type` is the stored account type. */
-const TABS: { type: AccountType; label: string }[] = [
-  "Account Balance",
-  "Cash",
-  "Fixed Deposit",
-  "Recurring Deposit",
-  "Lent",
-  "Borrowed",
-].map((type) => ({
-  type: type as AccountType,
-  label: accountTypeLabel(type),
-}));
 
 const AccountListScreen = () => {
   const router = useRouter();
@@ -57,13 +47,34 @@ const AccountListScreen = () => {
   const dispatch = useAppDispatch();
   const styles = useMemo(() => createStyles(colors), [colors]);
 
-  const [activeType, setActiveType] = useState<AccountType>("Account Balance");
+  // The tab strip's order is a saved preference — see `AccountTabsContext`.
+  const tabOrder = useAccountTabsStore((state) => state.order);
+  const tabs = useMemo(
+    () => tabOrder.map((type) => ({ type, label: accountTypeLabel(type) })),
+    [tabOrder]
+  );
+  const [isReorderOpen, setIsReorderOpen] = useState(false);
+
+  // Opens on whichever tab has been put first. Read once: reordering while the
+  // list is open must not yank the reader off the tab they are reading.
+  const [activeType, setActiveType] = useState<AccountType>(() => tabOrder[0]);
 
   // Both served from the store — fetched once, not on every focus. Contacts
   // resolve the counterparty label; accounts carry their own name and balance.
   const accounts = useCollectionState<AccountModel>("accounts");
   const contacts = useCollectionState<LedgerClientModel>("ledgerClients");
+  // Only needed to resolve a linked Loan's "Linked to <name>" line — never
+  // gates the loader, so the accounts list isn't held up by these fetching.
+  const properties = useCollectionState<PropertyModel>("properties");
+  const vehicles = useCollectionState<VehicleModel>("vehicles");
   const nameOf = useOwnerName();
+
+  const linkedAssetName = (account: AccountModel) => {
+    if (!account.linkedAssetId) return "";
+    const source =
+      account.linkedAssetType === "Property" ? properties.items : vehicles.items;
+    return source.find((item) => item.id === account.linkedAssetId)?.name ?? "";
+  };
 
   const hasLoaded = accounts.hasLoaded && contacts.hasLoaded;
   const isRefreshing = accounts.isRefreshing || contacts.isRefreshing;
@@ -117,30 +128,44 @@ const AccountListScreen = () => {
     );
   };
 
+  // The reorder button is pinned outside the scroller: it belongs to the strip
+  // as a whole, so scrolling to the last tab to reach it would be backwards.
   const renderTabs = () => (
-    <ScrollView
-      horizontal
-      showsHorizontalScrollIndicator={false}
-      style={styles.tabScroll}
-      contentContainerStyle={styles.tabBar}
-    >
-      {TABS.map(({ type, label }) => {
-        const active = type === activeType;
-        return (
-          <Pressable
-            key={type}
-            onPress={() => setActiveType(type)}
-            accessibilityRole="tab"
-            accessibilityState={{ selected: active }}
-            style={[styles.tab, active && styles.tabActive]}
-          >
-            <Text style={[styles.tabText, active && styles.tabTextActive]}>
-              {label}
-            </Text>
-          </Pressable>
-        );
-      })}
-    </ScrollView>
+    <View style={styles.tabRow}>
+      <ScrollView
+        horizontal
+        showsHorizontalScrollIndicator={false}
+        style={styles.tabScroll}
+        contentContainerStyle={styles.tabBar}
+      >
+        {tabs.map(({ type, label }) => {
+          const active = type === activeType;
+          return (
+            <Pressable
+              key={type}
+              onPress={() => setActiveType(type)}
+              accessibilityRole="tab"
+              accessibilityState={{ selected: active }}
+              style={[styles.tab, active && styles.tabActive]}
+            >
+              <Text style={[styles.tabText, active && styles.tabTextActive]}>
+                {label}
+              </Text>
+            </Pressable>
+          );
+        })}
+      </ScrollView>
+
+      <Pressable
+        onPress={() => setIsReorderOpen(true)}
+        accessibilityRole="button"
+        accessibilityLabel="Rearrange tabs"
+        hitSlop={8}
+        style={({ pressed }) => [styles.reorder, pressed && styles.pressed]}
+      >
+        <Ionicons name="swap-horizontal" size={18} color={colors.textMuted} />
+      </Pressable>
+    </View>
   );
 
   // A tab holds exactly one type, so the subtotal never mixes directions — it
@@ -168,7 +193,7 @@ const AccountListScreen = () => {
     );
   };
 
-  const activeLabel = TABS.find((t) => t.type === activeType)?.label ?? "";
+  const activeLabel = accountTypeLabel(activeType);
 
   const renderEmpty = () => {
     if (!hasLoaded) {
@@ -190,6 +215,13 @@ const AccountListScreen = () => {
     );
   };
 
+  const reorderSheet = (
+    <AccountTabsOrderSheet
+      visible={isReorderOpen}
+      onClose={() => setIsReorderOpen(false)}
+    />
+  );
+
   if (!hasLoaded) {
     return (
       <View style={styles.container}>
@@ -197,6 +229,7 @@ const AccountListScreen = () => {
         <View style={styles.listContent}>
           <DepositListSkeleton />
         </View>
+        {reorderSheet}
       </View>
     );
   }
@@ -223,6 +256,7 @@ const AccountListScreen = () => {
             account={item}
             institution={accountInstitution(item, contacts.items)}
             ownerName={nameOf(item.ownerId)}
+            linkedAssetName={linkedAssetName(item)}
             onClickCard={navigateAddEdit}
             editable={canEdit(item, user?.id)}
             onToggleInstalment={handleToggleInstalment}
@@ -233,6 +267,7 @@ const AccountListScreen = () => {
         accessibilityLabel={`Add ${activeLabel}`}
         onPress={() => navigateAddEdit(null)}
       />
+      {reorderSheet}
     </View>
   );
 };
@@ -243,11 +278,28 @@ const createStyles = (colors: ThemeColors) =>
       flex: 1,
       backgroundColor: colors.background,
     },
-    // A horizontal ScrollView otherwise stretches to fill the column's height,
-    // pushing the list down — pin it to its content height.
+    tabRow: {
+      flexDirection: "row",
+      alignItems: "center",
+    },
+    // A horizontal ScrollView otherwise stretches to fill the row's height and
+    // claims no width of its own — take the space left by the pinned button.
     tabScroll: {
-      flexGrow: 0,
-      flexShrink: 0,
+      flex: 1,
+    },
+    // Sits outside the scroller, so it keeps the strip's height without the
+    // pill styling: it isn't a tab and must not read as one.
+    reorder: {
+      width: 36,
+      height: 36,
+      borderRadius: radius.pill,
+      alignItems: "center",
+      justifyContent: "center",
+      marginRight: 12,
+      backgroundColor: colors.inputBackground,
+    },
+    pressed: {
+      opacity: 0.6,
     },
     tabBar: {
       paddingHorizontal: 16,

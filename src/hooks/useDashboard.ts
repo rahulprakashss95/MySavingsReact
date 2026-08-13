@@ -2,17 +2,13 @@
 import { useMemo } from "react";
 
 import { useAuth } from "../context/AuthContext";
-import {
-  EMPTY_METAL_RATES,
-  OrnamentModel,
-  PaymentEntry,
-  PropertyModel,
-} from "../models/AssetModel";
+import { EMPTY_METAL_RATES, OrnamentModel, PropertyModel } from "../models/AssetModel";
 import { FeatureKey, hasFeature, includedInPortfolio } from "../models/common";
 import {
   AccountModel,
   isLiability,
   isLoanAccount,
+  PaymentEntry,
 } from "../models/AccountModel";
 
 import { ExpenseModel } from "../models/ExpenseModel";
@@ -24,6 +20,7 @@ import {
   buildAccountTotals,
   parseMaturity,
 } from "../utils/deposits";
+import { isLoanSettled } from "../utils/loans";
 import {
   MonthPoint,
   monthlyTotals,
@@ -59,15 +56,15 @@ export type MaturityItem = {
 };
 
 export type PaymentDueItem = {
-  propertyId: string;
-  propertyName: string;
+  loanId: string;
+  loanName: string;
   label: string;
   amount: number;
   date: string;
   overdue: boolean;
   /** Negative once overdue. */
   daysUntil: number;
-  /** Where tapping the row lands — that property's payment schedule. */
+  /** Where tapping the row lands — that loan's payment schedule. */
   href: string;
 };
 
@@ -268,8 +265,9 @@ export const useDashboard = (): DashboardData => {
       : null;
     const portfolio = need.assets ? propertyPortfolio(worthProperties) : null;
     const goldValue = orn?.totalValue ?? 0;
-    // Property "equity" — what's actually paid, not the sticker value still owed.
-    const propertyEquity = portfolio?.paid ?? 0;
+    // Property counts at full value; any financing is a separate liability
+    // on the Loan side (see AccountModel), already netted via `depositsValue`.
+    const propertyEquity = portfolio?.total ?? 0;
 
     const segments: WorthSegment[] = [];
     if (need.deposits)
@@ -318,6 +316,8 @@ export const useDashboard = (): DashboardData => {
           .map((account): MaturityItem | null => {
             const maturity = parseMaturity(account.maturityDate);
             if (!maturity) return null;
+            // A settled loan needs no reminder regardless of its due date.
+            if (isLoanSettled(account)) return null;
             const daysUntil = maturity.startOf("day").diff(today, "days");
             if (daysUntil > UPCOMING_DAYS) return null;
             // FDs are identified by their institution, not a name; resolve the
@@ -345,25 +345,27 @@ export const useDashboard = (): DashboardData => {
           .sort((a, b) => a.daysUntil - b.daysUntil)
       : [];
 
-    const paymentsDue: PaymentDueItem[] = need.assets
-      ? properties.items
-          .flatMap((property) =>
-            (property.entries ?? [])
+    const paymentsDue: PaymentDueItem[] = need.deposits
+      ? accounts.items
+          .filter((account) => account.loanTracking === "Schedule")
+          .flatMap((account) =>
+            (account.entries ?? [])
               .filter((entry: PaymentEntry) => !entry.paid)
               .map((entry: PaymentEntry) => {
                 const due = parseLedgerDate(entry.date);
                 if (!due) return null;
                 const daysUntil = due.startOf("day").diff(today, "days");
                 if (daysUntil > UPCOMING_DAYS) return null;
+                const institution = accountInstitution(account, contacts.items);
                 return {
-                  propertyId: property.id,
-                  propertyName: property.name || "Property",
+                  loanId: account.id,
+                  loanName: institution !== "—" ? institution : "Loan",
                   label: entry.label || "Payment",
                   amount: Number(entry.amount) || 0,
                   date: entry.date,
                   overdue: daysUntil < 0,
                   daysUntil,
-                  href: `/assets/properties/${property.id}/payments`,
+                  href: `/assets/accounts/${account.id}/payments`,
                 };
               })
           )

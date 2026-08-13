@@ -1,4 +1,3 @@
-import moment from "moment";
 import {
   DEFAULT_GOLD_KARAT,
   KARAT_PURITY,
@@ -6,10 +5,8 @@ import {
   MetalRates,
   ORNAMENT_TYPES,
   OrnamentModel,
-  PaymentEntry,
   PropertyModel,
 } from "../models/AssetModel";
-import { DATE_FORMAT } from "./deposits";
 
 /** The pavan / sovereign used across Kerala and Tamil Nadu. */
 export const GRAMS_PER_PAWN = 8;
@@ -74,85 +71,9 @@ export const areaSummary = (cents?: string) => {
   return acres ? `${text} cents · ${acres} acres` : `${text} cents`;
 };
 
-const sumOf = (entries: PaymentEntry[]) =>
-  entries.reduce((total, entry) => total + (Number(entry.amount) || 0), 0);
-
-export type PaymentTotals = {
-  total: number;
-  paid: number;
-  /** Never negative: overpaying shows as zero left, not a refund. */
-  remaining: number;
-  paidCount: number;
-  entryCount: number;
-  /** 0–1, for the progress bar. Zero when there is no total to divide by. */
-  progress: number;
-};
-
-export const paymentTotals = (property: {
-  totalAmount: string;
-  entries?: PaymentEntry[];
-}): PaymentTotals => {
-  const entries = property.entries ?? [];
-  const total = Number(property.totalAmount) || 0;
-  const paidEntries = entries.filter((entry) => entry.paid);
-  const paid = sumOf(paidEntries);
-
-  return {
-    total,
-    paid,
-    remaining: Math.max(total - paid, 0),
-    paidCount: paidEntries.length,
-    entryCount: entries.length,
-    progress: total > 0 ? Math.min(paid / total, 1) : 0,
-  };
-};
-
-/**
- * Dates are stored as DD-MMM-YYYY display strings, so they have to be parsed
- * before comparing — "02-Apr-2026" sorts before "01-Dec-2025" as plain text.
- * Undated entries sink to the bottom of their group.
- */
-const dateValue = (date: string) => {
-  const parsed = moment(date, DATE_FORMAT, true);
-  return parsed.isValid() ? parsed.valueOf() : Number.POSITIVE_INFINITY;
-};
-
-/** Unpaid installments first, then by date — what you owe next, at the top. */
-export const sortEntries = (entries: PaymentEntry[]) =>
-  [...entries].sort((a, b) => {
-    if (a.paid !== b.paid) {
-      return a.paid ? 1 : -1;
-    }
-    return dateValue(a.date) - dateValue(b.date);
-  });
-
-/** Entries live inside the property document, so ids are generated here. */
-export const newEntryId = () =>
-  `${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`;
-
 /** Cars and bikes have no area, so the form hides the cents field for them. */
 export const hasArea = (propertyType: string) =>
   LAND_PROPERTY_TYPES.includes(propertyType);
-
-/**
- * `paymentTotals` counts only what the entries say was paid, which reads a
- * "paid in full" property as entirely unpaid — it has no entries. Correct for
- * that here, where properties are summed into a portfolio.
- */
-export const propertyTotals = (property: PropertyModel): PaymentTotals => {
-  const total = Number(property.totalAmount) || 0;
-  if (property.paymentMode === "full") {
-    return {
-      total,
-      paid: total,
-      remaining: 0,
-      paidCount: 0,
-      entryCount: 0,
-      progress: total > 0 ? 1 : 0,
-    };
-  }
-  return paymentTotals(property);
-};
 
 export type KaratTotal = { karat: string; grams: number; value: number };
 
@@ -298,36 +219,16 @@ export const ornamentsByHolder = (
 
 export type PropertyPortfolio = {
   count: number;
+  /** Sum of every property's value, counted in full — see `PropertyModel.totalAmount`. */
   total: number;
-  paid: number;
-  remaining: number;
-  progress: number;
-  /** Properties still carrying a balance. */
-  outstandingCount: number;
 };
 
 export const propertyPortfolio = (
   properties: PropertyModel[]
-): PropertyPortfolio => {
-  let total = 0;
-  let paid = 0;
-  let outstandingCount = 0;
-
-  properties.forEach((property) => {
-    const totals = propertyTotals(property);
-    total += totals.total;
-    paid += totals.paid;
-    if (totals.remaining > 0) {
-      outstandingCount += 1;
-    }
-  });
-
-  return {
-    count: properties.length,
-    total,
-    paid,
-    remaining: Math.max(total - paid, 0),
-    progress: total > 0 ? Math.min(paid / total, 1) : 0,
-    outstandingCount,
-  };
-};
+): PropertyPortfolio => ({
+  count: properties.length,
+  total: properties.reduce(
+    (total, property) => total + (Number(property.totalAmount) || 0),
+    0
+  ),
+});

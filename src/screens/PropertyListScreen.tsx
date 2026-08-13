@@ -6,8 +6,10 @@ import GroupedList from "../components/GroupedList";
 import { useCollectionState, useOwnerName } from "../query/hooks";
 import GroupedRow from "../components/GroupedRow";
 import { useTheme } from "../context/ThemeContext";
+import { AccountModel } from "../models/AccountModel";
 import { PROPERTY_TYPES, PropertyModel } from "../models/AssetModel";
-import { areaSummary, paymentTotals } from "../utils/assets";
+import { areaSummary } from "../utils/assets";
+import { linkedLoansFor } from "../utils/loans";
 import { ThemeColors } from "../utils/Color";
 import { byFixedOrder, byText, groupBy, UNGROUPED } from "../utils/grouping";
 import { amountFormat } from "../utils/Utils";
@@ -38,6 +40,7 @@ const PropertyListScreen = () => {
   const styles = useMemo(() => createStyles(colors), [colors]);
 
   const { items, ...list } = useCollectionState<PropertyModel>("properties");
+  const accountState = useCollectionState<AccountModel>("accounts");
   const nameOf = useOwnerName();
 
   const sections = useMemo(
@@ -58,24 +61,23 @@ const PropertyListScreen = () => {
     router.push(data ? `/assets/properties/${data.id}` : "/assets/properties/new");
   };
 
-  /** The one number you want at a glance: what's still owed. */
+  /** The one number you want at a glance: what's still owed on a linked loan. */
   const renderTrailing = (property: PropertyModel) => {
-    const totals = paymentTotals(property);
-    if (property.paymentMode === "full" || totals.total <= 0) {
+    const loans = linkedLoansFor(accountState.items, "Property", property.id);
+    if (loans.length === 0) {
       return null;
     }
-    const settled = totals.remaining <= 0;
+    const remaining = loans.reduce(
+      (sum, loan) => sum + (Number(loan.balance) || 0),
+      0
+    );
+    const settled = remaining <= 0;
     return (
       <View style={styles.trailing}>
         <Text style={[styles.trailingValue, settled && styles.settled]}>
-          {settled ? "Settled" : `₹ ${amountFormat(totals.remaining)}`}
+          {settled ? "Settled" : `₹ ${amountFormat(remaining)}`}
         </Text>
         {!settled && <Text style={styles.trailingLabel}>left</Text>}
-        {property.paymentMode === "installments" && totals.entryCount > 0 && (
-          <Text style={styles.trailingLabel}>
-            {totals.paidCount}/{totals.entryCount} paid
-          </Text>
-        )}
       </View>
     );
   };

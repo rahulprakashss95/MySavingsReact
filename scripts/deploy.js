@@ -1,14 +1,33 @@
 /* eslint-env node */
 /**
- * Interactive version bump for a release. Shows the current version, asks for
- * the next one, writes it to package.json and app.json, and regenerates
- * src/appVersion.ts so the drawer shows what is actually deployed.
+ * Release script: bumps the version and ships to Vercel. It never touches git —
+ * committing the bump is left to you.
  *
- * It deliberately does not build or publish. Both Vercel projects
- * (assetdiary-app at the repo root, assetdiary-site in site/) have no Git
- * integration connected — pushing to GitHub deploys nothing. Shipping is a
- * manual `npx vercel deploy --prod` from the right directory, which this
- * script prints but never runs, so nothing ships without an explicit command.
+ * Neither Vercel project (assetdiary-app at the repo root, assetdiary-site in
+ * site/) has a Git integration connected, so pushing to GitHub deploys nothing.
+ * Shipping is a `vercel deploy --prod` from the right directory, which this
+ * script runs for you once you confirm the version.
+ *
+ *   npm run deploy           bump, then deploy the app  (app.assetdiary.in)
+ *   npm run deploy --app     same — the app is the default target
+ *   npm run deploy --site    bump, then deploy the site (assetdiary.in)
+ *   npm run deploy --both    deploy both
+ *
+ * The version prompt is the only prompt, and comes pre-filled with the next
+ * patch bump: press Enter to take it, or edit it in place. Deploying starts as
+ * soon as you accept the version.
+ *
+ * npm turns bare flags into npm_config_* env vars rather than passing them
+ * through, so `--site` and `--both` are read from the env as well as argv.
+ * (npm 10 drops `--app` entirely — it never reaches this script in any form.
+ * That is harmless only because the app is the default.) Extra flags need the
+ * `--` separator, e.g. `npm run deploy -- --dry-run`:
+ *
+ *   --version=x.y.z    use this version instead of asking
+ *   --yes, -y          accept all defaults, never prompt
+ *   --no-bump          skip the version bump, just deploy
+ *   --no-deploy        bump only, ship nothing
+ *   --dry-run          print the deploy commands without running them
  */
 const path = require("path");
 const fs = require("fs");
@@ -16,6 +35,7 @@ const readline = require("readline");
 const { execSync } = require("child_process");
 
 const PROJECT_ROOT = path.resolve(__dirname, "..");
+const SITE_ROOT = path.join(PROJECT_ROOT, "site");
 const PACKAGE_JSON = path.join(PROJECT_ROOT, "package.json");
 const APP_JSON = path.join(PROJECT_ROOT, "app.json");
 
@@ -33,33 +53,76 @@ const suggestNext = (version) => {
   return `${major}.${minor}.${Number(patch) + 1}`;
 };
 
-const ask = (question) => {
+const argv = process.argv.slice(2);
+const hasFlag = (...names) => names.some((name) => argv.includes(name));
+const flagValue = (name) => {
+  const hit = argv.find((arg) => arg.startsWith(`${name}=`));
+  return hit ? hit.slice(name.length + 1).trim() : "";
+};
+
+/**
+ * `npm run deploy --app` never reaches process.argv — npm turns the flag into
+ * npm_config_app instead. Check the env too so the short form works.
+ */
+const npmFlag = (name) => {
+  const value = process.env[`npm_config_${name}`];
+  return value === "true" || value === "";
+};
+const hasEitherFlag = (name) => hasFlag(`--${name}`) || npmFlag(name);
+
+const assumeYes = hasFlag("--yes", "-y");
+const shouldBump = !hasFlag("--no-bump");
+const shouldDeploy = !hasFlag("--no-deploy");
+const dryRun = hasFlag("--dry-run");
+const targetFromFlags =
+  ["both", "site", "app"].find((name) => hasEitherFlag(name)) || "";
+
+const interactive = process.stdin.isTTY && !assumeYes;
+
+/**
+ * Ask a question with `prefill` already typed into the input, so the answer can
+ * be accepted with Enter or edited in place instead of retyped.
+ */
+const ask = (question, prefill = "") => {
+  if (!interactive) {
+    console.log(`${question}${prefill}`);
+    return Promise.resolve(prefill);
+  }
   const rl = readline.createInterface({
     input: process.stdin,
     output: process.stdout,
   });
-  return new Promise((resolve) =>
+  return new Promise((resolve) => {
     rl.question(question, (answer) => {
       rl.close();
       resolve(answer.trim());
-    })
-  );
+    });
+    if (prefill) rl.write(prefill);
+  });
 };
 
-async function main() {
+const run = (command, cwd = PROJECT_ROOT) => {
+  const where =
+    cwd === PROJECT_ROOT ? "" : `  (in ${path.relative(PROJECT_ROOT, cwd)})`;
+  console.log(`\n> ${command}${where}${dryRun ? "   [dry run, not executed]" : ""}`);
+  if (dryRun) return;
+  execSync(command, { cwd, stdio: "inherit" });
+};
+
+async function bumpVersion() {
   const pkg = readJson(PACKAGE_JSON);
   const current = pkg.version;
-  const suggestion = suggestNext(current);
+
+  if (!shouldBump) {
+    console.log(`\nVersion: ${current} (unchanged, --no-bump)`);
+    return { version: current, bumped: false };
+  }
+
+  const suggestion = flagValue("--version") || suggestNext(current);
 
   console.log(`\nCurrent version: ${current}`);
-  let next = await ask(
-    `Enter the next version${suggestion ? ` [${suggestion}]` : ""}: `
-  );
+  const next = (await ask("Enter the next version: ", suggestion)) || suggestion;
 
-  // Empty input accepts the suggested patch bump.
-  if (!next && suggestion) {
-    next = suggestion;
-  }
   if (!isValid(next)) {
     console.error(`\n"${next}" is not a valid x.y.z version. Aborting.`);
     process.exit(1);
@@ -82,25 +145,49 @@ async function main() {
     console.warn("Could not update app.json version:", error.message);
   }
 
-  // Regenerate now rather than leaving it to the Vercel build, so the bumped
-  // version is committed alongside the manifests instead of drifting.
+  // Regenerate now rather than leaving it to the Vercel build, so the version
+  // the drawer shows matches the manifests instead of drifting.
   execSync("node scripts/gen-version.js", {
     cwd: PROJECT_ROOT,
     stdio: "inherit",
   });
 
-  console.log(`
-Version bumped to ${next}. Nothing has been deployed yet.
+  console.log(`\nVersion bumped to ${next}.`);
+  return { version: next, bumped: true };
+}
 
-  git add package.json app.json src/appVersion.ts
-  git commit -m "Release ${next}"
-  git push
-
-Then ship it (no Git integration — pushing above does not deploy):
+function deploy(version) {
+  if (!shouldDeploy) {
+    console.log(`
+Nothing deployed (--no-deploy). To ship it yourself:
 
   - App (app.assetdiary.in):    npx vercel deploy --prod
   - Site (assetdiary.in):       cd site && npx vercel deploy --prod
 `);
+    return;
+  }
+
+  // No prompt here: accepting the version is the go-ahead. The app is the
+  // default because npm never forwards `--app` (see the header).
+  const target = targetFromFlags || "app";
+  const what = target === "both" ? "app and site" : target;
+  const tag = version ? ` (v${version})` : "";
+  console.log(`\nDeploying ${what}${tag} to production...`);
+
+  if (target === "app" || target === "both") {
+    run("npx vercel deploy --prod", PROJECT_ROOT);
+  }
+  if (target === "site" || target === "both") {
+    run("npx vercel deploy --prod", SITE_ROOT);
+  }
+
+  console.log("\nDone.");
+}
+
+async function main() {
+  const { version } = await bumpVersion();
+  deploy(version);
+  // Deliberately no git step: committing the bump is left to you.
 }
 
 main().catch((error) => {

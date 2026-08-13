@@ -10,6 +10,7 @@ import Button from "../components/Button";
 import DatePicker from "../components/DatePicker";
 import FormSection from "../components/FormSection";
 import Loader from "../components/Loader";
+import LinkedLoansSection from "../components/LinkedLoansSection";
 import ReadOnlyBanner from "../components/ReadOnlyBanner";
 import ReadOnlyGuard from "../components/ReadOnlyGuard";
 import SearchableSelect from "../components/SearchableSelect";
@@ -202,6 +203,8 @@ const VehicleAddEditScreen = ({ initial }: Props) => {
           module="vehicles"
         />
       </FormSection>
+
+      {vehicle && <LinkedLoansSection assetType="Vehicle" assetId={vehicle.id} />}
 
       <FormSection title="Notes">
         <TextField

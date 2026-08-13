@@ -4,8 +4,8 @@ import moment from "moment";
 import React, { useMemo, useState } from "react";
 import { Pressable, ScrollView, StyleSheet, View } from "react-native";
 import Text from "../components/Text";
-import { updateProperty } from "../../database/query";
-import { commitSave, useAppDispatch } from "../query/hooks";
+import { updateAccount } from "../../database/query";
+import { commitSave, useAppDispatch, useCollectionState } from "../query/hooks";
 import Button from "../components/Button";
 import DatePicker from "../components/DatePicker";
 import FormSection from "../components/FormSection";
@@ -14,8 +14,14 @@ import ProgressBar from "../components/ProgressBar";
 import TextField from "../components/TextField";
 import { useTheme } from "../context/ThemeContext";
 import { useCountUp } from "../hooks/useCountUp";
-import { PaymentEntry, PropertyModel } from "../models/AssetModel";
-import { newEntryId, paymentTotals, sortEntries } from "../utils/assets";
+import { AccountModel, PaymentEntry } from "../models/AccountModel";
+import { LedgerClientModel } from "../models/LedgerModel";
+import {
+  generateMonthlySchedule,
+  loanTotals,
+  newEntryId,
+  sortEntries,
+} from "../utils/loans";
 import { isValidAmount } from "../utils/amount";
 import { ThemeColors } from "../utils/Color";
 import { gradientAngle, radius } from "../utils/tokens";
@@ -27,34 +33,38 @@ import {
 } from "../utils/Utils";
 
 type Props = {
-  /** The property whose payments are being managed. Resolved by the route. */
-  property: PropertyModel;
+  /** The loan whose schedule is being managed. Resolved by the route. */
+  account: AccountModel;
 };
 
 /**
- * Payment entries live inside the property document, so every change here
- * rewrites the whole property. State is held locally and pushed on each edit —
- * the list is small, and it keeps the screen responsive.
+ * Entries live inside the account document, so every change here rewrites the
+ * whole account. State is held locally and pushed on each edit — the list is
+ * small, and it keeps the screen responsive.
  */
-const PropertyPaymentsScreen = ({ property }: Props) => {
-  const isLoan = property.paymentMode === "loan";
-
-  const [entries, setEntries] = useState<PaymentEntry[]>(property.entries ?? []);
+const AccountPaymentsScreen = ({ account }: Props) => {
+  const [entries, setEntries] = useState<PaymentEntry[]>(account.entries ?? []);
   const [isLoading, setIsLoading] = useState(false);
 
   const [amount, setAmount] = useState("");
   const [label, setLabel] = useState("");
-  const [date, setDate] = useState(
-    // A loan payment is recorded as it happens, so today is the useful default.
-    // An installment is scheduled, so the user must pick its due date.
-    isLoan ? moment().format(DATE_FORMAT) : ""
+  const [date, setDate] = useState("");
+
+  const [showGenerate, setShowGenerate] = useState(false);
+  const [genAmount, setGenAmount] = useState("");
+  const [genMonths, setGenMonths] = useState("");
+  const [genStartDate, setGenStartDate] = useState(
+    moment().format(DATE_FORMAT)
   );
 
   const { colors } = useTheme();
   const dispatch = useAppDispatch();
   const styles = useMemo(() => createStyles(colors), [colors]);
 
-  const totals = paymentTotals({ totalAmount: property.totalAmount, entries });
+  const contactState = useCollectionState<LedgerClientModel>("ledgerClients");
+  const counterparty = contactState.items.find((c) => c.id === account.contactId);
+
+  const totals = loanTotals({ principal: account.principal, entries });
   const sorted = useMemo(() => sortEntries(entries), [entries]);
   // The one hero moment on this screen — same gradient-top/flat-bottom split
   // card as the Overview screen's headline, so "what's still owed" reads as
@@ -67,8 +77,8 @@ const PropertyPaymentsScreen = ({ property }: Props) => {
     setEntries(next);
     setIsLoading(true);
 
-    const { id, ...input } = { ...property, entries: next };
-    dispatch(commitSave("properties", updateProperty(property.id, input)))
+    const { id, ...input } = { ...account, entries: next };
+    dispatch(commitSave("accounts", updateAccount(account.id, input)))
       .catch((error) => {
         setEntries(previous);
         showToast("error", failureTitle, String(error), "bottom");
@@ -82,12 +92,7 @@ const PropertyPaymentsScreen = ({ property }: Props) => {
       return;
     }
     if (!date) {
-      showToast(
-        "error",
-        "Missing date",
-        isLoan ? "Pick the payment date." : "Pick the due date.",
-        "bottom"
-      );
+      showToast("error", "Missing date", "Pick a date.", "bottom");
       return;
     }
 
@@ -96,15 +101,35 @@ const PropertyPaymentsScreen = ({ property }: Props) => {
       label: label.trim(),
       date,
       amount: amount.trim(),
-      // A loan entry records money already handed over; an installment is a
-      // plan you tick off later.
-      paid: isLoan,
+      paid: false,
     };
 
     persist([...entries, entry], "Unable to add");
     setAmount("");
     setLabel("");
-    setDate(isLoan ? moment().format(DATE_FORMAT) : "");
+    setDate("");
+  };
+
+  const handleGenerate = () => {
+    if (!isValidAmount(genAmount)) {
+      showToast("error", "Missing amount", "Enter the monthly amount.", "bottom");
+      return;
+    }
+    if (Number(genMonths) <= 0) {
+      showToast("error", "Missing months", "Enter the number of months.", "bottom");
+      return;
+    }
+
+    const generated = generateMonthlySchedule({
+      amount: genAmount.trim(),
+      months: Number(genMonths),
+      startDate: genStartDate,
+    });
+
+    persist([...entries, ...generated], "Unable to generate");
+    setShowGenerate(false);
+    setGenAmount("");
+    setGenMonths("");
   };
 
   const togglePaid = (entry: PaymentEntry) => {
@@ -120,7 +145,7 @@ const PropertyPaymentsScreen = ({ property }: Props) => {
 
   const handleDelete = (entry: PaymentEntry) => {
     showConfirmationAlert(
-      isLoan ? "Delete Payment" : "Delete Installment",
+      "Delete Payment",
       "Are you sure? This cannot be undone."
     ).then((confirmed) => {
       if (!confirmed) {
@@ -192,12 +217,9 @@ const PropertyPaymentsScreen = ({ property }: Props) => {
           end={gradientAngle.end}
           style={styles.heroTop}
         >
-          <Text style={styles.propertyName}>{property.name}</Text>
-          {isLoan && !!property.lender && (
-            <Text style={styles.lender}>
-              {property.lender}
-              {property.interestRate ? ` · ${property.interestRate}% p.a.` : ""}
-            </Text>
+          <Text style={styles.loanName}>{counterparty?.name || "Loan"}</Text>
+          {!!account.interestPercentage && (
+            <Text style={styles.rate}>{account.interestPercentage}% p.a.</Text>
           )}
 
           <Text style={styles.remaining}>
@@ -215,28 +237,26 @@ const PropertyPaymentsScreen = ({ property }: Props) => {
             <Text style={styles.totalsPaid}>
               ₹ {amountFormat(totals.paid)} paid
             </Text>
-            {!isLoan && totals.entryCount > 0 && (
+            {totals.entryCount > 0 && (
               <Text style={styles.totalsCount}>
-                {totals.paidCount} of {totals.entryCount} installments
+                {totals.paidCount} of {totals.entryCount} payments
               </Text>
             )}
           </View>
         </View>
       </View>
 
-      <FormSection title={isLoan ? "Payments made" : "Installments"}>
+      <FormSection title="Payments">
         {sorted.length === 0 ? (
           <Text style={styles.emptyText}>
-            {isLoan
-              ? "No payments recorded yet. Add one below as you pay."
-              : "No installments yet. Add each one below, then tick it off as you pay."}
+            No payments yet. Add each one below, then tick it off as you pay.
           </Text>
         ) : (
           sorted.map(renderEntry)
         )}
       </FormSection>
 
-      <FormSection title={isLoan ? "Record a payment" : "Add an installment"}>
+      <FormSection title="Add a payment">
         <TextField
           label="Amount"
           prefix="₹"
@@ -246,23 +266,56 @@ const PropertyPaymentsScreen = ({ property }: Props) => {
           keyboardType="numeric"
         />
 
-        <DatePicker
-          label={isLoan ? "Payment date" : "Due date"}
-          dateValue={date}
-          onDateChange={(next: any) => setDate(next || "")}
-        />
+        <DatePicker label="Date" dateValue={date} onDateChange={(next: any) => setDate(next || "")} />
 
         <TextField
           label="Label (optional)"
           onChangeText={setLabel}
           value={label}
-          placeholder={isLoan ? "e.g. EMI 4" : "e.g. Registration"}
+          placeholder="e.g. EMI 4, Floor finish"
         />
 
-        <Button
-          title={isLoan ? "Record Payment" : "Add Installment"}
-          onPress={handleAdd}
-        />
+        <Button title="Add Payment" onPress={handleAdd} />
+      </FormSection>
+
+      <FormSection title="Generate a schedule">
+        {showGenerate ? (
+          <>
+            <TextField
+              label="Amount per month"
+              prefix="₹"
+              onChangeText={setGenAmount}
+              value={genAmount}
+              placeholder="0"
+              keyboardType="numeric"
+            />
+            <TextField
+              label="Number of months"
+              suffix="months"
+              onChangeText={setGenMonths}
+              value={genMonths}
+              placeholder="e.g. 12"
+              keyboardType="number-pad"
+            />
+            <DatePicker
+              label="First payment date"
+              dateValue={genStartDate}
+              onDateChange={(next: any) => setGenStartDate(next || genStartDate)}
+            />
+            <Text style={styles.hint}>
+              Creates one unpaid entry per month, spaced from the start date.
+              Every row is still editable afterward, so this also works as a
+              starting point for a monthly amount that varies.
+            </Text>
+            <Button title="Generate" onPress={handleGenerate} />
+          </>
+        ) : (
+          <Button
+            title="Generate a monthly schedule"
+            variant="tonal"
+            onPress={() => setShowGenerate(true)}
+          />
+        )}
       </FormSection>
     </ScrollView>
   );
@@ -300,12 +353,12 @@ const createStyles = (colors: ThemeColors) =>
       paddingTop: 16,
       paddingBottom: 20,
     },
-    propertyName: {
+    loanName: {
       fontSize: 17,
       fontWeight: "700",
       color: colors.onPrimary,
     },
-    lender: {
+    rate: {
       fontSize: 13,
       color: colors.onPrimary,
       opacity: 0.75,
@@ -343,6 +396,12 @@ const createStyles = (colors: ThemeColors) =>
       fontSize: 14,
       color: colors.textMuted,
       lineHeight: 20,
+    },
+    hint: {
+      fontSize: 12,
+      color: colors.textMuted,
+      lineHeight: 17,
+      marginBottom: 12,
     },
     entry: {
       flexDirection: "row",
@@ -389,4 +448,4 @@ const createStyles = (colors: ThemeColors) =>
     },
   });
 
-export default PropertyPaymentsScreen;
+export default AccountPaymentsScreen;
