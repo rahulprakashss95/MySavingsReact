@@ -16,6 +16,8 @@ export default function RecordsStack() {
         headerShadowVisible: false,
         contentStyle: { backgroundColor: colors.background },
         headerRight: () => <ProfileButton />,
+        // No text next to the back chevron on sub-screens.
+        headerBackButtonDisplayMode: "minimal",
       }}
     >
       <Stack.Screen
@@ -23,7 +25,7 @@ export default function RecordsStack() {
         options={{
           title: "Records",
           headerLeft: () => <MenuButton />,
-          headerLargeTitle: true,
+          headerLargeTitle: false,
         }}
       />
       <Stack.Screen name="government/index" options={{ title: "Government" }} />

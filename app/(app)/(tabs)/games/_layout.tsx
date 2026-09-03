@@ -13,6 +13,8 @@ export default function GamesStack() {
         headerShadowVisible: false,
         contentStyle: { backgroundColor: colors.background },
         headerRight: () => <ProfileButton />,
+        // No text next to the back chevron on sub-screens.
+        headerBackButtonDisplayMode: "minimal",
       }}
     >
       <Stack.Screen
@@ -20,7 +22,7 @@ export default function GamesStack() {
         options={{
           title: "Games",
           headerLeft: () => <MenuButton />,
-          headerLargeTitle: true,
+          headerLargeTitle: false,
         }}
       />
       <Stack.Screen name="2048" options={{ title: "2048" }} />

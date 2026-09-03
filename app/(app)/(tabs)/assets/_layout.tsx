@@ -41,6 +41,8 @@ export default function AssetsStack() {
         headerShadowVisible: false,
         contentStyle: { backgroundColor: colors.background },
         headerRight: () => <ProfileButton />,
+        // No text next to the back chevron on sub-screens.
+        headerBackButtonDisplayMode: "minimal",
       }}
     >
       <Stack.Screen
@@ -48,7 +50,7 @@ export default function AssetsStack() {
         options={{
           title: "Assets",
           headerLeft: () => <MenuButton />,
-          headerLargeTitle: true,
+          headerLargeTitle: false,
         }}
       />
       <Stack.Screen name="ornaments/index" options={{ title: "Ornaments" }} />

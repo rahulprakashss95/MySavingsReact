@@ -1,8 +1,18 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { Ionicons } from "@expo/vector-icons";
 import React, { useEffect, useMemo, useRef, useState } from "react";
-import { Image, KeyboardAvoidingView, Pressable, ScrollView, StyleSheet, View } from "react-native";
-import type { TextInput as RNTextInput } from "react-native";
+import { Image, Pressable, ScrollView, StyleSheet, View } from "react-native";
+import type { LayoutChangeEvent, TextInput as RNTextInput } from "react-native";
+import Animated, {
+  Easing,
+  interpolate,
+  KeyboardState,
+  useAnimatedKeyboard,
+  useAnimatedReaction,
+  useAnimatedStyle,
+  useSharedValue,
+  withTiming,
+} from "react-native-reanimated";
 import Text from "../components/Text";
 import TextInput from "../components/TextInput";
 import { getFamilyByCode } from "../../database/query";
@@ -21,6 +31,22 @@ import { elevation, radius } from "../utils/tokens";
 import { showToast } from "../utils/Utils";
 
 type FocusField = "family" | "username" | "password" | null;
+
+// Brand lockup geometry, shared between the stylesheet and the keyboard
+// animation math below so the two stay in sync.
+const LOGO_SIZE = 72;
+const TITLE_LINE_HEIGHT = 34;
+const BRAND_ROW_GAP = 12; // horizontal gap between logo and title once compact
+const BRAND_STACK_GAP = 18; // vertical gap between logo and title at rest
+const STACK_HEIGHT = LOGO_SIZE + BRAND_STACK_GAP + TITLE_LINE_HEIGHT;
+const ROW_HEIGHT = LOGO_SIZE;
+// Rest-state (keyboard closed) vertical offset that separates the logo and
+// title within the row container — see the comment above brandRowAnimatedStyle.
+const LOGO_REST_Y = -(STACK_HEIGHT - LOGO_SIZE) / 2;
+const TITLE_REST_Y = (STACK_HEIGHT - TITLE_LINE_HEIGHT) / 2;
+// Best-guess width for "AssetDiary" before its first onLayout measurement,
+// so the very first frame doesn't render off-center.
+const DEFAULT_TITLE_WIDTH = 150;
 
 const LoginScreen = () => {
   const router = useRouter();
@@ -45,6 +71,91 @@ const LoginScreen = () => {
   const { signIn } = useAuth();
   const { colors } = useTheme();
   const styles = useMemo(() => createStyles(colors), [colors]);
+
+  // useAnimatedKeyboard tracks the native keyboard frame as a UI-thread
+  // shared value, so anything driven off it stays frame-synced with the
+  // real keyboard animation instead of trailing a JS-thread timer.
+  // (It's deprecated in favor of react-native-keyboard-controller upstream,
+  // but that's a native module this app doesn't have installed yet; this
+  // still works and needs no native changes.)
+  const keyboard = useAnimatedKeyboard({
+    isStatusBarTranslucentAndroid: true,
+    isNavigationBarTranslucentAndroid: true,
+  });
+
+  // Push the whole form up by the keyboard's height, pixel-synced every
+  // frame — this is what keeps the card (Login button included) scrolled
+  // above the keyboard instead of hidden behind it. Also turning off the
+  // ScrollView's own `automaticallyAdjustKeyboardInsets` (below) so this is
+  // the *only* thing driving keyboard avoidance — leaving both on had them
+  // fighting each other on every focus change (family -> username ->
+  // password), which read as a glitch/jump.
+  const containerAnimatedStyle = useAnimatedStyle(() => ({
+    paddingBottom: keyboard.height.value,
+  }));
+
+  // Morph the brand block from a centered logo-over-title stack into a
+  // compact logo-beside-title row pinned near the top, freeing up vertical
+  // space for the card below. Both the logo and title are laid out in a
+  // normal flex row (so their compact, keyboard-open position falls out of
+  // ordinary flow — no transform needed there); at rest we pull them apart
+  // into the stacked look with translateX/Y so no separate rest-state layout
+  // is needed. Driven off the keyboard's open/closed *state* (not its raw,
+  // sometimes-jittery height) through a fixed, custom-eased timing so the
+  // jump-and-slide always feels like one deliberate motion, matching pace
+  // with the keyboard without being a literal pixel-for-pixel mirror of it.
+  const brandProgress = useSharedValue(0);
+  useAnimatedReaction(
+    () => keyboard.state.value,
+    (state, previousState) => {
+      if (state === previousState) return;
+      const open = state === KeyboardState.OPEN || state === KeyboardState.OPENING;
+      brandProgress.value = withTiming(open ? 1 : 0, {
+        duration: 260,
+        easing: Easing.out(Easing.cubic),
+      });
+    }
+  );
+
+  const [titleWidth, setTitleWidth] = useState(DEFAULT_TITLE_WIDTH);
+  const onTitleLayout = (event: LayoutChangeEvent) => {
+    setTitleWidth(event.nativeEvent.layout.width);
+  };
+
+  const brandAnimatedStyle = useAnimatedStyle(() => ({
+    marginBottom: interpolate(brandProgress.value, [0, 1], [32, 14]),
+  }));
+
+  const brandRowAnimatedStyle = useAnimatedStyle(() => ({
+    height: interpolate(brandProgress.value, [0, 1], [STACK_HEIGHT, ROW_HEIGHT]),
+  }));
+
+  const logoAnimatedStyle = useAnimatedStyle(() => {
+    const restX = (BRAND_ROW_GAP + titleWidth) / 2;
+    return {
+      transform: [
+        { translateX: interpolate(brandProgress.value, [0, 1], [restX, 0]) },
+        { translateY: interpolate(brandProgress.value, [0, 1], [LOGO_REST_Y, 0]) },
+      ],
+    };
+  });
+
+  const titleAnimatedStyle = useAnimatedStyle(() => {
+    const restX = -(LOGO_SIZE + BRAND_ROW_GAP) / 2;
+    return {
+      transform: [
+        { translateX: interpolate(brandProgress.value, [0, 1], [restX, 0]) },
+        { translateY: interpolate(brandProgress.value, [0, 1], [TITLE_REST_Y, 0]) },
+      ],
+    };
+  });
+
+  const subtitleAnimatedStyle = useAnimatedStyle(() => ({
+    opacity: interpolate(brandProgress.value, [0, 1], [1, 0]),
+    transform: [
+      { translateY: interpolate(brandProgress.value, [0, 1], [0, -8]) },
+    ],
+  }));
 
   // Restore the last family so the field starts collapsed for returning users.
   useEffect(() => {
@@ -113,7 +224,7 @@ const LoginScreen = () => {
           "error",
           "Family not found",
           "Check the Family ID and try again.",
-          "bottom"
+          "top"
         );
         return;
       }
@@ -133,7 +244,7 @@ const LoginScreen = () => {
           "error",
           "Login Error",
           "Either username or password is incorrect",
-          "bottom"
+          "top"
         );
       }
     } catch (error) {
@@ -145,7 +256,7 @@ const LoginScreen = () => {
         "error",
         "Login Error",
         error instanceof Error ? error.message : "Something went wrong.",
-        "bottom"
+        "top"
       );
     } finally {
       setIsLoading(false);
@@ -153,33 +264,43 @@ const LoginScreen = () => {
   };
 
   return (
-    // Android needs "padding" too. Since edge-to-edge became mandatory the
-    // window no longer resizes for the keyboard, so the manifest's
+    // Android needs bottom padding too. Since edge-to-edge became mandatory
+    // the window no longer resizes for the keyboard, so the manifest's
     // adjustResize does nothing and an undefined behavior left the password
-    // field sitting behind the IME.
-    <KeyboardAvoidingView style={styles.container} behavior="padding">
+    // field sitting behind the IME. useAnimatedKeyboard (above) drives this
+    // padding on the UI thread, in sync with the native keyboard frame.
+    <Animated.View style={[styles.container, containerAnimatedStyle]}>
       <ScrollView
         contentContainerStyle={styles.content}
         keyboardShouldPersistTaps="handled"
         showsVerticalScrollIndicator={false}
+        automaticallyAdjustKeyboardInsets={false}
       >
-        <View style={styles.brand}>
-          <Image
-            source={require("../../assets/favicon.png")}
-            style={styles.logo}
-            accessibilityIgnoresInvertColors
-          />
-          <Text style={styles.title}>AssetDiary</Text>
-          {family ? (
-            <Text style={styles.welcome} numberOfLines={2}>
-              Welcome to {family.name}
-            </Text>
-          ) : (
-            <Text style={styles.subtitle}>
-              Enter your Family ID to sign in.
-            </Text>
-          )}
-        </View>
+        <Animated.View style={[styles.brand, brandAnimatedStyle]}>
+          <Animated.View style={[styles.brandRow, brandRowAnimatedStyle]}>
+            <Animated.View style={[styles.logoWrap, logoAnimatedStyle]}>
+              <Image
+                source={require("../../assets/favicon.png")}
+                style={styles.logo}
+                accessibilityIgnoresInvertColors
+              />
+            </Animated.View>
+            <Animated.View style={titleAnimatedStyle} onLayout={onTitleLayout}>
+              <Text style={styles.title}>AssetDiary</Text>
+            </Animated.View>
+          </Animated.View>
+          <Animated.View style={subtitleAnimatedStyle}>
+            {family ? (
+              <Text style={styles.welcome} numberOfLines={2}>
+                Welcome to {family.name}
+              </Text>
+            ) : (
+              <Text style={styles.subtitle}>
+                Enter your Family ID to sign in.
+              </Text>
+            )}
+          </Animated.View>
+        </Animated.View>
 
         <View style={styles.card}>
           {showFamilyField ? (
@@ -368,7 +489,7 @@ const LoginScreen = () => {
           </Text>
         </Pressable>
       </ScrollView>
-    </KeyboardAvoidingView>
+    </Animated.View>
   );
 };
 
@@ -385,18 +506,31 @@ const createStyles = (colors: ThemeColors) =>
     },
     brand: {
       alignItems: "center",
-      marginBottom: 32,
+      // marginBottom is animated (see brandAnimatedStyle) to compact as the
+      // keyboard opens; base value lives there, not here.
+    },
+    // Row that holds the logo + title. Its height is animated between the
+    // stacked (rest) and side-by-side (keyboard open) footprint; the logo
+    // and title are then pulled apart into the stacked look with
+    // translateX/Y at rest (see logoAnimatedStyle/titleAnimatedStyle).
+    brandRow: {
+      flexDirection: "row",
+      alignItems: "center",
+      justifyContent: "center",
+    },
+    logoWrap: {
+      marginRight: BRAND_ROW_GAP,
     },
     // The mark carries its own lapis field, so no tinted backing behind it.
     logo: {
-      width: 72,
-      height: 72,
+      width: LOGO_SIZE,
+      height: LOGO_SIZE,
       borderRadius: 22,
-      marginBottom: 18,
     },
     title: {
       fontSize: 28,
       fontWeight: "700",
+      lineHeight: TITLE_LINE_HEIGHT,
       color: colors.text,
     },
     subtitle: {

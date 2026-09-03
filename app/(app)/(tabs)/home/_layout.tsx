@@ -20,7 +20,10 @@ export default function HomeStack() {
         options={{
           title: "Home",
           headerLeft: () => <MenuButton />,
-          headerLargeTitle: true,
+          // Large titles reserve extra header height everywhere in this app
+          // (see the other tab stacks) — off app-wide for a tighter header.
+          // Home also has its own "Good morning" greeting doing the title's job.
+          headerLargeTitle: false,
         }}
       />
     </Stack>

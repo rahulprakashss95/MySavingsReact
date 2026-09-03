@@ -16,6 +16,8 @@ export default function LedgerStack() {
         headerShadowVisible: false,
         contentStyle: { backgroundColor: colors.background },
         headerRight: () => <ProfileButton />,
+        // No text next to the back chevron on sub-screens.
+        headerBackButtonDisplayMode: "minimal",
       }}
     >
       <Stack.Screen
@@ -23,7 +25,7 @@ export default function LedgerStack() {
         options={{
           title: "Ledger",
           headerLeft: () => <MenuButton />,
-          headerLargeTitle: true,
+          headerLargeTitle: false,
         }}
       />
       <Stack.Screen name="earnings/index" options={{ title: "Earnings" }} />

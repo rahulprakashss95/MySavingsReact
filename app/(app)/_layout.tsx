@@ -26,9 +26,26 @@ export default function AppLayout() {
         headerTintColor: colors.text,
         headerShadowVisible: false,
         contentStyle: { backgroundColor: colors.background },
+        // Without this, iOS's back button shows the *previous* screen's title
+        // as text next to the chevron — defaulting to the raw route name
+        // "(tabs)" for Profile/Admin, since that group has no title of its own.
+        headerBackButtonDisplayMode: "minimal",
       }}
     >
-      <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+      <Stack.Screen
+        name="(tabs)"
+        options={{
+          headerShown: false,
+          // `headerShown: false` only hides *this* screen's own header — iOS
+          // still reads its `title` for the back button's long-press menu, so
+          // without one it falls back to the raw route name "(tabs)". Not a
+          // specific tab's name: whichever tab is showing when Profile/Settings
+          // gets opened is where "back" actually returns to, and this one
+          // title has to stand in for all of them.
+          title: "AssetDiary",
+        }}
+      />
+      <Stack.Screen name="settings" options={{ headerShown: false }} />
       <Stack.Screen name="profile" options={{ title: "Profile" }} />
       <Stack.Screen name="admin" options={{ title: "Family Admin" }} />
     </Stack>

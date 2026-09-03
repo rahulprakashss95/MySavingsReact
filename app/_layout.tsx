@@ -8,6 +8,7 @@ import { GestureHandlerRootView } from "react-native-gesture-handler";
 import {
   SafeAreaProvider,
   initialWindowMetrics,
+  useSafeAreaInsets,
 } from "react-native-safe-area-context";
 import Toast from "react-native-toast-message";
 import { QueryClientProvider } from "@tanstack/react-query";
@@ -79,6 +80,12 @@ function RootNavigator() {
     isRestoring: passcodeRestoring,
   } = usePasscode();
   const [fontsLoaded] = useFonts(fontAssets);
+  // react-native-toast-message's default topOffset (40) is a flat value that
+  // doesn't know about the notch/Dynamic Island — on those devices the safe
+  // area alone is already ~47-59px, so a top toast sat under/against it.
+  // Push it below the safe area instead, plus a little breathing room.
+  const insets = useSafeAreaInsets();
+  const toastTopOffset = insets.top + 12;
 
   // Only frame the app once the viewport is actually wider than the cap; at or
   // below it the frame fills the window and there is no gutter to draw.
@@ -160,7 +167,7 @@ function RootNavigator() {
         </Stack>
         {/* Overlays the whole app (absolute-fill); mounts only while open. */}
         <SideDrawer />
-        <Toast />
+        <Toast topOffset={toastTopOffset} />
         {/* Launch lock: covers everything above until the passcode is entered. */}
         {showLock && <PasscodeLockScreen />}
         <AnimatedSplash visible={!ready} />

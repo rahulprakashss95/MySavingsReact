@@ -17,6 +17,8 @@ type TabDef = {
 
 // Mirrors the iOS NativeTabs list — same modules, order, and glyphs. Deposits
 // now live inside Assets and Expenses inside Ledger, so both are gone as tabs.
+// Settings isn't here either — it's pushed from the header's hamburger drawer
+// as its own screen (see `app/(app)/settings`), not a tab, on every platform.
 const TABS: TabDef[] = [
   { name: "home", label: "Home", icon: "home-outline", activeIcon: "home" },
   { name: "ledger", label: "Ledger", icon: "book-outline", activeIcon: "book", module: "ledger" },
@@ -24,7 +26,6 @@ const TABS: TabDef[] = [
   { name: "records", label: "Records", icon: "document-text-outline", activeIcon: "document-text", module: "documents" },
   // No `module`: games are open to everyone, like Home — no tile-gating.
   { name: "games", label: "Games", icon: "game-controller-outline", activeIcon: "game-controller" },
-  { name: "settings", label: "Settings", icon: "settings-outline", activeIcon: "settings" },
 ];
 
 /**

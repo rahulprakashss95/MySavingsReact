@@ -15,7 +15,17 @@ import { confirmSignOut } from "./HeaderActions";
 
 type IconName = React.ComponentProps<typeof Ionicons>["name"];
 
-type Leaf = { label: string; icon: IconName; href: string };
+type Leaf = {
+  label: string;
+  icon: IconName;
+  href: string;
+  /**
+   * `false` for destinations pushed directly onto the signed-in-area Stack
+   * (Settings, Family Admin) rather than nested inside a tab's own stack —
+   * see `go` below for why tab destinations need the anchor and these don't.
+   */
+  anchored?: boolean;
+};
 type Group = {
   label: string;
   icon: IconName;
@@ -26,9 +36,11 @@ type Group = {
 type Node = Leaf | Group;
 
 // The drawer mirrors the app's screen hierarchy as a tree: top-level
-// destinations plus one expandable group per module. `href` values are the
-// Expo Router paths under app/(app)/(tabs). Order follows the tab bar's TABS
-// list so the two navigations read the same left-to-right / top-to-bottom.
+// destinations plus one expandable group per module. `href` values are Expo
+// Router paths — most live under app/(app)/(tabs), but Settings and Family
+// Admin are pushed straight onto app/(app) instead (see `anchored` on `Leaf`).
+// Order follows the tab bar's TABS list so the two navigations read the same
+// left-to-right / top-to-bottom.
 const TREE: Node[] = [
   { label: "Home", icon: "home-outline", href: "/home" },
   {
@@ -70,7 +82,9 @@ const TREE: Node[] = [
   },
   // Like Home, open to everyone — no module gating.
   { label: "Games", icon: "game-controller-outline", href: "/games" },
-  { label: "Settings", icon: "settings-outline", href: "/settings" },
+  // Pushed straight onto the signed-in-area Stack, like Profile — not nested
+  // in a tab, so no anchor needed (see `anchored` on `Leaf`).
+  { label: "Settings", icon: "settings-outline", href: "/settings", anchored: false },
 ];
 
 const isGroup = (node: Node): node is Group => "children" in node;
@@ -160,17 +174,21 @@ const SideDrawer = () => {
   const nodes: Node[] = isAdmin
     ? [
         ...visibleTree,
-        { label: "Family Admin", icon: "shield-outline", href: "/admin" },
+        // Also pushed straight onto the signed-in-area Stack — see Settings.
+        { label: "Family Admin", icon: "shield-outline", href: "/admin", anchored: false },
       ]
     : visibleTree;
 
-  // `withAnchor` for the same reason as Home's links: the drawer opens from
-  // Home, so every destination is in another tab's stack and would otherwise
-  // arrive as that stack's initial route — no back button, and no way back via
-  // the tab bar either. The anchor pushes the module's index underneath first.
-  const go = (href: string) => {
+  // `withAnchor` is for jumping into a *tab's* own stack: the drawer opens
+  // from Home, so a tab destination would otherwise arrive as that stack's
+  // initial route — no back button, and no way back via the tab bar either.
+  // The anchor pushes the tab's index underneath first. Destinations that
+  // aren't nested in a tab (Settings, Family Admin) skip it — they're pushed
+  // directly onto the outer Stack, same as Profile, and already get a normal
+  // back button from that.
+  const go = (href: string, anchored: boolean) => {
     close();
-    router.push(href as never, { withAnchor: true });
+    router.push(href as never, anchored ? { withAnchor: true } : undefined);
   };
 
   const renderLeaf = (leaf: Leaf, nested: boolean) => {
@@ -178,7 +196,7 @@ const SideDrawer = () => {
     return (
       <Pressable
         key={leaf.label}
-        onPress={() => go(leaf.href)}
+        onPress={() => go(leaf.href, leaf.anchored ?? true)}
         accessibilityRole="button"
         style={({ pressed }) => [
           styles.row,
@@ -228,7 +246,7 @@ const SideDrawer = () => {
             way into their profile rather than the menu carrying a second row
             saying the same thing. */}
         <Pressable
-          onPress={() => go("/profile")}
+          onPress={() => go("/profile", false)}
           accessibilityRole="button"
           accessibilityLabel="Open your profile"
           style={({ pressed }) => [

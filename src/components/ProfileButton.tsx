@@ -1,6 +1,6 @@
 import { useRouter } from "expo-router";
 import React from "react";
-import { Pressable, StyleSheet } from "react-native";
+import { Platform, Pressable, StyleSheet } from "react-native";
 import { useAuth } from "../context/AuthContext";
 import Avatar from "./Avatar";
 
@@ -31,8 +31,12 @@ const ProfileButton = () => {
 
 const styles = StyleSheet.create({
   button: {
-    // Mirrors MenuButton's inset on the other side, so the two sit level.
-    marginRight: 12,
+    // Mirrors MenuButton's inset on the other side, so the two sit level. Not
+    // on iOS, though — same reason as MenuButton: a one-sided margin stretches
+    // iOS 26's Liquid Glass pill (sized to this view's bounding box) into an
+    // ellipse instead of a circle, and iOS's own header chrome already insets
+    // headerRight from the edge.
+    marginRight: Platform.OS === "ios" ? 0 : 12,
   },
   pressed: {
     opacity: 0.6,
